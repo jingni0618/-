@@ -64,7 +64,7 @@ select option { background: #24243e; color: white; }
 .deck-card.drawn { opacity: 0; pointer-events: none; }
 
 /* 5. 牌阵展示区与 3D 翻转 */
-.spread-container { display: flex; justify-content: center; gap: 20px; margin-bottom: 40px; flex-wrap: wrap; min-height: 320px; /* 加高了一点适应真实图片 */ }
+.spread-container { display: flex; justify-content: center; gap: 20px; margin-bottom: 40px; flex-wrap: wrap; min-height: 320px; }
 .card-slot { width: 150px; height: 260px; perspective: 1000px; display: flex; flex-direction: column; }
 .slot-label { font-size: 14px; color: #f9d342; margin-bottom: 12px; opacity: 0; transition: opacity 0.5s; letter-spacing: 1px; font-weight: bold; }
 .slot-label.visible { opacity: 1; }
@@ -80,37 +80,47 @@ select option { background: #24243e; color: white; }
 .card-face {
   position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 12px; overflow: hidden;
   display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 12px 25px rgba(0,0,0,0.6); border: 2px solid #d4af37;
+  background-color: #fdfbf7;
 }
 .card-back { background: radial-gradient(circle at center, #4b3e7c 0%, #2a1645 100%); color: rgba(249, 211, 66, 0.9); font-size: 45px; }
 .card-back::before { content: ''; position: absolute; width: 85%; height: 90%; border: 1px dashed rgba(249, 211, 66, 0.5); border-radius: 8px; }
 
-/* 正面不再使用渐变背景，而是用来包裹真实的塔罗牌图片 */
+/* 正面用来包裹真实的塔罗牌图片 */
 .card-front { 
-  background: #fdfbf7; 
-  color: #333; 
   transform: rotateY(180deg); 
-  background-image: none;
+  background-color: #fdfbf7;
+  position: relative;
+  /* 确保整个正面是占满的 */
+  width: 100%; 
+  height: 100%;
 }
+
 .card-front img.tarot-image {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover; /* 保证图片铺满整张牌 */
+  object-fit: cover; /* 让图片不拉伸变形，完美铺满卡牌 */
   border-radius: 10px;
+  z-index: 1;
 }
+
 .card-front .name-overlay {
   position: absolute;
   bottom: 0;
   left: 0;
   width: 100%;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.75);
   color: #fff;
   font-size: 13px;
   font-weight: 600;
-  padding: 8px 0;
+  padding: 10px 0;
   text-align: center;
-  backdrop-filter: blur(5px);
+  backdrop-filter: blur(8px);
   border-bottom-left-radius: 10px;
   border-bottom-right-radius: 10px;
+  z-index: 10; /* 确保名字遮罩永远在图片的最上层 */
 }
 
 /* 6. AI 解读区域 */
