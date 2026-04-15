@@ -1,4 +1,4 @@
-// 1. 塔罗牌库（为了让你测试，我放了 10 张经典大阿尔卡那，你可以以后自己加满 78 张）
+// 1. 塔罗牌库
 const deck = [
   { name: "愚者 (The Fool)", emoji: "🚶‍♂️", meaning: "新的开始、自发性、信念的飞跃" },
   { name: "魔术师 (The Magician)", emoji: "🪄", meaning: "创造力、技能、意志力、显化" },
@@ -20,13 +20,12 @@ const layout = [
   { id: "pos-4", label: "未来的可能走向" }
 ];
 
-// 3. 页面一加载，就自动在 HTML 里生成这 4 张盖着的牌
+// 3. 页面加载时生成牌的骨架
 window.onload = function() {
   const container = document.getElementById("spreadContainer");
-  container.innerHTML = ""; // 清空容器
+  container.innerHTML = ""; 
   
   layout.forEach((pos, index) => {
-    // 动态创建 HTML
     const slotHTML = `
       <div class="card-slot">
         <div class="slot-label" id="label-${index}">${pos.label}</div>
@@ -43,7 +42,7 @@ window.onload = function() {
   });
 };
 
-// 4. 洗牌算法（打乱数组顺序）
+// 4. 洗牌算法
 function shuffle(array) {
   let currentIndex = array.length, randomIndex;
   while (currentIndex !== 0) {
@@ -54,7 +53,7 @@ function shuffle(array) {
   return array;
 }
 
-// 5. 点击“抽取四张牌”按钮触发的主流程
+// 5. 点击抽取触发主流程
 async function startDivination() {
   const question = document.getElementById("questionInput").value.trim();
   const btn = document.getElementById("drawBtn");
@@ -65,64 +64,53 @@ async function startDivination() {
     return;
   }
 
-  // 重置状态
   readingBox.classList.remove("visible");
   readingBox.innerHTML = "";
   btn.disabled = true;
   btn.innerText = "洗牌与抽牌中...";
 
-  // 准备一套洗好的牌
   let currentDeck = shuffle([...deck]);
-  let drawnCardsData = []; // 用来存抽到的牌的信息，稍后发给后端
+  let drawnCardsData = [];
 
-  // 依次翻开 4 张牌
   for (let i = 0; i < layout.length; i++) {
-    // 制造 0.6 秒的停顿，让翻牌有节奏感
     await new Promise(r => setTimeout(r, 600)); 
     
-    // 从牌堆里弹出一张牌
     const cardData = currentDeck.pop();
-    
-    // 随机决定是否是逆位 (20% 概率)
     const isReversed = Math.random() < 0.2;
     const reversedText = isReversed ? " (逆位)" : " (正位)";
 
-    // 记录这张牌的数据
     drawnCardsData.push({
       position: layout[i].label,
       cardName: cardData.name + reversedText,
       meaning: cardData.meaning
     });
 
-    // 改变页面上的文字和 emoji
     document.getElementById(`label-${i}`).classList.add("visible");
     document.getElementById(`emoji-${i}`).innerText = cardData.emoji;
     document.getElementById(`name-${i}`).innerText = cardData.name + reversedText;
     
-    // 如果是逆位，给卡牌加个旋转 180 度的效果
     const cardElement = document.getElementById(`card-${i}`);
     if(isReversed) {
-        cardElement.style.transform = "rotateY(180deg) rotateZ(180deg)"; // 翻面的同时倒过来
+        cardElement.style.transform = "rotateY(180deg) rotateZ(180deg)";
     } else {
         cardElement.style.transform = "rotateY(180deg)";
     }
   }
 
-  // 牌翻完后，呼叫我们的后端 API
   btn.innerText = "等待命运的启示...";
   document.getElementById("loadingBox").style.display = "block";
   
   await requestAIReading(question, drawnCardsData);
 }
 
-// 6. 向我们自己的安全后端发起请求（取代之前直接请求 OpenAI）
+// 6. 向后端 API 发起真实请求
 async function requestAIReading(question, cards) {
   const loading = document.getElementById("loadingBox");
   const readingBox = document.getElementById("readingBox");
   const btn = document.getElementById("drawBtn");
 
   try {
-    // 这里的 /api/tarot 就是我们马上要在 Vercel 里跑起来的后端接口地址
+    // 强制使用相对路径，匹配 Vercel 的 Serverless Function 路由
     const response = await fetch("/api/tarot", {
       method: "POST",
       headers: {
@@ -134,18 +122,33 @@ async function requestAIReading(question, cards) {
       })
     });
 
-    // 如果后端报错了
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || "占星网关连接失败");
+      const errorText = await response.text(); // 获取后端返回的原始报错信息
+      let errorMessage = "未知网络错误";
+      try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.error || JSON.stringify(errorJson);
+      } catch (e) {
+          errorMessage = errorText;
+      }
+      throw new Error(`请求失败 (HTTP ${response.status}): ${errorMessage}`);
     }
 
-    // 拿到后端传回来的大模型解读结果
     const data = await response.json();
     readingBox.innerHTML = data.reading;
 
   } catch (error) {
-    readingBox.innerHTML = `<p style="color: #ff6b6b;">🔮 星空信号受到干扰：${error.message}</p>`;
+    console.error("Fetch 捕获到错误:", error);
+    readingBox.innerHTML = `
+      <div style="background: rgba(255,107,107,0.1); border: 1px solid #ff6b6b; padding: 20px; border-radius: 8px;">
+        <h4 style="color: #ff6b6b; margin-top: 0;">🔮 星空信号受到干扰</h4>
+        <p style="color: #ffcccc; font-family: monospace; font-size: 14px; word-break: break-all;">
+          ${error.message}
+        </p>
+        <p style="color: #a8b2d1; font-size: 13px; margin-bottom: 0;">
+          * 请截图此错误信息发送给开发者进行 Debug。
+        </p>
+      </div>`;
   } finally {
     loading.style.display = "none";
     readingBox.classList.add("visible");

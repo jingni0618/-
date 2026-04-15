@@ -11,15 +11,12 @@
     <h1>✨ 命运的四牌阵</h1>
     <p class="subtitle">洞见过去、现在、对方与未来</p>
 
-    <!-- 控制面板：输入问题和 API Key -->
+    <!-- 控制面板：纯净的输入框 -->
     <div class="control-panel">
       <div class="input-group">
         <label>你心中的疑惑是什么？</label>
-        <input type="text" id="questionInput" placeholder="例如：我最近和他吵架了，我们还能复合吗？">
-      </div>
-      <div class="input-group">
-        <label>输入你的 OpenAI API Key（用于 AI 解读）：</label>
-        <input type="password" id="apiKeyInput" placeholder="sk-...">
+        <!-- 去掉了 placeholder 占位符提示 -->
+        <input type="text" id="questionInput">
       </div>
       <button id="drawBtn" onclick="startDivination()">点击抽取四张牌</button>
     </div>
