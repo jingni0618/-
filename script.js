@@ -1,6 +1,6 @@
-// 1. 完整 78 张塔罗牌库 (大阿尔卡那 + 四元素小阿尔卡那)
+// 1. 完整 78 张塔罗牌库
 const deck = [
-  // 大阿尔卡那 (22张)
+  // 大阿尔卡那
   { name: "愚者 (The Fool)", emoji: "🚶‍♂️", meaning: "新的开始、自发性、信念的飞跃、天真" },
   { name: "魔术师 (The Magician)", emoji: "🪄", meaning: "创造力、技能、意志力、显化、掌控资源" },
   { name: "女祭司 (The High Priestess)", emoji: "🌙", meaning: "直觉、潜意识、内在声音、神秘" },
@@ -24,7 +24,7 @@ const deck = [
   { name: "审判 (Judgement)", emoji: "📯", meaning: "重生、内在呼唤、宽恕、了结过去" },
   { name: "世界 (The World)", emoji: "🌍", meaning: "完成、整合、成就、旅行、圆满" },
 
-  // 权杖牌组 (火元素：行动、热情、创造)
+  // 权杖
   { name: "权杖一 (Ace of Wands)", emoji: "🔥", meaning: "灵感、新机会、成长、潜能迸发" },
   { name: "权杖二 (Two of Wands)", emoji: "🗺️", meaning: "未来规划、决策、走出舒适区" },
   { name: "权杖三 (Three of Wands)", emoji: "🚢", meaning: "远见、领导力、探索、扩张与合作" },
@@ -40,7 +40,7 @@ const deck = [
   { name: "权杖星币 (Queen of Wands)", emoji: "💃", meaning: "勇气、自信、独立、社交与魅力" },
   { name: "权杖国王 (King of Wands)", emoji: "🤴", meaning: "天生的领导者、远见卓识、创业精神" },
 
-  // 圣杯牌组 (水元素：情感、直觉、关系)
+  // 圣杯
   { name: "圣杯一 (Ace of Cups)", emoji: "💧", meaning: "纯粹的爱、新感情、同情心、创造力" },
   { name: "圣杯二 (Two of Cups)", emoji: "🥂", meaning: "统一、伴侣关系、互相吸引、平等结合" },
   { name: "圣杯三 (Three of Cups)", emoji: "🍻", meaning: "庆祝、友谊、合作、社交聚会" },
@@ -56,7 +56,7 @@ const deck = [
   { name: "圣杯王后 (Queen of Cups)", emoji: "🧜‍♀️", meaning: "富有同情心、直觉敏锐、情感的滋养" },
   { name: "圣杯国王 (King of Cups)", emoji: "🧔", meaning: "情感控制、外交手腕、情绪的平衡" },
 
-  // 宝剑牌组 (风元素：思想、冲突、沟通)
+  // 宝剑
   { name: "宝剑一 (Ace of Swords)", emoji: "🗡️", meaning: "突破、清晰、锐利的思想、真理" },
   { name: "宝剑二 (Two of Swords)", emoji: "盲", meaning: "僵局、困难的选择、逃避现实" },
   { name: "宝剑三 (Three of Swords)", emoji: "💔", meaning: "心碎、悲伤、悲痛、痛苦的分离" },
@@ -72,7 +72,7 @@ const deck = [
   { name: "宝剑王后 (Queen of Swords)", emoji: "👩‍⚖️", meaning: "独立、客观、清晰的边界、洞察力" },
   { name: "宝剑国王 (King of Swords)", emoji: "👨‍⚖️", meaning: "智力、理性、权威、清晰的判断" },
 
-  // 星币牌组 (土元素：物质、现实、金钱)
+  // 星币
   { name: "星币一 (Ace of Pentacles)", emoji: "🪙", meaning: "新的财务机会、繁荣、物质表现" },
   { name: "星币二 (Two of Pentacles)", emoji: "🤹", meaning: "平衡、适应能力、时间或资金管理" },
   { name: "星币三 (Three of Pentacles)", emoji: "🤝", meaning: "团队合作、初步成果、专业的技能" },
@@ -89,7 +89,7 @@ const deck = [
   { name: "星币国王 (King of Pentacles)", emoji: "🏦", meaning: "财富创造、商业领袖、富足与稳定" }
 ];
 
-// 2. 动态牌阵配置库 (加入了是非决断阵)
+// 2. 牌阵配置库
 const spreadsOptions = {
   single: [
     { label: "核心指引" }
@@ -119,7 +119,7 @@ const spreadsOptions = {
   ]
 };
 
-// 3. 动态渲染牌阵
+// 3. 页面加载/切换阵法时，重新绘制初始的牌面
 function renderSpread() {
   const spreadType = document.getElementById("spreadSelect").value;
   const layout = spreadsOptions[spreadType];
@@ -135,7 +135,7 @@ function renderSpread() {
           <div class="card-face card-back">✧</div>
           <div class="card-face card-front">
             <div class="emoji" id="emoji-${index}">❓</div>
-            <div class="name" id="name-${index}">等待抽取</div>
+            <div class="name" id="name-${index}">等待</div>
           </div>
         </div>
       </div>
@@ -144,10 +144,8 @@ function renderSpread() {
   });
 }
 
-// 页面加载时渲染
 window.onload = renderSpread;
 
-// 4. 洗牌算法
 function shuffle(array) {
   let currentIndex = array.length, randomIndex;
   while (currentIndex !== 0) {
@@ -158,7 +156,7 @@ function shuffle(array) {
   return array;
 }
 
-// 5. 点击抽取触发主流程
+// 4. 核心：带有发牌特效的主流程
 async function startDivination() {
   const question = document.getElementById("questionInput").value.trim();
   const spreadType = document.getElementById("spreadSelect").value;
@@ -171,16 +169,35 @@ async function startDivination() {
     return;
   }
 
+  // 1. 初始化界面
   readingBox.classList.remove("visible");
   readingBox.innerHTML = "";
   btn.disabled = true;
-  btn.innerText = "洗牌与抽牌中...";
+  btn.innerText = "正在向星空请牌...";
 
+  // 洗牌
   let currentDeck = shuffle([...deck]);
   let drawnCardsData = [];
-
+  
+  // 第一阶段动画：把所有隐形的牌“发”到各自的位置上 (从天而降)
   for (let i = 0; i < layout.length; i++) {
-    await new Promise(r => setTimeout(r, 600)); 
+    await new Promise(r => setTimeout(r, 200)); // 很快地依次飞出
+    
+    // 显示标签
+    document.getElementById(`label-${i}`).classList.add("visible");
+    
+    // 让牌飞下来（添加 dealt class 去掉缩小和透明度）
+    const cardElement = document.getElementById(`card-${i}`);
+    cardElement.classList.add("dealt");
+  }
+
+  // 停顿一下，让玩家感受发牌完毕的庄重感
+  btn.innerText = "即将揭开命运...";
+  await new Promise(r => setTimeout(r, 800)); 
+
+  // 第二阶段动画：依次翻开卡牌
+  for (let i = 0; i < layout.length; i++) {
+    await new Promise(r => setTimeout(r, 500)); // 有节奏地翻牌
     
     const cardData = currentDeck.pop();
     const isReversed = Math.random() < 0.2;
@@ -192,25 +209,27 @@ async function startDivination() {
       meaning: cardData.meaning
     });
 
-    document.getElementById(`label-${i}`).classList.add("visible");
     document.getElementById(`emoji-${i}`).innerText = cardData.emoji;
     document.getElementById(`name-${i}`).innerText = cardData.name + reversedText;
     
     const cardElement = document.getElementById(`card-${i}`);
+    // 加上翻转类
+    cardElement.classList.add("flipped");
+    
+    // 如果是逆位，再加上倒转效果
     if(isReversed) {
-        cardElement.style.transform = "rotateY(180deg) rotateZ(180deg)";
-    } else {
-        cardElement.style.transform = "rotateY(180deg)";
+        cardElement.classList.add("reversed");
     }
   }
 
-  btn.innerText = "等待命运的启示...";
+  // 牌翻完后，呼叫后端 API
+  btn.innerText = "等待宇宙的启示...";
   document.getElementById("loadingBox").style.display = "block";
   
   await requestAIReading(question, drawnCardsData);
 }
 
-// 6. 向后端 API 发起真实请求
+// 5. 后端通信
 async function requestAIReading(question, cards) {
   const loading = document.getElementById("loadingBox");
   const readingBox = document.getElementById("readingBox");
