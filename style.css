@@ -1,269 +1,121 @@
-/* 1. 基础背景和文字设置 */
+/* 1. 基础重置与字体 */
 body {
   margin: 0;
   background-color: #0b0f19;
-  background-image: radial-gradient(circle at center, #1a2235 0%, #0b0f19 100%);
   color: #e0e6ed;
   font-family: "PingFang SC", "Helvetica Neue", serif;
   display: flex;
   justify-content: center;
   min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* 动态星空画布，垫在最底层 */
+#starfield {
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1;
+  background: radial-gradient(circle at center, #1a2235 0%, #0b0f19 100%);
 }
 
 .container {
-  text-align: center;
-  padding: 40px 20px;
-  width: 100%;
+  text-align: center; padding: 40px 20px; width: 100%; max-width: 900px; position: relative; z-index: 1;
 }
 
-h1 {
-  color: #d4af37;
-  letter-spacing: 3px;
-  text-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
-  font-weight: 300;
-  font-size: 2.2rem;
-  margin-bottom: 10px;
-}
+h1 { color: #d4af37; letter-spacing: 3px; text-shadow: 0 0 15px rgba(212, 175, 55, 0.4); font-weight: 300; font-size: 2.2rem; margin-bottom: 10px; }
+.subtitle { color: #8892b0; margin-bottom: 40px; font-size: 0.95rem; }
 
-.subtitle {
-  color: #8892b0;
-  margin-bottom: 40px;
-  font-size: 0.95rem;
-  letter-spacing: 1px;
-}
-
-/* 2. 控制面板和输入框 (玻璃拟态) */
+/* 2. 控制面板与输入框 */
 .control-panel {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(212, 175, 55, 0.2);
-  padding: 30px;
-  border-radius: 16px;
-  max-width: 650px;
-  margin: 0 auto 40px auto;
-  text-align: left;
-  backdrop-filter: blur(12px);
-  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-  position: relative;
-  z-index: 10;
+  background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(212, 175, 55, 0.2); padding: 30px; border-radius: 16px;
+  max-width: 650px; margin: 0 auto 40px auto; text-align: left; backdrop-filter: blur(12px); box-shadow: 0 10px 30px rgba(0,0,0,0.4);
 }
-
-.input-group {
-  margin-bottom: 22px;
-}
-
-.input-group label {
-  display: block;
-  font-size: 14px;
-  color: #d4af37;
-  margin-bottom: 10px;
-  letter-spacing: 1px;
-}
-
+.input-group { margin-bottom: 22px; }
+.input-group label { display: block; font-size: 14px; color: #d4af37; margin-bottom: 10px; }
 .input-group input, .input-group select {
-  width: 100%;
-  padding: 14px 16px;
-  border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(0, 0, 0, 0.3);
-  color: white;
-  font-size: 15px;
-  box-sizing: border-box;
-  transition: all 0.3s ease;
-  appearance: none;
+  width: 100%; padding: 14px 16px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.3); color: white; font-size: 15px; box-sizing: border-box; transition: all 0.3s; appearance: none;
 }
-
-.input-group input:focus, .input-group select:focus {
-  outline: none;
-  border-color: #d4af37;
-  box-shadow: 0 0 12px rgba(212, 175, 55, 0.2);
-  background: rgba(0, 0, 0, 0.5);
-}
-
-select { cursor: pointer; }
+.input-group input:focus, .input-group select:focus { outline: none; border-color: #d4af37; box-shadow: 0 0 12px rgba(212, 175, 55, 0.2); }
 select option { background: #1a2235; color: white; }
 
 /* 3. 按钮样式 */
-button {
-  background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
-  color: #0b0f19;
-  border: none;
-  padding: 16px 30px;
-  font-size: 1.1rem;
-  font-weight: bold;
-  border-radius: 30px;
-  cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  margin-top: 10px;
-  width: 100%;
-  letter-spacing: 2px;
-  text-transform: uppercase;
+.main-btn, .save-btn {
+  background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%); color: #0b0f19; border: none; padding: 16px 30px; 
+  font-size: 1.1rem; font-weight: bold; border-radius: 30px; cursor: pointer; transition: all 0.3s; margin-top: 10px; letter-spacing: 2px; width: 100%;
+}
+.main-btn:hover, .save-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4); }
+.save-btn { width: auto; display: inline-block; margin-bottom: 40px; }
+.save-btn.restart { background: transparent; border: 2px solid #d4af37; color: #d4af37; }
+.music-btn {
+  position: fixed; top: 20px; right: 20px; background: rgba(0,0,0,0.5); border: 1px solid #d4af37;
+  color: #d4af37; padding: 8px 15px; border-radius: 20px; cursor: pointer; z-index: 100; font-size: 12px; backdrop-filter: blur(5px);
 }
 
-button:hover:not(:disabled) {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(212, 175, 55, 0.4);
+/* 4. 扇形抽牌区 */
+.deck-area { margin: 40px 0; height: 250px; position: relative; }
+.ritual-text { color: #d4af37; font-weight: normal; margin-bottom: 5px; animation: pulseText 2s infinite; }
+.fan-deck { position: relative; width: 100%; height: 200px; display: flex; justify-content: center; }
+.deck-card {
+  position: absolute; width: 80px; height: 140px; bottom: 0; background: radial-gradient(circle at center, #2a1645 0%, #0d061c 100%);
+  border: 1px solid rgba(212, 175, 55, 0.4); border-radius: 6px; transform-origin: bottom center; cursor: pointer; transition: transform 0.3s, margin-bottom 0.3s;
+  box-shadow: -2px 0 5px rgba(0,0,0,0.5);
 }
+.deck-card:hover { transform: translateY(-20px) !important; border-color: #d4af37; z-index: 100 !important; box-shadow: 0 0 15px rgba(212, 175, 55, 0.8); }
+.deck-card.drawn { opacity: 0; pointer-events: none; }
 
-button:active:not(:disabled) { transform: translateY(1px); }
-button:disabled { background: #444; color: #888; cursor: not-allowed; box-shadow: none; transform: none; }
+/* 5. 牌阵展示区与 3D 翻转 */
+.spread-container { display: flex; justify-content: center; gap: 20px; margin-bottom: 40px; flex-wrap: wrap; min-height: 270px; }
+.card-slot { width: 140px; height: 240px; perspective: 1000px; display: flex; flex-direction: column; }
+.slot-label { font-size: 13px; color: #d4af37; margin-bottom: 12px; opacity: 0; transition: opacity 0.5s; letter-spacing: 1px; }
+.slot-label.visible { opacity: 1; }
 
-/* 4. 牌阵展示区布局 */
-.spread-container {
-  display: flex;
-  justify-content: center;
-  gap: 25px;
-  margin-bottom: 50px;
-  flex-wrap: wrap;
-  min-height: 280px;
-  position: relative; /* 为了让发牌动画以此为基准 */
-}
-
-/* 卡牌槽位 */
-.card-slot {
-  width: 155px;
-  height: 270px;
-  perspective: 1000px;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.card-slot .slot-label {
-  font-size: 13px;
-  color: #d4af37;
-  margin-bottom: 12px;
-  text-align: center;
-  opacity: 0;
-  transition: opacity 0.5s;
-  letter-spacing: 1px;
-}
-
-.card-slot .slot-label.visible { opacity: 1; }
-
-/* 5. 卡牌与发牌动画特效 */
 .card {
-  width: 100%;
-  height: 100%;
-  position: relative;
-  transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  transform-style: preserve-3d;
-  cursor: pointer;
-  /* 初始状态：卡牌缩小并堆叠在屏幕中央偏上的位置（模拟在抽牌前） */
-  transform: scale(0.1) translateY(-500px);
-  opacity: 0;
+  width: 100%; height: 100%; position: relative; transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform-style: preserve-3d; opacity: 0; transform: scale(0.1) translateY(-500px);
 }
-
-/* 卡牌从牌堆飞入槽位的动画类 */
-.card.dealt {
-  transform: scale(1) translateY(0);
-  opacity: 1;
-}
-
-.card.flipped {
-  transform: rotateY(180deg);
-}
-/* 处理发牌飞入后，如果是逆位的情况 */
-.card.flipped.reversed {
-  transform: rotateY(180deg) rotateZ(180deg);
-}
+.card.dealt { opacity: 1; transform: scale(1) translateY(0); }
+.card.flipped { transform: rotateY(180deg); }
+.card.flipped.reversed { transform: rotateY(180deg) rotateZ(180deg); }
 
 .card-face {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  backface-visibility: hidden;
-  border-radius: 12px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 12px 25px rgba(0,0,0,0.6);
-  border: 1px solid #d4af37;
+  position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 12px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 10px 20px rgba(0,0,0,0.6); border: 1px solid #d4af37;
 }
+.card-back { background: radial-gradient(circle at center, #2a1645 0%, #0d061c 100%); color: rgba(212, 175, 55, 0.8); font-size: 40px; }
+.card-back::before { content: ''; position: absolute; width: 85%; height: 90%; border: 1px dashed rgba(212, 175, 55, 0.4); border-radius: 8px; }
+.card-front { background: #fdfbf7; color: #333; transform: rotateY(180deg); background-image: radial-gradient(circle at top right, #ffffff 0%, #f4ebd0 100%); }
+.card-front .emoji { font-size: 60px; margin-bottom: 15px; }
+.card-front .name { font-size: 13px; font-weight: 600; border-top: 1px solid #d4af37; border-bottom: 1px solid #d4af37; padding: 6px 0; width: 85%; }
 
-/* 牌背 */
-.card-back {
-  background: radial-gradient(circle at center, #2a1645 0%, #0d061c 100%);
-  color: rgba(212, 175, 55, 0.8);
-  font-size: 50px;
-}
-.card-back::before {
-  content: '';
-  position: absolute;
-  width: 85%;
-  height: 90%;
-  border: 1px dashed rgba(212, 175, 55, 0.4);
-  border-radius: 8px;
-}
+/* 6. AI 解读区域与截图水印（治乱换颜色、排版溢出的终极代码） */
+.loading-box { display: none; color: #d4af37; font-style: italic; margin-bottom: 30px; animation: pulseText 1.5s infinite; font-size: 1.1rem; }
+@keyframes pulseText { 0% { opacity: 0.4; } 50% { opacity: 1; } 100% { opacity: 0.4; } }
 
-/* 牌面 */
-.card-front {
-  background: #fdfbf7;
-  color: #333;
-  transform: rotateY(180deg);
-  background-image: radial-gradient(circle at top right, #ffffff 0%, #f4ebd0 100%);
-}
-.card-front .emoji {
-  font-size: 65px;
-  margin-bottom: 20px;
-  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
-}
-.card-front .name {
-  font-size: 14px;
-  font-weight: 600;
-  border-top: 1px solid #d4af37;
-  border-bottom: 1px solid #d4af37;
-  padding: 8px 0;
-  width: 85%;
-  text-align: center;
-  color: #2c2c2c;
-}
-
-/* 6. AI 解读报告区域 */
-.loading-box {
-  display: none;
-  color: #d4af37;
-  font-style: italic;
-  margin-bottom: 30px;
-  font-size: 1.1rem;
-  animation: pulse 1.5s infinite;
-}
-
-@keyframes pulse {
-  0% { opacity: 0.4; }
-  50% { opacity: 1; }
-  100% { opacity: 0.4; }
-}
-
+.reading-wrapper { position: relative; max-width: 800px; margin: 0 auto; }
 .reading-box {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(212, 175, 55, 0.3);
-  padding: 40px 50px;
-  border-radius: 16px;
-  max-width: 800px;
-  margin: 0 auto 50px auto;
-  display: none;
-  line-height: 1.8;
-  text-align: left;
-  font-size: 1.05rem;
-  box-shadow: 0 15px 40px rgba(0,0,0,0.5);
-  backdrop-filter: blur(12px);
-  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(212, 175, 55, 0.3); padding: 40px; border-radius: 16px;
+  display: none; line-height: 1.8; text-align: left; font-size: 1.1rem; backdrop-filter: blur(15px); color: #e2e8f0;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif !important;
 }
+.reading-box.visible { display: block; animation: fadeIn 1s; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-.reading-box.visible {
-  display: block;
-  animation: fadeIn 1s ease;
+/* 强制重置 AI 返回的任何内置样式，让它只准用我们规定的颜色 */
+.reading-box * { font-family: inherit !important; background-color: transparent !important; color: inherit !important; }
+
+/* 统一控制所有级别标题的颜色（全换成暗金色） */
+.reading-box h1, .reading-box h2, .reading-box h3, .reading-box h4, .reading-box h5 { 
+  color: #d4af37 !important; border-bottom: 1px solid rgba(212, 175, 55, 0.15) !important; 
+  padding-bottom: 10px; margin-top: 30px; font-size: 1.25rem !important; font-weight: normal;
 }
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* 优化 AI 排版的样式 */
-.reading-box h4 { color: #d4af37; border-bottom: 1px solid rgba(212, 175, 55, 0.15); padding-bottom: 12px; margin-top: 35px; font-size: 1.3rem; font-weight: 500; }
-.reading-box h4:first-child { margin-top: 0; }
+.reading-box h1:first-child, .reading-box h2:first-child, .reading-box h3:first-child, .reading-box h4:first-child { margin-top: 0; }
 .reading-box ul { padding-left: 25px; }
 .reading-box li { margin-bottom: 12px; }
-.reading-box strong { color: #fff; font-weight: 600; }
+.reading-box p { margin-bottom: 15px; }
+
+/* 强调文字变白变粗 */
+.reading-box strong, .reading-box b, .reading-box .highlight { color: #ffffff !important; font-weight: bold !important; }
+
+/* 截图时的水印样式 */
+.share-only { display: none; text-align: center; color: #8892b0; font-size: 13px; font-style: italic; }
+#shareHeader { margin-bottom: 20px; font-size: 18px; color: #d4af37; letter-spacing: 2px; }
+#shareFooter { margin-top: 20px; border-top: 1px dashed #444; padding-top: 15px; }

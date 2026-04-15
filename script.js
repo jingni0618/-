@@ -1,6 +1,7 @@
-// 1. 完整 78 张塔罗牌库
+/* =================================================================
+   第一部分：全局变量与初始化
+================================================================= */
 const deck = [
-  // 大阿尔卡那
   { name: "愚者 (The Fool)", emoji: "🚶‍♂️", meaning: "新的开始、自发性、信念的飞跃、天真" },
   { name: "魔术师 (The Magician)", emoji: "🪄", meaning: "创造力、技能、意志力、显化、掌控资源" },
   { name: "女祭司 (The High Priestess)", emoji: "🌙", meaning: "直觉、潜意识、内在声音、神秘" },
@@ -23,128 +24,34 @@ const deck = [
   { name: "太阳 (The Sun)", emoji: "☀️", meaning: "积极、活力、成功、快乐、纯真" },
   { name: "审判 (Judgement)", emoji: "📯", meaning: "重生、内在呼唤、宽恕、了结过去" },
   { name: "世界 (The World)", emoji: "🌍", meaning: "完成、整合、成就、旅行、圆满" },
-
-  // 权杖
   { name: "权杖一 (Ace of Wands)", emoji: "🔥", meaning: "灵感、新机会、成长、潜能迸发" },
   { name: "权杖二 (Two of Wands)", emoji: "🗺️", meaning: "未来规划、决策、走出舒适区" },
-  { name: "权杖三 (Three of Wands)", emoji: "🚢", meaning: "远见、领导力、探索、扩张与合作" },
-  { name: "权杖四 (Four of Wands)", emoji: "🎪", meaning: "庆祝、和谐、家庭、回到避风港" },
-  { name: "权杖五 (Five of Wands)", emoji: "🤼", meaning: "冲突、竞争、分歧、紧张局势" },
-  { name: "权杖六 (Six of Wands)", emoji: "🏇", meaning: "胜利、认可、公众赞赏、自信" },
-  { name: "权杖七 (Seven of Wands)", emoji: "🤺", meaning: "防守、坚持立场、面对挑战" },
-  { name: "权杖八 (Eight of Wands)", emoji: "☄️", meaning: "快速行动、突然的变化、消息传来" },
-  { name: "权杖九 (Nine of Wands)", emoji: "🤕", meaning: "韧性、防备、接近完成时的疲惫" },
-  { name: "权杖十 (Ten of Wands)", emoji: "🪵", meaning: "重担、责任过重、辛劳与压力" },
-  { name: "权杖侍从 (Page of Wands)", emoji: "🏃", meaning: "探索、兴奋、充满活力的新想法" },
-  { name: "权杖骑士 (Knight of Wands)", emoji: "🐎", meaning: "热情、冒险、冲动、充满能量的行动" },
-  { name: "权杖星币 (Queen of Wands)", emoji: "💃", meaning: "勇气、自信、独立、社交与魅力" },
-  { name: "权杖国王 (King of Wands)", emoji: "🤴", meaning: "天生的领导者、远见卓识、创业精神" },
-
-  // 圣杯
   { name: "圣杯一 (Ace of Cups)", emoji: "💧", meaning: "纯粹的爱、新感情、同情心、创造力" },
   { name: "圣杯二 (Two of Cups)", emoji: "🥂", meaning: "统一、伴侣关系、互相吸引、平等结合" },
-  { name: "圣杯三 (Three of Cups)", emoji: "🍻", meaning: "庆祝、友谊、合作、社交聚会" },
-  { name: "圣杯四 (Four of Cups)", emoji: "🧘", meaning: "沉思、冷漠、错失良机、内省" },
-  { name: "圣杯五 (Five of Cups)", emoji: "🥀", meaning: "悲伤、失落、沉溺于过去的遗憾" },
-  { name: "圣杯六 (Six of Cups)", emoji: "🧒", meaning: "回忆、童年、纯真、怀旧与重逢" },
-  { name: "圣杯七 (Seven of Cups)", emoji: "💭", meaning: "幻想、选择困难、白日梦、欲望" },
-  { name: "圣杯八 (Eight of Cups)", emoji: "🚶", meaning: "离开、寻找更深的意义、放弃现有" },
-  { name: "圣杯九 (Nine of Cups)", emoji: "🧞", meaning: "心满意足、愿望实现、物质享受" },
-  { name: "圣杯十 (Ten of Cups)", emoji: "🌈", meaning: "神圣的爱、幸福的家庭、和谐圆满" },
-  { name: "圣杯侍从 (Page of Cups)", emoji: "💌", meaning: "创意、新感情的开始、直觉的萌芽" },
-  { name: "圣杯骑士 (Knight of Cups)", emoji: "🏇", meaning: "浪漫、魅力、想象力、理想主义" },
-  { name: "圣杯王后 (Queen of Cups)", emoji: "🧜‍♀️", meaning: "富有同情心、直觉敏锐、情感的滋养" },
-  { name: "圣杯国王 (King of Cups)", emoji: "🧔", meaning: "情感控制、外交手腕、情绪的平衡" },
-
-  // 宝剑
   { name: "宝剑一 (Ace of Swords)", emoji: "🗡️", meaning: "突破、清晰、锐利的思想、真理" },
   { name: "宝剑二 (Two of Swords)", emoji: "盲", meaning: "僵局、困难的选择、逃避现实" },
-  { name: "宝剑三 (Three of Swords)", emoji: "💔", meaning: "心碎、悲伤、悲痛、痛苦的分离" },
-  { name: "宝剑四 (Four of Swords)", emoji: "🛌", meaning: "休息、恢复、疗愈、从压力中撤退" },
-  { name: "宝剑五 (Five of Swords)", emoji: "⚔️", meaning: "冲突、分歧、不计代价的胜利、敌意" },
-  { name: "宝剑六 (Six of Swords)", emoji: "🛶", meaning: "过渡、离开困境、平复心情、疗愈之旅" },
-  { name: "宝剑七 (Seven of Swords)", emoji: "🥷", meaning: "背叛、欺骗、策略、逃避责任" },
-  { name: "宝剑八 (Eight of Swords)", emoji: "⛓️", meaning: "自我设限、束缚、无力感、受困的思维" },
-  { name: "宝剑九 (Nine of Swords)", emoji: "😨", meaning: "焦虑、噩梦、担忧、内心的恐惧" },
-  { name: "宝剑十 (Ten of Swords)", emoji: "📌", meaning: "痛苦的结局、背叛、低谷、彻底崩溃" },
-  { name: "宝剑侍从 (Page of Swords)", emoji: "🕵️", meaning: "好奇心、机智、警惕、新的沟通方式" },
-  { name: "宝剑骑士 (Knight of Swords)", emoji: "🤺", meaning: "直言不讳、冲动、快速行动、急躁" },
-  { name: "宝剑王后 (Queen of Swords)", emoji: "👩‍⚖️", meaning: "独立、客观、清晰的边界、洞察力" },
-  { name: "宝剑国王 (King of Swords)", emoji: "👨‍⚖️", meaning: "智力、理性、权威、清晰的判断" },
-
-  // 星币
   { name: "星币一 (Ace of Pentacles)", emoji: "🪙", meaning: "新的财务机会、繁荣、物质表现" },
-  { name: "星币二 (Two of Pentacles)", emoji: "🤹", meaning: "平衡、适应能力、时间或资金管理" },
-  { name: "星币三 (Three of Pentacles)", emoji: "🤝", meaning: "团队合作、初步成果、专业的技能" },
-  { name: "星币四 (Four of Pentacles)", emoji: "🏦", meaning: "控制、稳定、保守、占有欲、吝啬" },
-  { name: "星币五 (Five of Pentacles)", emoji: "🏚️", meaning: "财务损失、贫困、孤立无援、艰难时刻" },
-  { name: "星币六 (Six of Pentacles)", emoji: "🤲", meaning: "慈善、分享、施与受、财富的流动" },
-  { name: "星币七 (Seven of Pentacles)", emoji: "🌱", meaning: "长期愿景、耐心等待、投资与评估" },
-  { name: "星币八 (Eight of Pentacles)", emoji: "🔨", meaning: "勤奋、学徒期、精通技能、注重细节" },
-  { name: "星币九 (Nine of Pentacles)", emoji: "🍇", meaning: "自给自足、物质享受、独立与回报" },
-  { name: "星币十 (Ten of Pentacles)", emoji: "🏡", meaning: "财富传承、家庭、长期成功、稳定" },
-  { name: "星币侍从 (Page of Pentacles)", emoji: "🧑‍🎓", meaning: "好学、务实、新技能的开始" },
-  { name: "星币骑士 (Knight of Pentacles)", emoji: "🚜", meaning: "效率、例行公事、可靠、脚踏实地" },
-  { name: "星币王后 (Queen of Pentacles)", emoji: "🤱", meaning: "务实、舒适、提供滋养、财务安全" },
-  { name: "星币国王 (King of Pentacles)", emoji: "🏦", meaning: "财富创造、商业领袖、富足与稳定" }
+  { name: "星币二 (Two of Pentacles)", emoji: "🤹", meaning: "平衡、适应能力、时间或资金管理" }
 ];
 
-// 2. 牌阵配置库
 const spreadsOptions = {
-  single: [
-    { label: "核心指引" }
-  ],
-  yesno: [
-    { label: "支持的力量" },
-    { label: "反对的力量" },
-    { label: "最终的答案" }
-  ],
-  time: [
-    { label: "过去的因果" },
-    { label: "当下的现状" },
-    { label: "未来的趋势" }
-  ],
-  relationship: [
-    { label: "你的现状" },
-    { label: "对方的状态" },
-    { label: "当前的阻碍" },
-    { label: "未来的走向" }
-  ],
-  cross: [
-    { label: "当下的核心问题" },
-    { label: "面临的阻碍" },
-    { label: "潜在的目标/理想" },
-    { label: "深层的潜意识" },
-    { label: "最终的可能结局" }
-  ]
+  single: [{ label: "核心指引" }],
+  yesno: [{ label: "支持的力量" }, { label: "反对的力量" }, { label: "最终的答案" }],
+  time: [{ label: "过去的因果" }, { label: "当下的现状" }, { label: "未来的趋势" }],
+  relationship: [{ label: "你的现状" }, { label: "对方的状态" }, { label: "当前的阻碍" }, { label: "未来的走向" }],
+  cross: [{ label: "当下的核心问题" }, { label: "面临的阻碍" }, { label: "潜在的目标" }, { label: "深层的潜意识" }, { label: "最终的可能结局" }]
 };
 
-// 3. 页面加载/切换阵法时，重新绘制初始的牌面
-function renderSpread() {
-  const spreadType = document.getElementById("spreadSelect").value;
-  const layout = spreadsOptions[spreadType];
-  const container = document.getElementById("spreadContainer");
-  
-  container.innerHTML = ""; 
-  
-  layout.forEach((pos, index) => {
-    const slotHTML = `
-      <div class="card-slot">
-        <div class="slot-label" id="label-${index}">${pos.label}</div>
-        <div class="card" id="card-${index}">
-          <div class="card-face card-back">✧</div>
-          <div class="card-face card-front">
-            <div class="emoji" id="emoji-${index}">❓</div>
-            <div class="name" id="name-${index}">等待</div>
-          </div>
-        </div>
-      </div>
-    `;
-    container.innerHTML += slotHTML;
-  });
-}
+let currentSpreadLayout = []; 
+let requiredCardsCount = 0;   
+let cardsDrawn = 0;           
+let drawnCardsData = [];      
+let shuffledDeck = [];        
 
-window.onload = renderSpread;
+window.onload = function() {
+  initStarfield(); // 启动星空背景
+  renderSpread();  // 渲染空牌阵
+};
 
 function shuffle(array) {
   let currentIndex = array.length, randomIndex;
@@ -156,126 +63,277 @@ function shuffle(array) {
   return array;
 }
 
-// 4. 核心：带有发牌特效的主流程
-async function startDivination() {
-  const question = document.getElementById("questionInput").value.trim();
+// 动态渲染空牌阵
+function renderSpread() {
   const spreadType = document.getElementById("spreadSelect").value;
-  const layout = spreadsOptions[spreadType];
-  const btn = document.getElementById("drawBtn");
-  const readingBox = document.getElementById("readingBox");
-
-  if (!question) {
-    alert("请先输入你心中的疑惑。");
-    return;
+  currentSpreadLayout = spreadsOptions[spreadType];
+  requiredCardsCount = currentSpreadLayout.length;
+  if(document.getElementById("cardsLeft")) {
+      document.getElementById("cardsLeft").innerText = requiredCardsCount;
   }
 
-  // 1. 初始化界面
-  readingBox.classList.remove("visible");
-  readingBox.innerHTML = "";
-  btn.disabled = true;
-  btn.innerText = "正在向星空请牌...";
+  const container = document.getElementById("spreadContainer");
+  container.innerHTML = ""; 
+  currentSpreadLayout.forEach((pos, index) => {
+    container.innerHTML += `
+      <div class="card-slot">
+        <div class="slot-label" id="label-${index}">${pos.label}</div>
+        <div class="card" id="card-${index}">
+          <div class="card-face card-back">✧</div>
+          <div class="card-face card-front">
+            <div class="emoji" id="emoji-${index}">❓</div>
+            <div class="name" id="name-${index}">等待抽取</div>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+}
 
-  // 洗牌
-  let currentDeck = shuffle([...deck]);
-  let drawnCardsData = [];
-  
-  // 第一阶段动画：把所有隐形的牌“发”到各自的位置上 (从天而降)
-  for (let i = 0; i < layout.length; i++) {
-    await new Promise(r => setTimeout(r, 200)); // 很快地依次飞出
-    
-    // 显示标签
-    document.getElementById(`label-${i}`).classList.add("visible");
-    
-    // 让牌飞下来（添加 dealt class 去掉缩小和透明度）
-    const cardElement = document.getElementById(`card-${i}`);
-    cardElement.classList.add("dealt");
+/* =================================================================
+   第二部分：音效与星空特效 (点子 1 & 2)
+================================================================= */
+let isMusicPlaying = false;
+function toggleMusic() {
+  const bgMusic = document.getElementById("bgMusic");
+  const btn = document.getElementById("musicToggle");
+  if (isMusicPlaying) {
+    bgMusic.pause();
+    btn.innerText = "🎵 开启灵性环境音";
+  } else {
+    bgMusic.volume = 0.4;
+    bgMusic.play();
+    btn.innerText = "🔇 关闭环境音";
+  }
+  isMusicPlaying = !isMusicPlaying;
+}
+
+function playSound(id) {
+  const audio = document.getElementById(id);
+  audio.currentTime = 0;
+  audio.volume = 0.7;
+  audio.play().catch(e => {}); 
+}
+
+// Canvas 星空粒子动画
+function initStarfield() {
+  const canvas = document.getElementById('starfield');
+  const ctx = canvas.getContext('2d');
+  let width, height;
+  let stars = [];
+
+  function resize() {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+    initStars();
   }
 
-  // 停顿一下，让玩家感受发牌完毕的庄重感
-  btn.innerText = "即将揭开命运...";
-  await new Promise(r => setTimeout(r, 800)); 
-
-  // 第二阶段动画：依次翻开卡牌
-  for (let i = 0; i < layout.length; i++) {
-    await new Promise(r => setTimeout(r, 500)); // 有节奏地翻牌
-    
-    const cardData = currentDeck.pop();
-    const isReversed = Math.random() < 0.2;
-    const reversedText = isReversed ? " (逆位)" : " (正位)";
-
-    drawnCardsData.push({
-      position: layout[i].label,
-      cardName: cardData.name + reversedText,
-      meaning: cardData.meaning
-    });
-
-    document.getElementById(`emoji-${i}`).innerText = cardData.emoji;
-    document.getElementById(`name-${i}`).innerText = cardData.name + reversedText;
-    
-    const cardElement = document.getElementById(`card-${i}`);
-    // 加上翻转类
-    cardElement.classList.add("flipped");
-    
-    // 如果是逆位，再加上倒转效果
-    if(isReversed) {
-        cardElement.classList.add("reversed");
+  function initStars() {
+    stars = [];
+    const numStars = window.innerWidth < 768 ? 100 : 200;
+    for (let i = 0; i < numStars; i++) {
+      stars.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        radius: Math.random() * 1.5,
+        vx: Math.floor(Math.random() * 50) - 25,
+        vy: Math.floor(Math.random() * 50) - 25,
+        opacity: Math.random()
+      });
     }
   }
 
-  // 牌翻完后，呼叫后端 API
-  btn.innerText = "等待宇宙的启示...";
-  document.getElementById("loadingBox").style.display = "block";
+  function draw() {
+    ctx.clearRect(0, 0, width, height);
+    for (let star of stars) {
+      star.x += star.vx / 100;
+      star.y += star.vy / 100;
+      if (star.x < 0 || star.x > width) star.vx = -star.vx;
+      if (star.y < 0 || star.y > height) star.vy = -star.vy;
+      star.opacity += (Math.random() - 0.5) * 0.1;
+      star.opacity = Math.max(0.1, Math.min(1, star.opacity));
+
+      ctx.beginPath();
+      ctx.arc(star.x, star.y, star.radius, 0, 2 * Math.PI);
+      ctx.fillStyle = `rgba(212, 175, 55, ${star.opacity})`;
+      ctx.fill();
+    }
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+  draw();
+}
+
+/* =================================================================
+   第三部分：仪式级交互抽牌 (点子 4)
+================================================================= */
+
+function startRitual() {
+  const question = document.getElementById("questionInput").value.trim();
+  if (!question) {
+    alert("星空需要知道你的疑惑，请在上方输入问题。");
+    return;
+  }
+
+  document.getElementById("controlPanel").style.display = "none";
+  const deckArea = document.getElementById("deckArea");
+  deckArea.style.display = "block";
   
+  cardsDrawn = 0;
+  drawnCardsData = [];
+  shuffledDeck = shuffle([...deck]);
+
+  const fanDeck = document.getElementById("fanDeck");
+  fanDeck.innerHTML = "";
+  const totalCards = 50; 
+  const angleStep = 120 / totalCards;
+
+  for (let i = 0; i < totalCards; i++) {
+    const angle = -60 + (i * angleStep);
+    const cardEl = document.createElement("div");
+    cardEl.className = "deck-card";
+    cardEl.style.transform = `rotate(${angle}deg) translateY(-20px)`;
+    cardEl.style.zIndex = i;
+    
+    cardEl.onclick = function() {
+      if (cardsDrawn < requiredCardsCount && !this.classList.contains("drawn")) {
+        userDrawsOneCard(this);
+      }
+    };
+    fanDeck.appendChild(cardEl);
+  }
+}
+
+// 用户手动点击牌堆里的一张牌
+function userDrawsOneCard(clickedCardElement) {
+  playSound("drawSound"); // 播放抽牌音效
+  clickedCardElement.classList.add("drawn");
+  
+  const cardData = shuffledDeck.pop();
+  const isReversed = Math.random() < 0.2; 
+  const reversedText = isReversed ? " (逆位)" : " (正位)";
+
+  drawnCardsData.push({
+    position: currentSpreadLayout[cardsDrawn].label,
+    cardName: cardData.name + reversedText,
+    meaning: cardData.meaning,
+    isReversed: isReversed,
+    emoji: cardData.emoji
+  });
+
+  const targetSlotCard = document.getElementById(`card-${cardsDrawn}`);
+  targetSlotCard.classList.add("dealt");
+  document.getElementById(`label-${cardsDrawn}`).classList.add("visible");
+
+  cardsDrawn++;
+  document.getElementById("cardsLeft").innerText = (requiredCardsCount - cardsDrawn);
+
+  if (cardsDrawn === requiredCardsCount) {
+    setTimeout(revealCardsAndRead, 1000); 
+  }
+}
+
+/* =================================================================
+   第四部分：翻牌与请求大模型
+================================================================= */
+async function revealCardsAndRead() {
+  document.getElementById("deckArea").style.display = "none"; 
+
+  // 依次翻开阵位上的牌
+  for (let i = 0; i < requiredCardsCount; i++) {
+    await new Promise(r => setTimeout(r, 600)); 
+    playSound("revealSound"); // 叮的一声
+    
+    const data = drawnCardsData[i];
+    document.getElementById(`emoji-${i}`).innerText = data.emoji;
+    document.getElementById(`name-${i}`).innerText = data.cardName;
+    
+    const cardElement = document.getElementById(`card-${i}`);
+    cardElement.classList.add("flipped");
+    if(data.isReversed) cardElement.classList.add("reversed");
+  }
+
+  // 翻牌完毕，请求 AI
+  const question = document.getElementById("questionInput").value.trim();
+  document.getElementById("loadingBox").style.display = "block";
   await requestAIReading(question, drawnCardsData);
 }
 
-// 5. 后端通信
+// 发起网络请求
 async function requestAIReading(question, cards) {
   const loading = document.getElementById("loadingBox");
   const readingBox = document.getElementById("readingBox");
-  const btn = document.getElementById("drawBtn");
 
   try {
     const response = await fetch("/api/tarot", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        question: question,
-        cards: cards
-      })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: question, cards: cards })
     });
 
     if (!response.ok) {
       const errorText = await response.text(); 
       let errorMessage = "未知网络错误";
-      try {
-          const errorJson = JSON.parse(errorText);
-          errorMessage = errorJson.error || JSON.stringify(errorJson);
-      } catch (e) {
-          errorMessage = errorText;
-      }
-      throw new Error(`请求失败: ${errorMessage}`);
+      try { errorMessage = JSON.parse(errorText).error || errorText; } catch(e){}
+      throw new Error(errorMessage);
     }
 
     const data = await response.json();
     readingBox.innerHTML = data.reading;
 
   } catch (error) {
-    console.error("Fetch 捕获到错误:", error);
-    readingBox.innerHTML = `
-      <div style="background: rgba(255,107,107,0.1); border: 1px solid #ff6b6b; padding: 20px; border-radius: 8px;">
-        <h4 style="color: #ff6b6b; margin-top: 0;">🔮 星空信号受到干扰</h4>
-        <p style="color: #ffcccc; font-family: monospace; font-size: 14px;">${error.message}</p>
-      </div>`;
+    readingBox.innerHTML = `<div style="padding: 20px; border: 1px solid #ff6b6b; color:#ffcccc;">🔮 信号干扰: ${error.message}</div>`;
   } finally {
     loading.style.display = "none";
     readingBox.classList.add("visible");
     readingBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
     
-    btn.innerText = "重新占卜";
-    btn.disabled = false;
-    btn.onclick = () => { window.location.reload(); };
+    // 显示截图分享按钮和重新占卜按钮
+    document.getElementById("saveBtn").style.display = "inline-block";
+    document.getElementById("restartBtn").style.display = "inline-block";
   }
+}
+
+/* =================================================================
+   第五部分：生成截图分享 (点子 3)
+================================================================= */
+function saveAsImage() {
+  const captureArea = document.getElementById("captureArea");
+  const shareHeader = document.getElementById("shareHeader");
+  const shareFooter = document.getElementById("shareFooter");
+  const btn = document.getElementById("saveBtn");
+  
+  // 截图前准备：显示水印，临时改底板颜色（防止因为毛玻璃透明而截图变黑）
+  shareHeader.style.display = "block";
+  shareFooter.style.display = "block";
+  btn.innerText = "正在生成命运卡片...";
+  btn.disabled = true;
+  
+  const originalBackground = captureArea.style.background;
+  captureArea.style.background = "#0b0f19"; 
+  captureArea.style.padding = "20px";
+  captureArea.style.borderRadius = "20px";
+
+  html2canvas(captureArea, {
+    scale: 2, 
+    useCORS: true,
+    backgroundColor: "#0b0f19"
+  }).then(canvas => {
+    // 恢复原状
+    shareHeader.style.display = "none";
+    shareFooter.style.display = "none";
+    captureArea.style.background = originalBackground;
+    btn.innerText = "📸 保存专属命运卡片";
+    btn.disabled = false;
+
+    // 触发下载
+    const link = document.createElement("a");
+    link.download = "我的塔罗启示.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  });
 }
