@@ -13,20 +13,21 @@ export default async function handler(req, res) {
   const { question, cards } = req.body || {};
   if (!question || !cards || !Array.isArray(cards)) return res.status(400).json({ error: '前端数据格式不正确' });
 
-  // 🚨 核心改动点：彻底改写大模型的人设！要求大白话、直接、简短！
-  const promptContext = `你是一位像知心大姐姐一样的现代塔罗牌占卜师。
-你的任务是：根据访客抽到的牌，用最接地气的“大白话”为TA解答生活中的困惑。
+  // 🚨 核心改动点：让 AI 变成一个资深的心理咨询师，给出极度丰富、温暖的千字长文解答。
+  const promptContext = `你是一位拥有极高同理心的心理咨询师和塔罗牌解读大师。
+你的任务是：根据访客抽到的牌，为TA提供一份深度、丰富、极具情感共鸣的长篇解读。
 
 【访客的问题】：${question}
 【抽到的牌阵】：
 ${cards.map(c => `- ${c.position}: 抽到了 ${c.cardName}。核心含义：${c.meaning}`).join('\n')}
 
 【答题铁律（必须遵守）】：
-1. 绝对不要用深奥的玄学词汇（如“灵性显化”、“星体能量”、“因果业力”等），像朋友聊天一样说话。
-2. 结合TA提出的具体问题，把这几张牌连起来讲一个简单易懂的道理。
-3. 结尾必须给出一个非常具体、明天就能照着做的“行动建议”。
-4. 语言要凝练，越精简越好（减少生成时间）。
-5. 直接输出带有基础 HTML 标签（如 <p>, <strong>, <ul>, <h4>）的排版，【绝对禁止】在回答中包含 <style> 标签和颜色代码，【绝对禁止】输出 \`\`\`html 代码块！`;
+1. 你的语气必须极度温柔、充满智慧，像一个懂TA的知心朋友，去共情TA在问题里隐藏的焦虑或期待。
+2. 篇幅要长，内容要丰满（总字数在 1000 - 1500 字左右）。
+3. 详细拆解这几张牌在TA的具体生活场景中意味着什么，彼此之间是如何影响的。
+4. 提供的情感建议和行动指南必须贴近现代人的生活，具有极强的可操作性。
+5. 必须包含三个明显的部分：🔮 【命运的整体启示】、🌟 【牌面深度故事解析】、✨ 【心灵处方与行动建议】。
+6. 直接输出带有基础 HTML 标签（如 <h4>, <p>, <ul>, <strong>）的精美排版。绝对禁止使用 markdown 的 \`\`\`html 代码块！绝对禁止在回答中输出 <style> 或颜色代码。`;
 
   try {
     const response = await fetch("https://api.deepseek.com/chat/completions", {
@@ -35,13 +36,13 @@ ${cards.map(c => `- ${c.position}: 抽到了 ${c.cardName}。核心含义：${c.
       body: JSON.stringify({
         model: "deepseek-chat", 
         messages: [
-          { "role": "system", "content": "你是一个直白、接地气、只输出干净HTML排版的占卜助手。" },
+          { "role": "system", "content": "你是一个极具同理心、只输出干净HTML排版的占卜助手。" },
           { "role": "user", "content": promptContext }
         ],
-        // 把温度调低一点，让它少发散、少说废话，速度会更快
-        temperature: 0.6,
-        // 限制最大回答长度，防止它啰嗦半天导致等待过长
-        max_tokens: 600
+        // 把温度调高一点，让它写出来的文章更感性、更发散、更丰富
+        temperature: 0.85,
+        // 解除短字数限制，允许它写长文
+        max_tokens: 2000
       })
     });
 
