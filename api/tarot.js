@@ -27,22 +27,22 @@ ${cards.map(c => `- [${c.position}]: ${c.cardName}。基础含义：${c.meaning}
 要求：使用 HTML 标签排版（如 <h4>, <p>, <ul>），直接输出纯 HTML。`;
 
   try {
-    // 后端去请求 OpenAI
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+   
+          { "role": "system", "content": "你是一个塔罗占卜助手，请直接输出纯 HTML 排版文本。" },
+          { "role": "user", "content": promptContext }
+        ],
+        temperature: 0.7
+      })
+    });// 后端去请求 DeepSeek
+    const response = await fetch("https://api.deepseek.com/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: "gpt-3.5-turbo",
+        model: "deepseek-chat",
         messages: [
-          { "role": "system", "content": "你是一个塔罗占卜助手，请直接输出纯 HTML 排版文本。" },
-          { "role": "user", "content": promptContext }
-        ],
-        temperature: 0.7
-      })
-    });
 
     const data = await response.json();
     
