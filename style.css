@@ -1,0 +1,221 @@
+/* 基础背景和文字设置 */
+body {
+  margin: 0;
+  background-color: #0b0f19;
+  background-image: radial-gradient(circle at center, #1a2235 0%, #0b0f19 100%);
+  color: #e0e6ed;
+  font-family: "PingFang SC", sans-serif;
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.container {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+h1 {
+  color: #d4af37;
+  letter-spacing: 2px;
+  text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
+}
+
+.subtitle {
+  color: #8892b0;
+  margin-bottom: 40px;
+}
+
+/* 卡牌的 3D 翻转效果 */
+.card-slot {
+  width: 200px;
+  height: 340px;
+  perspective: 1000px; /* 制造 3D 空间感 */
+  margin: 0 auto 30px auto;
+  cursor: pointer;
+}
+
+.card {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform-style: preserve-3d; /* 保持子元素的 3D 位置 */
+}
+
+/* 当卡牌被加上 'flipped' 这个词时，它就会翻转 180 度 */
+.card.flipped {
+  transform: rotateY(180deg);
+}
+
+.card-face {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden; /* 翻过去后背面隐藏 */
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+  border: 2px solid #d4af37;
+}
+
+.card-back {
+  background: repeating-linear-gradient(45deg, #2a0845, #2a0845 10px, #6441A5 10px, #6441A5 20px);
+  color: #d4af37;
+  font-size: 60px;
+}
+
+.card-front {
+  background: #fdfbf7;
+  color: #333;
+  transform: rotateY(180deg); /* 正面默认是反过来的，这样翻转 180 度时才会正过来 */
+}
+
+.card-front .emoji {
+  font-size: 70px;
+  margin-bottom: 15px;
+}
+
+.card-front .name {
+  font-size: 18px;
+  font-weight: bold;
+  border-top: 1px solid #d4af37;
+  border-bottom: 1px solid #d4af37;
+  padding: 8px 0;
+  width: 80%;
+}
+
+/* 按钮样式 */
+button {
+  background: linear-gradient(135deg, #d4af37 0%, #aa8529 100%);
+  color: #0b0f19;
+  border: none;
+  padding: 12px 30px;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: transform 0.2s;
+  margin-bottom: 30px;
+}
+
+button:hover {
+  transform: scale(1.05); /* 鼠标放上去稍微变大 */
+}
+
+/* 解读文字的盒子 */
+.reading-box {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  padding: 20px;
+  border-radius: 10px;
+  max-width: 400px;
+  margin: 0 auto;
+  display: none; /* 默认隐藏 */
+  line-height: 1.6;
+}
+
+.reading-box.visible {
+  display: block; /* 加上 visible 就会显示出来 */
+}
+/* 追加的样式：控制面板和输入框 */
+.control-panel {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  padding: 20px;
+  border-radius: 12px;
+  max-width: 600px;
+  margin: 0 auto 30px auto;
+  text-align: left;
+}
+
+.input-group {
+  margin-bottom: 15px;
+}
+
+.input-group label {
+  display: block;
+  font-size: 14px;
+  color: #a8b2d1;
+  margin-bottom: 8px;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.3);
+  color: white;
+  box-sizing: border-box; /* 让宽度包含 padding，防止撑破盒子 */
+}
+
+.input-group input:focus {
+  outline: none;
+  border-color: #d4af37;
+}
+
+/* 追加的样式：让 4 张牌横向排列 */
+.spread-container {
+  display: flex;
+  justify-content: center;
+  gap: 15px; /* 卡牌之间的间距 */
+  margin-bottom: 40px;
+  flex-wrap: wrap; /* 如果屏幕太窄，自动换行 */
+}
+
+/* 稍微缩小单张牌的尺寸，以便能放下 4 张 */
+.card-slot {
+  width: 140px;
+  height: 240px;
+  margin: 0;
+}
+
+.card-slot .slot-label {
+  font-size: 12px;
+  color: #8892b0;
+  margin-bottom: 8px;
+  text-align: center;
+  opacity: 0; /* 默认隐藏，翻牌时再显示 */
+  transition: opacity 0.5s;
+}
+
+.card-slot .slot-label.visible {
+  opacity: 1;
+}
+
+.card-front .emoji {
+  font-size: 50px; /* 稍微调小 emoji */
+}
+
+.card-front .name {
+  font-size: 14px; /* 稍微调小字体 */
+}
+
+.loading-box {
+  display: none;
+  color: #d4af37;
+  font-style: italic;
+  margin-bottom: 20px;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
+}
+
+.reading-box {
+  max-width: 800px;
+  text-align: left;
+}
+
+.reading-box h4 {
+  color: #d4af37;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+  padding-bottom: 10px;
+}
