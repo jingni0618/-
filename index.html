@@ -8,23 +8,33 @@
 <body>
 
   <div class="container">
-    <h1>✨ 命运的四牌阵</h1>
-    <p class="subtitle">洞见过去、现在、对方与未来</p>
+    <h1>✨ 命运的星盘</h1>
+    <p class="subtitle">倾听宇宙的回音，洞见灵魂的轨迹</p>
 
-    <!-- 控制面板：纯净的输入框 -->
+    <!-- 控制面板：增加牌阵选择 -->
     <div class="control-panel">
       <div class="input-group">
         <label>你心中的疑惑是什么？</label>
-        <!-- 去掉了 placeholder 占位符提示 -->
-        <input type="text" id="questionInput">
+        <input type="text" id="questionInput" placeholder="越具体，星空的启示越清晰...">
       </div>
-      <button id="drawBtn" onclick="startDivination()">点击抽取四张牌</button>
+      
+      <div class="input-group">
+        <label>请选择你要使用的牌阵：</label>
+        <!-- 下拉菜单，加入了 yesno 选项 -->
+        <select id="spreadSelect" onchange="renderSpread()" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(0, 0, 0, 0.3); color: white; margin-bottom: 10px;">
+          <option value="single">单牌神谕 (1张：每日指引/核心启示)</option>
+          <option value="yesno">是非决断阵 (3张：支持、反对、最终答案)</option>
+          <option value="time">时间之流 (3张：过去、现在、未来)</option>
+          <option value="relationship" selected>情感/关系阵 (4张：你、对方、阻碍、未来)</option>
+          <option value="cross">灵感十字阵 (5张：现状、阻碍、目标、潜意识、未来)</option>
+        </select>
+      </div>
+
+      <button id="drawBtn" onclick="startDivination()">点击开始洗牌与抽取</button>
     </div>
 
     <!-- 牌阵展示区 -->
-    <div class="spread-container" id="spreadContainer">
-      <!-- 这里的 4 张牌，我们稍后会用 JavaScript 自动生成出来 -->
-    </div>
+    <div class="spread-container" id="spreadContainer"></div>
 
     <!-- 加载动画和解读结果区域 -->
     <div id="loadingBox" class="loading-box">🌌 宇宙磁场连接中，AI 占星师正在解读...</div>
