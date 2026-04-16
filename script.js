@@ -78,6 +78,12 @@ function checkVipAndStart(requireQuestion = true) {
   } else { showEnergyEffect(); }
 }
 
+function quickDrawSingleCard() {
+  document.getElementById("spreadSelect").value = "single";
+  renderSpread();
+  showEnergyEffect();
+}
+
 function closeVipModal() { document.getElementById("vipModal").style.display = "none"; paymentPending = false;}
 function pcPayFlow() { const btn = document.getElementById("pcPayBtn"); btn.innerText = "🔄 核实中..."; btn.disabled = true; setTimeout(() => { closeVipModal(); showEnergyEffect(true); }, 3500); }
 function mobilePayFlow() {
