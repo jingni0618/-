@@ -69,9 +69,9 @@ function renderSpread() {
   });
 }
 
-function checkVipAndStart() {
+function checkVipAndStart(requireQuestion = true) {
   const q = document.getElementById("questionInput").value.trim();
-  if (!q) { alert("星空需要知道你的疑惑..."); return; }
+  if (requireQuestion && !q) { alert("星空需要知道你的疑惑..."); return; }
   if (requiredCardsCount > 3) {
     document.getElementById("vipModal").style.display = "flex";
     if (isMobile) { document.getElementById("mobilePayBtn").style.display = "block"; document.getElementById("pcPayBtn").style.display = "none"; } else { document.getElementById("mobilePayBtn").style.display = "none"; document.getElementById("pcPayBtn").style.display = "block"; }
