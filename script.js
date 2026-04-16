@@ -67,13 +67,14 @@ function renderHistory() {
   const list = document.getElementById("historyList");
   if (!aside || !card || !list) return;
   list.innerHTML = "";
-  if (historyRecords.length === 0) {
-    card.style.display = "none";
-    aside.style.display = "none";
-    return;
-  }
   aside.style.display = "flex";
   card.style.display = "block";
+  if (historyRecords.length === 0) {
+    const item = document.createElement("div"); item.className = "history-item";
+    item.textContent = "暂无记录，开始你的第一场命运占卜。";
+    list.appendChild(item);
+    return;
+  }
   historyRecords.forEach(r => {
     const item = document.createElement("div"); item.className = "history-item";
     const title = document.createElement("div"); title.textContent = `${r.mode} · ${r.spread} · ${r.date}`;
@@ -98,16 +99,6 @@ function shuffle(array) { let cur = array.length, rnd; while (cur !== 0) { rnd =
 function forcePlayMusic() { if (!isMusicPlaying) { const bgMusic = document.getElementById("bgMusic"); bgMusic.volume = 0.4; let p = bgMusic.play(); if (p !== undefined) { p.then(_ => { isMusicPlaying = true; document.getElementById("musicToggle").innerText = "🔇 静音"; }).catch(e => {}); } } }
 function playSound(id) { const audio = document.getElementById(id); audio.currentTime = 0; audio.volume = 0.4; audio.play().catch(e => {}); }
 
-function calculateSoulCard() {
-  const input = document.getElementById("birthInput").value.trim();
-  if(!/^\d{8}$/.test(input)) { alert("请输入连续8位数字，如 19950821"); return; }
-  let sum = 0; for(let char of input) sum += parseInt(char);
-  while(sum > 22) { let temp = 0; for(let char of sum.toString()) temp += parseInt(char); sum = temp; }
-  if(sum === 22) sum = 0; userSoulCard = deck[sum];
-  const resBox = document.getElementById("soulCardResult");
-  resBox.innerHTML = `🔮 灵魂本命牌：<strong>${userSoulCard.name}</strong><br><span style="font-size:12px; color:#8e8579;">大师将在解盘时融入你的灵魂底色。</span>`;
-  resBox.style.display = "block";
-}
 
 /* 核心修复：渲染空卡牌，默认先隐藏（display:none），冥想结束后才出现 */
 function renderSpread() {
@@ -314,7 +305,11 @@ async function startDailyDraw() {
   } catch(e) { document.getElementById("dailyQuote").innerText = "“跟随内心的指引，今天也是充满奇迹的一天。”"; }
   
   const backBtn = document.createElement("button"); backBtn.className = "save-btn restart"; backBtn.innerText = "返回星盘"; backBtn.style.display = "block"; backBtn.style.margin = "30px auto";
-  backBtn.onclick = () => window.location.reload();
+  backBtn.onclick = () => {
+    document.getElementById("dailyCardArea").style.display = "none";
+    document.getElementById("uiElements").style.display = "block";
+    updateStatus("回到星盘界面，继续你的占卜旅程。");
+  };
   if(!document.getElementById("backBtnId")) { backBtn.id = "backBtnId"; document.getElementById("dailyCardArea").appendChild(backBtn); }
 }
 
