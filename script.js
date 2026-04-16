@@ -62,13 +62,10 @@ function addHistoryRecord(record) {
   historyRecords.unshift(record); historyRecords = historyRecords.slice(0, 6); saveHistory(); renderHistory();
 }
 function renderHistory() {
-  const aside = document.querySelector(".aside-panel");
   const card = document.getElementById("historyCardArea");
   const list = document.getElementById("historyList");
-  if (!aside || !card || !list) return;
+  if (!card || !list) return;
   list.innerHTML = "";
-  aside.style.display = "flex";
-  card.style.display = "block";
   if (historyRecords.length === 0) {
     const item = document.createElement("div"); item.className = "history-item";
     item.textContent = "暂无记录，开始你的第一场命运占卜。";
@@ -83,6 +80,27 @@ function renderHistory() {
     item.appendChild(detail);
     list.appendChild(item);
   });
+}
+
+function showHistoryPanel() {
+  const aside = document.querySelector(".aside-panel");
+  if (!aside) return;
+  document.getElementById("uiElements").style.display = "none";
+  document.getElementById("dailyCardArea").style.display = "none";
+  document.getElementById("historyCardArea").style.display = "block";
+  aside.style.display = "flex";
+  renderHistory();
+  updateStatus("占卜记录已打开，查看你的历史占卜。");
+}
+
+function closeHistoryPanel() {
+  const aside = document.querySelector(".aside-panel");
+  if (!aside) return;
+  document.getElementById("historyCardArea").style.display = "none";
+  document.getElementById("dailyCardArea").style.display = "none";
+  aside.style.display = "none";
+  document.getElementById("uiElements").style.display = "block";
+  updateStatus("回到星盘界面，继续你的占卜旅程。");
 }
 function clearHistory() { historyRecords = []; saveHistory(); renderHistory(); updateStatus("记录已清空，重新开始你的占卜旅程。"); }
 
@@ -293,6 +311,7 @@ async function startDailyDraw() {
   const aside = document.querySelector(".aside-panel");
   if (aside) aside.style.display = "flex";
   document.getElementById("uiElements").style.display = "none";
+  document.getElementById("historyCardArea").style.display = "none";
   document.getElementById("dailyCardArea").style.display = "block";
   const today = new Date(); const dateCN = `${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日`; document.getElementById("dailyDate").innerText = dateCN;
   const randomMajor = deck[Math.floor(Math.random() * 22)];

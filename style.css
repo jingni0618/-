@@ -69,7 +69,7 @@ h1, h2, h3, h4, h5, h6 { font-family: "Georgia", "Times New Roman", serif; }
   align-items: start;
 }
 .aside-panel {
-  display: flex;
+  display: none;
   position: static;
   width: 100%;
   max-width: 360px;
@@ -97,7 +97,7 @@ h1, h2, h3, h4, h5, h6 { font-family: "Georgia", "Times New Roman", serif; }
   .choice-card { padding: 26px 24px; }
   .container { padding: 28px 22px 24px; }
   .aside-panel { position: static; width: 100%; align-items: center; margin: 0 auto 18px; }
-  .aside-panel .daily-card-area, .aside-panel .soul-calc-box { max-width: 100%; }
+  .aside-panel .daily-card-area, .aside-panel .history-card { max-width: 100%; }
 }
 .input-group { margin-bottom: 20px; }
 .input-group label { display: block; font-size: 14px; color: #f3e0ba; margin-bottom: 10px; font-family: "PingFang SC", sans-serif; letter-spacing: 0.8px; line-height: 1.7; }
