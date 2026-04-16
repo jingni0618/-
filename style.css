@@ -1,23 +1,27 @@
-/* 1. 基础重置与暗金配色 */
+/* 基础与古典质感 */
 body { margin: 0; background-color: #0a0a0c; color: #d8c8b8; font-family: "Georgia", "Times New Roman", "PingFang SC", serif; display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
 #starfield { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -2; background: radial-gradient(circle at center, #1b1725 0%, #0a0a0c 100%); }
-.night-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0,0,0,0.7); z-index: -1; opacity: 0; pointer-events: none; transition: opacity 2s ease; }
+.night-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0,0,0,0.65); z-index: -1; opacity: 0; pointer-events: none; transition: opacity 2s ease; }
 .night-mode .night-overlay { opacity: 1; }
 
 /* 开场与退场 */
 .intro-screen { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #0a0a0c; z-index: 2000; display: flex; align-items: center; justify-content: center; transition: opacity 1.5s ease; }
 .intro-text { color: #c5a059; font-size: 1.2rem; letter-spacing: 3px; font-style: italic; text-align: center; white-space: pre-wrap; line-height: 2; padding: 20px;}
-.ui-wrapper { width: 100%; display: flex; flex-direction: column; align-items: center; transition: opacity 1.5s ease, transform 1s ease; }
-.ui-wrapper.fade-out { opacity: 0; pointer-events: none; transform: translateY(-20px); position: absolute; }
+
+/* 核心修复：退场时彻底隐藏，不再占用空间 */
+.ui-wrapper { width: 100%; display: flex; flex-direction: column; align-items: center; transition: opacity 1s ease, transform 1s ease; position: relative;}
+.ui-wrapper.fade-out { opacity: 0; pointer-events: none; transform: translateY(-20px); position: absolute; top: -9999px; height: 0; overflow: hidden; display: none; }
 .container { text-align: center; padding: 20px; width: 100%; max-width: 800px; z-index: 1; box-sizing: border-box; }
 
-/* 标题与控制面板 */
 .classic-title { color: #c5a059; letter-spacing: 6px; text-shadow: 0 0 20px rgba(197, 160, 89, 0.5); font-weight: normal; font-size: 2.2rem; margin-bottom: 10px; }
 .subtitle { color: #8e8579; margin-bottom: 30px; font-size: 0.95rem; font-style: italic; letter-spacing: 2px;}
+
+/* 顶部悬浮按钮 */
 .top-nav { position: absolute; top: 20px; width: 100%; max-width: 800px; display: flex; justify-content: space-between; padding: 0 20px; box-sizing: border-box; z-index: 100; pointer-events: none; left: 50%; transform: translateX(-50%); }
 .icon-btn { background: rgba(20,20,25,0.6); border: 1px solid #c5a059; color: #c5a059; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-size: 12px; backdrop-filter: blur(8px); pointer-events: auto; letter-spacing: 1px;}
 .icon-btn.highlight { background: rgba(197, 160, 89, 0.15); font-weight: bold; }
 
+/* 灵魂计算器与控制面板 */
 .soul-calc-box { background: rgba(255,255,255,0.02); border: 1px dashed rgba(197,160,89,0.3); padding: 15px 20px; border-radius: 12px; margin-bottom: 25px; text-align: left; }
 .soul-calc-box label { color: #c5a059; font-size: 13px; font-style: italic; }
 .soul-calc-box input { flex: 1; padding: 10px; border-radius: 6px; border: 1px solid rgba(197,160,89,0.2); background: rgba(0,0,0,0.4); color: #d8c8b8; outline: none;}
@@ -47,10 +51,8 @@ optgroup { color: #c5a059; background-color: #0a0a0c; font-style: normal; font-w
 .modal-btns button { padding: 10px; font-size: 0.95rem; border-radius: 6px; }
 .cancel-btn { background: transparent !important; color: #8e8579 !important; border: 1px solid #8e8579 !important; width: 35%;}
 .confirm-btn { flex: 1; background: #c5a059 !important; color: #000 !important; border: none; font-weight: bold;}
-.pulse-btn { animation: pulseBtn 2s infinite; }
-@keyframes pulseBtn { 0% { box-shadow: 0 0 0 0 rgba(197, 160, 89, 0.5); } 70% { box-shadow: 0 0 0 10px rgba(197, 160, 89, 0); } 100% { box-shadow: 0 0 0 0 rgba(197, 160, 89, 0); } }
 
-/* 沉浸式交互区与特效 */
+/* 沉浸式动画特效 */
 .immersive-container { width: 100%; display: flex; flex-direction: column; align-items: center; padding-top: 20px;}
 .energy-text { color: #c5a059; font-size: 1.2rem; font-style: italic; letter-spacing: 3px; position: absolute; top: 30vh; width: 100%; text-align: center; animation: fadeInOut 3.5s ease forwards; z-index: 50; text-shadow: 0 0 15px rgba(197, 160, 89, 0.8);}
 @keyframes fadeInOut { 0% { opacity: 0; transform: scale(0.9); } 20% { opacity: 1; transform: scale(1); } 80% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.1); } }
@@ -61,28 +63,28 @@ optgroup { color: #c5a059; background-color: #0a0a0c; font-style: normal; font-w
 
 .deck-area { margin: 20px 0 40px 0; height: 250px; position: relative; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%;}
 .ritual-text { color: #c5a059; font-weight: normal; margin-bottom: 20px; font-style: italic; font-size: 1.1rem; letter-spacing: 2px;}
+
 .shuffling-deck { width: 75px; height: 130px; background: #1a1a2e; border: 1px solid #c5a059; border-radius: 4px; position: relative; margin: 20px auto; animation: shuffleCards 0.4s infinite alternate ease-in-out; box-shadow: -4px 0 8px rgba(0,0,0,0.6), 4px 0 8px rgba(0,0,0,0.6); }
 .shuffling-deck::before, .shuffling-deck::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: inherit; border: inherit; border-radius: inherit; z-index: -1; animation: cardSplit 0.4s infinite alternate ease-in-out; }
 .shuffling-deck::after { animation-delay: 0.2s; }
 @keyframes shuffleCards { 0% { transform: translateY(0) rotate(0); } 100% { transform: translateY(-10px) rotate(6deg); } }
 @keyframes cardSplit { 0% { transform: translateX(0) rotate(0); } 100% { transform: translateX(30px) rotate(12deg); } }
+
 .fan-deck { position: relative; width: 100%; height: 200px; display: flex; justify-content: center; align-items: flex-end;}
 .deck-card { position: absolute; width: 75px; height: 130px; bottom: 0; background: radial-gradient(circle at center, #231b38 0%, #110d1c 100%); border: 1px solid rgba(197, 160, 89, 0.5); border-radius: 5px; transform-origin: bottom center; cursor: pointer; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: -2px 0 6px rgba(0,0,0,0.8); }
 .deck-card:hover { transform: translateY(-25px) scale(1.1) !important; border-color: #c5a059; z-index: 100 !important; box-shadow: 0 0 15px rgba(197, 160, 89, 0.8); }
 .deck-card.drawn { opacity: 0; pointer-events: none; transform: translateY(-100px) scale(0.5) !important; transition: all 0.5s; }
 
-/* ✅ 修复点 [UI-3]：十字阵法真实的物理网格结构 */
-.spread-container { margin-bottom: 30px; max-width: 100%; padding: 20px;}
+/* 核心修复：初始隐藏牌阵容器，解决打开网页重叠问题 */
+.spread-container { display: none; justify-content: center; gap: 15px; margin-bottom: 20px; flex-wrap: wrap; min-height: 200px; max-width: 100%; padding: 20px; opacity: 0; transition: opacity 1s ease;}
 .layout-linear { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
 .layout-grid { display: grid; grid-template-columns: 120px 120px; gap: 20px; justify-content: center; }
-/* 真·十字布局：中心牌占位逻辑 */
 .layout-cross { display: grid; grid-template-columns: 100px 100px 100px; grid-template-rows: 170px 170px 170px; gap: 15px; justify-content: center; align-items: center;}
 .layout-cross #slot-0 { grid-column: 2; grid-row: 2; z-index: 5;} 
 .layout-cross #slot-1 { grid-column: 1; grid-row: 2; } 
 .layout-cross #slot-2 { grid-column: 2; grid-row: 1; } 
 .layout-cross #slot-3 { grid-column: 2; grid-row: 3; } 
 .layout-cross #slot-4 { grid-column: 3; grid-row: 2; } 
-/* 手机端由于屏幕窄，十字阵稍微缩小以适配 */
 @media (max-width: 480px) {
   .layout-cross { grid-template-columns: 85px 85px 85px; grid-template-rows: 150px 150px 150px; gap: 10px; }
   .layout-cross .card-slot { width: 85px; height: 150px; }
@@ -102,7 +104,7 @@ optgroup { color: #c5a059; background-color: #0a0a0c; font-style: normal; font-w
 
 .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 6px; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 8px 15px rgba(0,0,0,0.7); border: 1px solid #c5a059; }
 .card-back { background: radial-gradient(circle at center, #231b38 0%, #110d1c 100%); color: rgba(197, 160, 89, 0.7); font-size: 35px; }
-.card-back::before { content: ''; position: absolute; width: 85%; height: 90%; border: 1px solid rgba(197, 160, 89, 0.3); border-radius: 4px; }
+.card-back::before { content: ''; position: absolute; width: 85%; height: 90%; border: 1px solid rgba(197, 160, 89, 0.3); border-radius: 5px; }
 .card-front { background: #fdfbf7; transform: rotateY(180deg); background-image: radial-gradient(circle at top right, #ffffff 0%, #eee1c9 100%); color: #2c241b; position: relative; }
 .card-front::after { content: ''; position: absolute; top: 0; left: -150%; width: 50%; height: 100%; background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%); transform: skewX(-20deg); animation: holographic 4s infinite; pointer-events: none; z-index: 5;}
 .card-front .emoji { font-size: 45px; margin-bottom: 10px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); z-index: 2; position: relative;}
@@ -116,9 +118,7 @@ optgroup { color: #c5a059; background-color: #0a0a0c; font-style: normal; font-w
 
 .parchment-box { background-color: #f4ecd8; background-image: url("https://www.transparenttextures.com/patterns/cream-paper.png"); border: 1px solid #d4c4a8; padding: 40px 35px; border-radius: 4px; box-shadow: inset 0 0 30px rgba(139, 115, 85, 0.15), 0 15px 40px rgba(0,0,0,0.7); display: none; text-align: left; }
 .parchment-box.visible { display: block; animation: fadeIn 1.5s ease; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-/* 强制清除大模型可能返回的内联样式 */
 .parchment-text { display: block; word-break: break-word; color: #3a2f24; font-family: "Georgia", "Songti SC", serif; font-size: 1.05rem; line-height: 1.9; }
 .parchment-text * { font-family: inherit !important; background-color: transparent !important; color: inherit !important; margin: 0; padding: 0; }
 .parchment-text h1, .parchment-text h2, .parchment-text h3, .parchment-text h4 { color: #6d5438 !important; border-bottom: 1px dashed #c8b99e !important; padding-bottom: 8px !important; margin-top: 30px !important; margin-bottom: 15px !important; font-size: 1.3rem !important; font-weight: bold; display: block; font-family: "PingFang SC", sans-serif !important;}
@@ -130,10 +130,9 @@ optgroup { color: #c5a059; background-color: #0a0a0c; font-style: normal; font-w
 .parchment-text strong, .parchment-text b { color: #4a3622 !important; font-weight: bold !important; background: rgba(197, 160, 89, 0.15); padding: 0 4px; }
 .typing-cursor { display: inline-block; width: 6px; height: 18px; background: #6d5438; vertical-align: middle; margin-left: 4px; animation: blink 1s step-end infinite; }
 
-/* 命运关键词 (TL;DR) 样式 */
 .reading-keywords { background: rgba(109, 84, 56, 0.1); border-left: 4px solid #6d5438; padding: 15px; margin-bottom: 25px; font-weight: bold; color: #4a3622; font-family: "PingFang SC", sans-serif; border-radius: 0 8px 8px 0;}
 
-/* 日签卡片与分享水印 */
+/* 日签卡片与分享 */
 .daily-card-area { background: rgba(20,20,25,0.8); border: 1px solid #c5a059; padding: 40px 30px; border-radius: 12px; max-width: 320px; margin: 40px auto; box-shadow: 0 15px 40px rgba(0,0,0,0.6); backdrop-filter: blur(10px); z-index: 10;}
 .daily-title { color: #c5a059; font-size: 1.4rem; font-weight: bold; letter-spacing: 2px; margin-bottom: 5px; }
 .daily-date { color: #8e8579; font-size: 0.85rem; margin-bottom: 20px; border-bottom: 1px dashed #444; padding-bottom: 15px; }
