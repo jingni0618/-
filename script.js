@@ -156,18 +156,28 @@ function userFlipsCard(i) {
 
 /* 流式输出解码 */
 async function fetchStream(question, userName, cards) {
-  const streamContent = document.getElementById("streamContent"); const cursor = document.getElementById("cursor"); const loadingText = document.getElementById("loadingText"); 
+  const streamContent = document.getElementById("streamContent"); 
+  const cursor = document.getElementById("cursor");
+  const loadingText = document.getElementById("loadingText"); 
+  
   streamContent.innerHTML = ""; let htmlBuffer = "";
-  const aiStatus = document.getElementById("aiStatus"); if(aiStatus) aiStatus.style.display = "flex";
+
+  const aiStatus = document.getElementById("aiStatus"); 
+  if(aiStatus) aiStatus.style.display = "flex";
 
   try {
     const response = await fetch("/api/tarot", {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question: question, cards: cards, userName: userName, soulCard: userSoulCard, isNight: false })
+      body: JSON.stringify({ question: question, cards: cards, userName: userName, soulCard: userSoulCard, isNight: isNightMode })
     });
+    
     if (!response.ok) throw new Error("宇宙网关拥堵，请稍后重试");
     
-    loadingText.style.display = "none";
+    // 【关键修复点】：如果找不到这个元素就不操作，避免报错中断
+    if (loadingText) {
+        loadingText.style.display = "none";
+    }
+    
     const reader = response.body.getReader(); const decoder = new TextDecoder("utf-8");
 
     while (true) {
@@ -186,9 +196,11 @@ async function fetchStream(question, userName, cards) {
         }
       }
     }
-  } catch (error) { streamContent.innerHTML = `<span style="color:#ff6b6b">🔮 宇宙连接中断: ${error.message}</span>`;
+  } catch (error) { 
+    streamContent.innerHTML = `<span style="color:#ff6b6b">🔮 宇宙连接中断: ${error.message}</span>`;
   } finally {
-    cursor.style.display = "none"; if(aiStatus) aiStatus.style.display = "none"; 
+    if (cursor) cursor.style.display = "none"; 
+    if (aiStatus) aiStatus.style.display = "none"; 
     const actionBtns = document.getElementById("actionBtns");
     if(actionBtns) { actionBtns.style.display = "flex"; }
   }
