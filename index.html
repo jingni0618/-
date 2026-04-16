@@ -35,6 +35,7 @@
         <h1 id="mainTitle" class="classic-title">👀仔的命运星盘</h1>
         <p id="mainSubtitle" class="subtitle">倾听宇宙回响，洞察灵魂轨迹</p>
       </div>
+      <div id="statusBanner" class="status-banner">请选择占卜方式：直觉速取或深度问卜</div>
 
       <div class="hero-grid">
         <div class="choice-card choice-card--secondary">
@@ -108,16 +109,21 @@
   <!-- 沉浸式交互区 -->
   <div class="aside-panel">
     <div class="daily-card-area" id="dailyCardArea" style="display: none;">
-      <div class="daily-title">今日神谕 / Daily Oracle</div>
+      <div class="daily-title">今日神谕</div>
       <div class="daily-date" id="dailyDate"></div>
-      <div class="daily-emoji-card"><div id="dailyEmoji" class="daily-emoji">✨</div><div id="dailyName" class="daily-name">牌名 / Card</div></div>
-      <div class="daily-quote" id="dailyQuote">星辰正为你织就今日日签... / The stars are weaving today's oracle...</div>
+      <div class="daily-emoji-card"><div id="dailyEmoji" class="daily-emoji">✨</div><div id="dailyName" class="daily-name">牌名</div></div>
+      <div class="daily-quote" id="dailyQuote">星辰正为你织就今日日签...</div>
+    </div>
+    <div class="history-card" id="historyCardArea" style="display: none;">
+      <div class="history-title">占卜记录</div>
+      <div id="historyList" class="history-list"></div>
+      <button class="history-clear-btn" onclick="clearHistory()">清空记录</button>
     </div>
     <div class="soul-calc-box" style="display: none;" id="asideSoulCalc">
-      <label>✨ 测算灵魂专属牌（选填） / Soul number reading (optional)</label>
+      <label>✨ 测算灵魂专属牌（选填）</label>
       <div style="display: flex; gap: 10px; margin-top: 10px;">
-        <input type="text" id="birthInput" placeholder="出生年月 (如 19950821)">
-        <button class="small-gold-btn" onclick="calculateSoulCard()">推演 / Reveal</button>
+        <input type="text" id="birthInput" placeholder="出生年月（如 19950821）">
+        <button class="small-gold-btn" onclick="calculateSoulCard()">推演</button>
       </div>
       <div id="soulCardResult" class="soul-result" style="display: none;"></div>
     </div>
@@ -156,9 +162,10 @@
       <div id="shareHeader" class="share-only" style="color: #2c241b; font-weight: bold; margin-bottom: 20px;">✨ 命运星盘 · 专属占卜报告 ✨</div>
     </div>
     
-    <div id="actionBtns" style="margin-top: 30px; display: none; justify-content: center; gap: 15px; padding-bottom: 50px;">
-      <button id="saveBtn" class="save-btn" onclick="saveAsImage()">📸 保存羊皮卷轴 / Save reading</button>
-      <button id="restartBtn" class="save-btn restart" onclick="window.location.reload()">重新占卜 / Restart</button>
+    <div id="actionBtns" class="action-btns" style="margin-top: 30px; display: none; justify-content: center; gap: 15px; padding-bottom: 50px;">
+      <button id="saveBtn" class="save-btn" onclick="saveAsImage()">📸 保存羊皮卷轴</button>
+      <button id="copyBtn" class="save-btn" onclick="copyReadingText()">📋 复制解读</button>
+      <button id="restartBtn" class="save-btn restart" onclick="window.location.reload()">重新占卜</button>
     </div>
   </div>
 

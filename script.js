@@ -16,11 +16,11 @@ const spreadsOptions = {
   cross: { cssClass: 'cross', cards: [{ label: "核心问题" }, { label: "面临的阻碍" }, { label: "潜在的目标" }, { label: "深层的潜意识" }, { label: "最终的可能结局" }] }
 };
 
-let currentSpreadConfig = {}; let requiredCardsCount = 0; let cardsDrawn = 0; let cardsFlipped = 0; let drawnCardsData = []; let shuffledDeck = []; let userSoulCard = null; let isMobile = false; let paymentPending = false; let isMusicPlaying = false; let isNightMode = false;
+let currentSpreadConfig = {}; let requiredCardsCount = 0; let cardsDrawn = 0; let cardsFlipped = 0; let drawnCardsData = []; let shuffledDeck = []; let userSoulCard = null; let isMobile = false; let paymentPending = false; let paymentConfirmed = false; let isMusicPlaying = false; let isNightMode = false; let historyRecords = [];
 
 window.onload = function() {
   isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  checkNightMode(); initStarfield(); renderSpread();
+  checkNightMode(); initStarfield(); renderSpread(); loadHistory(); updateStatus("请选择占卜方式：直觉速取或深度问卜");
   
   const introStr = isNightMode ? "亲爱的旅人，夜深了。\n闭上眼，告诉我你心中的困惑..." : "亲爱的旅人，欢迎来到命运星盘。\n深呼吸，告诉我你最想问的是什么...";
   let i = 0;
@@ -45,13 +45,56 @@ function checkNightMode() {
     document.getElementById("mainSubtitle").innerText = "夜深星象更清晰，静心倾听宇宙。";
   }
 }
+
+function updateStatus(text) {
+  const banner = document.getElementById("statusBanner"); if (banner) banner.innerText = text;
+}
+
+function saveHistory() { localStorage.setItem("tarotHistory", JSON.stringify(historyRecords)); }
+function loadHistory() {
+  const raw = localStorage.getItem("tarotHistory");
+  if (raw) {
+    try { historyRecords = JSON.parse(raw).slice(0, 6); } catch (e) { historyRecords = []; }
+  }
+  renderHistory();
+}
+function addHistoryRecord(record) {
+  historyRecords.unshift(record); historyRecords = historyRecords.slice(0, 6); saveHistory(); renderHistory();
+}
+function renderHistory() {
+  const card = document.getElementById("historyCardArea"); const list = document.getElementById("historyList");
+  if (!card || !list) return;
+  if (historyRecords.length === 0) {
+    card.style.display = "block";
+    list.innerHTML = `<div class="history-item">暂无记录，开始你的第一场命运占卜。</div>`;
+    return;
+  }
+  card.style.display = "block";
+  list.innerHTML = historyRecords.map(r => `
+      <div class="history-item">
+        ${r.mode} · ${r.spread} · ${r.date}
+        <span>问题：${r.question || '未输入'} · 风格：${r.style}</span>
+      </div>
+    `).join('');
+}
+function clearHistory() { historyRecords = []; saveHistory(); renderHistory(); updateStatus("记录已清空，重新开始你的占卜旅程。"); }
+
+function copyReadingText() {
+  const content = document.getElementById("streamContent"); if (!content) return;
+  const text = content.innerText.trim();
+  if (!text) { alert("当前还没有解读内容可复制。"); return; }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => { alert("解读已复制，快分享到你的灵魂圈子。"); }).catch(() => { prompt("请复制以下内容：", text); });
+  } else { prompt("请复制以下内容：", text); }
+}
+
 function shuffle(array) { let cur = array.length, rnd; while (cur !== 0) { rnd = Math.floor(Math.random() * cur); cur--; [array[cur], array[rnd]] = [array[rnd], array[cur]]; } return array; }
 function forcePlayMusic() { if (!isMusicPlaying) { const bgMusic = document.getElementById("bgMusic"); bgMusic.volume = 0.4; let p = bgMusic.play(); if (p !== undefined) { p.then(_ => { isMusicPlaying = true; document.getElementById("musicToggle").innerText = "🔇 静音"; }).catch(e => {}); } } }
 function playSound(id) { const audio = document.getElementById(id); audio.currentTime = 0; audio.volume = 0.4; audio.play().catch(e => {}); }
 
 function calculateSoulCard() {
   const input = document.getElementById("birthInput").value.trim();
-  if(!/^\d{8}$/.test(input)) { alert("请输入连续8位数字，如 19950821 / Please enter 8 digits, e.g. 19950821"); return; }
+  if(!/^\d{8}$/.test(input)) { alert("请输入连续8位数字，如 19950821"); return; }
   let sum = 0; for(let char of input) sum += parseInt(char);
   while(sum > 22) { let temp = 0; for(let char of sum.toString()) temp += parseInt(char); sum = temp; }
   if(sum === 22) sum = 0; userSoulCard = deck[sum];
@@ -75,31 +118,36 @@ function renderSpread() {
 
 function checkVipAndStart(requireQuestion = true) {
   const q = document.getElementById("questionInput").value.trim();
-  if (requireQuestion && !q) { alert("请先输入你的问题，星空才能回应。 / Please enter your question first so the stars can answer."); return; }
-  if (requiredCardsCount > 3) {
+  if (requireQuestion && !q) { alert("请先输入你的问题，星空才能回应。" ); return; }
+  updateStatus("准备进入深度问卜...");
+  if (requiredCardsCount > 3 && !paymentConfirmed) {
     document.getElementById("vipModal").style.display = "flex";
+    updateStatus("高级牌阵需要解锁，赞赏后即可继续测算。");
     if (isMobile) { document.getElementById("mobilePayBtn").style.display = "block"; document.getElementById("pcPayBtn").style.display = "none"; } else { document.getElementById("mobilePayBtn").style.display = "none"; document.getElementById("pcPayBtn").style.display = "block"; }
-  } else { showEnergyEffect(); }
+    return;
+  }
+  showEnergyEffect(requiredCardsCount > 3 && paymentConfirmed);
 }
 
 function quickDrawSingleCard() {
   document.getElementById("spreadSelect").value = "single";
   renderSpread();
+  updateStatus("直觉速取准备中，抽取你的灵感之牌...");
   showEnergyEffect();
 }
 
-function closeVipModal() { document.getElementById("vipModal").style.display = "none"; paymentPending = false;}
-function pcPayFlow() { const btn = document.getElementById("pcPayBtn"); btn.innerText = "🔄 核实中..."; btn.disabled = true; setTimeout(() => { closeVipModal(); showEnergyEffect(true); }, 3500); }
+function closeVipModal() { document.getElementById("vipModal").style.display = "none"; paymentPending = false; }
+function pcPayFlow() { const btn = document.getElementById("pcPayBtn"); btn.innerText = "🔄 核实中..."; btn.disabled = true; setTimeout(() => { paymentConfirmed = true; closeVipModal(); showEnergyEffect(true); }, 3500); }
 function mobilePayFlow() {
-  const btn = document.getElementById("mobilePayBtn"); const imgUrl = document.getElementById("qrImage").src; btn.innerText = "🔄 正在跳转微信..."; paymentPending = true; 
+  const btn = document.getElementById("mobilePayBtn"); const imgUrl = document.getElementById("qrImage").src; btn.innerText = "🔄 正在跳转微信..."; paymentPending = true;
   fetch(imgUrl).then(res => res.blob()).then(blob => {
-    const url = window.URL.createObjectURL(blob); const a = document.createElement('a'); a.style.display = 'none'; a.href = url; a.download = 'WeChat_Tip_QR.jpg'; document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
+    const url = window.URL.createObjectURL(blob); const a = document.createElement('a'); a.style.display = 'none'; a.href = url; a.download = '命运星盘扫码二维码.jpg'; document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
     setTimeout(() => { window.location.href = "weixin://"; btn.innerText = "扫码完成后请切回"; }, 1000);
   }).catch(() => { window.location.href = "weixin://"; btn.innerText = "请自行截图前往微信"; });
 }
 document.addEventListener("visibilitychange", function() {
   if (document.visibilityState === 'visible' && paymentPending) {
-    paymentPending = false; document.getElementById("mobilePayBtn").innerText = "✅ 能量已接收...";
+    paymentPending = false; paymentConfirmed = true; document.getElementById("mobilePayBtn").innerText = "✅ 能量已接收...";
     setTimeout(() => { closeVipModal(); showEnergyEffect(true); }, 2000);
   }
 });
@@ -107,13 +155,13 @@ document.addEventListener("visibilitychange", function() {
 function showEnergyEffect(isVip = false) {
   forcePlayMusic();
   document.getElementById("uiElements").classList.add("fade-out");
+  updateStatus("灵感正在凝聚，片刻后进入占卜仪式...");
   const energyText = document.getElementById("energyText");
   energyText.innerText = isVip ? "能量已接收...深层的因果锁链已被解开" : "灵感已汇聚...星盘开始转动";
   energyText.style.display = "block";
 
-  // 确保牌阵在这个阶段被设置成 block（占据空间）但透明
   const spreadContainer = document.getElementById("spreadContainer");
-  if(spreadContainer) {
+  if (spreadContainer) {
       spreadContainer.style.display = "flex";
       spreadContainer.style.opacity = "0";
   }
@@ -131,6 +179,7 @@ function initFanDeck() {
   const fanDeck = document.getElementById("fanDeck"); fanDeck.innerHTML = "";
   const totalCards = 38; const angleStep = 120 / totalCards;
   document.getElementById("cardsLeft").innerText = requiredCardsCount;
+  updateStatus(`请点击牌面抽取 ${requiredCardsCount} 张牌`);
   for (let i = 0; i < totalCards; i++) {
     const angle = -60 + (i * angleStep);
     const cardEl = document.createElement("div"); cardEl.className = "deck-card"; cardEl.style.transform = `rotate(${angle}deg) translateY(-20px)`; cardEl.style.zIndex = i;
@@ -138,7 +187,6 @@ function initFanDeck() {
     fanDeck.appendChild(cardEl);
   }
   
-  // 冥想结束，让空卡槽正式在页面上淡入
   const spreadContainer = document.getElementById("spreadContainer");
   if(spreadContainer) {
       spreadContainer.style.opacity = "1";
@@ -155,11 +203,13 @@ function userDrawsOneCard(clickedCardElement) {
   const targetSlotCard = document.getElementById(`card-${cardsDrawn}`);
   targetSlotCard.classList.add("dealt"); document.getElementById(`label-${cardsDrawn}`).classList.add("visible");
   cardsDrawn++; document.getElementById("cardsLeft").innerText = (requiredCardsCount - cardsDrawn);
+  updateStatus(`已抽取 ${cardsDrawn} 张，还需抽取 ${requiredCardsCount - cardsDrawn} 张`);
 
   if (cardsDrawn === requiredCardsCount) { 
     setTimeout(() => {
       document.getElementById("deckArea").style.display = "none"; 
       document.getElementById("revealInstruction").style.display = "block";
+      updateStatus("牌已到位，依次点击牌背揭晓答案。");
       for(let i=0; i<requiredCardsCount; i++) { document.getElementById(`card-${i}`).onclick = function() { userFlipsCard(i); }; }
     }, 1000); 
   }
@@ -177,6 +227,7 @@ function userFlipsCard(i) {
   cardsFlipped++;
   if (cardsFlipped === requiredCardsCount) {
     document.getElementById("revealInstruction").style.display = "none";
+    updateStatus("牌已揭晓，正在生成个人化占卜解读...");
     const question = document.getElementById("questionInput").value.trim();
     const style = document.getElementById("styleSelect").value;
     const userName = document.getElementById("nameInput") ? document.getElementById("nameInput").value.trim() : "";
@@ -190,13 +241,14 @@ async function fetchStream(question, style, userName, cards) {
   const streamContent = document.getElementById("streamContent"); const cursor = document.getElementById("cursor");
   streamContent.innerHTML = ""; let htmlBuffer = "";
   const aiStatus = document.getElementById("aiStatus"); if(aiStatus) aiStatus.style.display = "flex";
+  let historyRecord = null;
 
   try {
     const response = await fetch("/api/tarot", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ question: question, cards: cards, readingStyle: style, userName: userName, soulCard: userSoulCard, isNight: isNightMode })
     });
-    if (!response.ok) throw new Error("宇宙网关拥堵，请稍后重试 / The cosmic gateway is busy, please try again later");
+    if (!response.ok) throw new Error("宇宙网关拥堵，请稍后重试");
     const reader = response.body.getReader(); const decoder = new TextDecoder("utf-8");
 
     while (true) {
@@ -208,17 +260,33 @@ async function fetchStream(question, style, userName, cards) {
           try {
             const dataStr = line.replace('data: ', '');
             if(dataStr.startsWith('[ERROR]')) { streamContent.innerHTML += `<br><span style="color:#ff6b6b">${dataStr}</span>`; continue; }
-            const data = JSON.parse(dataStr); const content = data.choices[0]?.delta?.content || ""; htmlBuffer += content;
+            const data = JSON.parse(dataStr);
+            const content = data.choices?.[0]?.delta?.content || "";
+            htmlBuffer += content;
             streamContent.innerHTML = htmlBuffer.replace(/```html/gi, '').replace(/```/g, '');
-            document.getElementById("readingWrapper").scrollIntoView({ behavior: 'smooth', block: 'end' });
-          } catch (e) {}
+            if (cursor) cursor.style.display = "inline-block";
+          } catch (e) {
+            console.error("流数据解析失败", e);
+          }
         }
       }
     }
-  } catch (error) { streamContent.innerHTML = `<span style="color:#ff6b6b">🔮 宇宙连接中断: ${error.message} / Connection to the cosmos failed</span>`;
+
+    const spreadLabel = document.getElementById("spreadSelect") ? document.getElementById("spreadSelect").selectedOptions[0].innerText : "未知牌阵";
+    const displayQuestion = question || "直觉速取";
+    const mode = requiredCardsCount === 1 && question === "" ? "直觉速取" : "深度问卜";
+    historyRecord = { mode, question: displayQuestion, style, spread: spreadLabel, date: new Date().toLocaleString() };
+  } catch (error) {
+    streamContent.innerHTML = `<span style="color:#ff6b6b">🔮 宇宙连接中断: ${error.message}</span>`;
+    updateStatus("连接异常，请稍后重试。");
   } finally {
-    if(cursor) cursor.style.display = "none"; if(aiStatus) aiStatus.style.display = "none"; 
+    if(cursor) cursor.style.display = "none";
+    if(aiStatus) aiStatus.style.display = "none";
     const actionBtns = document.getElementById("actionBtns"); if(actionBtns) actionBtns.style.display = "flex";
+    if (historyRecord) {
+      addHistoryRecord(historyRecord);
+      updateStatus("解读已生成，查看你的命运报告。你也可以复制或保存结果。");
+    }
   }
 }
 
@@ -268,6 +336,6 @@ function initStarfield() {
 }
 
 function saveAsImage() {
-  const captureArea = document.getElementById("readingWrapper"); document.getElementById("shareHeader").style.display = "block"; const btn = document.getElementById("saveBtn"); btn.innerText = "正在生成..."; btn.disabled = true;
-  html2canvas(captureArea, { scale: 2, useCORS: true, backgroundColor: "#0a0a0c" }).then(canvas => { document.getElementById("shareHeader").style.display = "none"; btn.innerText = "📸 保存羊皮卷轴"; btn.disabled = false; const link = document.createElement("a"); link.download = "Tarot_Oracle.png"; link.href = canvas.toDataURL("image/png"); link.click(); }); 
+  const captureArea = document.getElementById("readingWrapper"); document.getElementById("shareHeader").style.display = "block"; const btn = document.getElementById("saveBtn"); btn.innerText = "正在生成图片..."; btn.disabled = true;
+  html2canvas(captureArea, { scale: 2, useCORS: true, backgroundColor: "#0a0a0c" }).then(canvas => { document.getElementById("shareHeader").style.display = "none"; btn.innerText = "📸 保存羊皮卷轴"; btn.disabled = false; const link = document.createElement("a"); link.download = "命运星盘占卜报告.png"; link.href = canvas.toDataURL("image/png"); link.click(); }); 
 }
