@@ -1,4 +1,4 @@
-/* 全局变量与 Emoji 牌库 */
+/* 1. 牌库与配置 */
 const deck = [
   { name: "愚者", emoji: "🚶‍♂️", meaning: "新的开始、自发性、信念的飞跃" },
   { name: "魔术师", emoji: "🪄", meaning: "创造力、技能、意志力、显化" },
@@ -50,218 +50,204 @@ const spreadsOptions = {
   cross: [{ label: "当下的核心问题" }, { label: "面临的阻碍" }, { label: "潜在的目标" }, { label: "深层的潜意识" }, { label: "最终的可能结局" }]
 };
 
-let currentSpreadLayout = []; 
-let requiredCardsCount = 0;   
-let cardsDrawn = 0;           
-let drawnCardsData = [];      
-let shuffledDeck = [];        
-let isNightMode = false;
+let currentSpreadLayout = []; let requiredCardsCount = 0; let cardsDrawn = 0; let drawnCardsData = []; let shuffledDeck = []; let isNightMode = false; let isMobile = false; let paymentPending = false;
 
 window.onload = function() {
-  checkNightMode(); 
-  initStarfield(); 
-  renderSpread();
+  isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  checkNightMode(); initStarfield(); renderSpread();
 };
 
 function checkNightMode() {
   const hour = new Date().getHours();
   if (hour >= 22 || hour <= 4) {
-    isNightMode = true;
-    document.body.classList.add("night-mode");
+    isNightMode = true; document.body.classList.add("night-mode");
     document.getElementById("mainTitle").innerText = "🌙 深夜星盘";
     document.getElementById("mainSubtitle").innerText = "夜深了，让星空安抚你疲惫的灵魂";
   }
 }
 
 function shuffle(array) {
-  let currentIndex = array.length, randomIndex;
-  while (currentIndex !== 0) { randomIndex = Math.floor(Math.random() * currentIndex); currentIndex--; [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]]; }
+  let cur = array.length, rnd;
+  while (cur !== 0) { rnd = Math.floor(Math.random() * cur); cur--; [array[cur], array[rnd]] = [array[rnd], array[cur]]; }
   return array;
 }
 
-// 因为不要图片了，改回 Emoji 渲染方式
 function renderSpread() {
   const spreadType = document.getElementById("spreadSelect").value;
   currentSpreadLayout = spreadsOptions[spreadType];
   requiredCardsCount = currentSpreadLayout.length;
   if(document.getElementById("cardsLeft")) document.getElementById("cardsLeft").innerText = requiredCardsCount;
 
-  const container = document.getElementById("spreadContainer");
-  container.innerHTML = ""; 
+  const container = document.getElementById("spreadContainer"); container.innerHTML = ""; 
   currentSpreadLayout.forEach((pos, index) => {
     container.innerHTML += `
-      <div class="card-slot">
-        <div class="slot-label" id="label-${index}">${pos.label}</div>
-        <div class="card" id="card-${index}">
-          <div class="card-face card-back">✧</div>
-          <div class="card-face card-front">
-            <div class="emoji" id="emoji-${index}">❓</div>
-            <div class="name" id="name-${index}">等待抽取</div>
-          </div>
-        </div>
-      </div>
-    `;
+      <div class="card-slot"><div class="slot-label" id="label-${index}">${pos.label}</div><div class="card" id="card-${index}">
+      <div class="card-face card-back">✧</div><div class="card-face card-front"><div class="emoji" id="emoji-${index}">❓</div><div class="name" id="name-${index}">等待抽取</div></div></div></div>`;
   });
 }
 
-/* 拦截流程：洗牌 -> 冥想 -> 划牌 */
+/* VIP 付费墙及移动端唤起微信逻辑 */
 function checkVipAndStart() {
-  const question = document.getElementById("questionInput").value.trim();
-  if (!question) { alert("星空需要知道你的疑惑，请在上方输入问题。"); return; }
+  const q = document.getElementById("questionInput").value.trim();
+  if (!q) { alert("星空需要知道你的疑惑，请在上方输入问题。"); return; }
   
   if (requiredCardsCount > 3) {
-    const confirmBtn = document.getElementById("vipConfirmBtn");
-    confirmBtn.innerText = "✅ 我已赞赏，开启占卜";
-    confirmBtn.disabled = false;
-    confirmBtn.style.opacity = "1";
     document.getElementById("vipModal").style.display = "flex";
+    // 针对手机端和 PC 端显示不同的按钮
+    if (isMobile) {
+      document.getElementById("mobilePayBtn").style.display = "block";
+      document.getElementById("pcPayBtn").style.display = "none";
+    } else {
+      document.getElementById("mobilePayBtn").style.display = "none";
+      document.getElementById("pcPayBtn").style.display = "block";
+    }
   } else {
-    startShuffling(); // 免费阵法直接进入洗牌
+    startShuffling(); 
   }
 }
-function closeVipModal() { document.getElementById("vipModal").style.display = "none"; }
-function confirmVip() {
-  const confirmBtn = document.getElementById("vipConfirmBtn");
-  confirmBtn.innerText = "🔄 正在核实能量交换...";
-  confirmBtn.disabled = true; confirmBtn.style.opacity = "0.7";
+
+function closeVipModal() { document.getElementById("vipModal").style.display = "none"; paymentPending = false;}
+
+// PC端用户自己扫码，点击确认
+function pcPayFlow() {
+  const btn = document.getElementById("pcPayBtn");
+  btn.innerText = "🔄 正在核实能量交换..."; btn.disabled = true; btn.style.opacity = "0.7";
   setTimeout(() => { document.getElementById("vipModal").style.display = "none"; startShuffling(); }, 3500);
 }
 
-// 新增功能：洗牌动画
-function startShuffling() {
-  document.getElementById("controlPanel").style.display = "none";
-  playSound("drawSound"); // 播放洗牌音
-  if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 100]); // 手机震动模拟洗牌
+// 移动端：下载图片并尝试唤起微信
+function mobilePayFlow() {
+  const btn = document.getElementById("mobilePayBtn");
+  const imgUrl = document.getElementById("qrImage").src;
   
-  const shuffleArea = document.getElementById("shuffleArea");
-  shuffleArea.style.display = "flex";
+  btn.innerText = "🔄 正在为您保存收款码并跳转微信...";
+  paymentPending = true; // 标记用户正在支付
 
-  // 洗牌 3 秒后进入冥想
-  setTimeout(() => {
-    shuffleArea.style.display = "none";
-    startMeditation();
-  }, 3000);
+  // 1. 触发下载收款码到手机相册
+  fetch(imgUrl).then(response => response.blob()).then(blob => {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.style.display = 'none'; a.href = url;
+    a.download = '微信赞赏码.jpg';
+    document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
+    
+    // 2. 尝试唤起微信
+    setTimeout(() => {
+      window.location.href = "weixin://";
+      btn.innerText = "扫码完成后，请切回此页面";
+    }, 1000);
+  }).catch(() => {
+    // 如果浏览器拦截了下载，就直接唤起微信
+    window.location.href = "weixin://";
+    btn.innerText = "请自行截图后前往微信扫码，完成后切回此页面";
+  });
+}
+
+// 监听手机用户切回网页的动作，自动解锁！
+document.addEventListener("visibilitychange", function() {
+  if (document.visibilityState === 'visible' && paymentPending) {
+    paymentPending = false;
+    const btn = document.getElementById("mobilePayBtn");
+    btn.innerText = "✅ 能量已接收，开启命运星盘...";
+    btn.style.background = "#4CAF50";
+    btn.style.color = "white";
+    
+    // 假装核对两秒钟然后放行
+    setTimeout(() => {
+      document.getElementById("vipModal").style.display = "none"; 
+      startShuffling();
+    }, 2000);
+  }
+});
+
+/* 洗牌、冥想与划牌 */
+function startShuffling() {
+  document.getElementById("divinationSection").style.display = "none";
+  document.getElementById("dailyEntrance").style.display = "none";
+  playSound("drawSound"); 
+  if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 100]); 
+  const shuffleArea = document.getElementById("shuffleArea"); shuffleArea.style.display = "flex";
+  setTimeout(() => { shuffleArea.style.display = "none"; startMeditation(); }, 3000);
 }
 
 function startMeditation() {
-  const overlay = document.getElementById("meditationOverlay");
-  overlay.style.display = "flex";
-  
+  const overlay = document.getElementById("meditationOverlay"); overlay.style.display = "flex";
   setTimeout(() => {
-    overlay.style.display = "none";
-    document.getElementById("deckArea").style.display = "flex";
-    
+    overlay.style.display = "none"; document.getElementById("deckArea").style.display = "flex";
     cardsDrawn = 0; drawnCardsData = []; shuffledDeck = shuffle([...deck]);
-    const fanDeck = document.getElementById("fanDeck");
-    fanDeck.innerHTML = "";
+    const fanDeck = document.getElementById("fanDeck"); fanDeck.innerHTML = "";
     const totalCards = 38; const angleStep = 120 / totalCards;
-
     for (let i = 0; i < totalCards; i++) {
       const angle = -60 + (i * angleStep);
-      const cardEl = document.createElement("div");
-      cardEl.className = "deck-card";
-      cardEl.style.transform = `rotate(${angle}deg) translateY(-20px)`;
-      cardEl.style.zIndex = i;
-      cardEl.onclick = function() {
-        if (cardsDrawn < requiredCardsCount && !this.classList.contains("drawn")) { userDrawsOneCard(this); }
-      };
+      const cardEl = document.createElement("div"); cardEl.className = "deck-card"; cardEl.style.transform = `rotate(${angle}deg) translateY(-20px)`; cardEl.style.zIndex = i;
+      cardEl.onclick = function() { if (cardsDrawn < requiredCardsCount && !this.classList.contains("drawn")) { userDrawsOneCard(this); } };
       fanDeck.appendChild(cardEl);
     }
-  }, 4000); // 冥想 4 秒
+  }, 4000); 
 }
 
 function userDrawsOneCard(clickedCardElement) {
   playSound("drawSound"); 
-  if (navigator.vibrate) navigator.vibrate(50); // 抽牌单次震动
-
+  if (navigator.vibrate) navigator.vibrate(50); 
   clickedCardElement.classList.add("drawn");
   const cardData = shuffledDeck.pop();
   const isReversed = Math.random() < 0.2; 
   const reversedText = isReversed ? " (逆位)" : " (正位)";
 
-  drawnCardsData.push({
-    position: currentSpreadLayout[cardsDrawn].label,
-    cardName: cardData.name + reversedText,
-    meaning: cardData.meaning,
-    isReversed: isReversed,
-    emoji: cardData.emoji // 记录 Emoji
-  });
-
+  drawnCardsData.push({ position: currentSpreadLayout[cardsDrawn].label, cardName: cardData.name + reversedText, meaning: cardData.meaning, isReversed: isReversed, emoji: cardData.emoji });
   const targetSlotCard = document.getElementById(`card-${cardsDrawn}`);
   targetSlotCard.classList.add("dealt");
   document.getElementById(`label-${cardsDrawn}`).classList.add("visible");
-
-  cardsDrawn++;
-  document.getElementById("cardsLeft").innerText = (requiredCardsCount - cardsDrawn);
+  cardsDrawn++; document.getElementById("cardsLeft").innerText = (requiredCardsCount - cardsDrawn);
 
   if (cardsDrawn === requiredCardsCount) { setTimeout(revealCardsAndRead, 1000); }
 }
 
 async function revealCardsAndRead() {
   document.getElementById("deckArea").style.display = "none"; 
-
   for (let i = 0; i < requiredCardsCount; i++) {
     await new Promise(r => setTimeout(r, 600)); 
-    playSound("revealSound"); 
-    if (navigator.vibrate) navigator.vibrate(80); 
-    
+    playSound("revealSound"); if (navigator.vibrate) navigator.vibrate(80); 
     const data = drawnCardsData[i];
-    document.getElementById(`emoji-${i}`).innerText = data.emoji;
-    document.getElementById(`name-${i}`).innerText = data.cardName;
-    
+    document.getElementById(`emoji-${i}`).innerText = data.emoji; document.getElementById(`name-${i}`).innerText = data.cardName;
     const cardElement = document.getElementById(`card-${i}`);
-    cardElement.classList.add("flipped");
-    if(data.isReversed) cardElement.classList.add("reversed");
+    cardElement.classList.add("flipped"); if(data.isReversed) cardElement.classList.add("reversed");
   }
-
   const question = document.getElementById("questionInput").value.trim();
-  const userName = document.getElementById("nameInput") ? document.getElementById("nameInput").value.trim() : "";
-  document.getElementById("readingWrapper").style.display = "block";
-  document.getElementById("readingBox").classList.add("visible");
-  
+  const userName = document.getElementById("nameInput").value.trim();
+  document.getElementById("readingWrapper").style.display = "block"; document.getElementById("readingBox").classList.add("visible");
   await fetchStream(question, userName, drawnCardsData);
 }
 
-/* 流式输出解码器 */
+/* 流式输出解码 */
 async function fetchStream(question, userName, cards) {
-  const streamContent = document.getElementById("streamContent");
-  const cursor = document.getElementById("cursor");
-  const loadingText = document.getElementById("loadingText");
-  
-  streamContent.innerHTML = "";
-  let htmlBuffer = "";
+  const streamContent = document.getElementById("streamContent"); const cursor = document.getElementById("cursor");
+  const loadingText = document.getElementById("loadingText"); streamContent.innerHTML = ""; let htmlBuffer = "";
+
+  // 如果大模型回答太长需要滚动，我们让占星师动画一直存在
+  const aiStatus = document.getElementById("aiStatus");
+  if(aiStatus) aiStatus.style.display = "flex";
 
   try {
     const response = await fetch("/api/tarot", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ question, cards, userName, isNight: isNightMode })
     });
-
     if (!response.ok) throw new Error("宇宙网关拥堵，请稍后重试");
-
     loadingText.style.display = "none";
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder("utf-8");
+    const reader = response.body.getReader(); const decoder = new TextDecoder("utf-8");
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
-      
       const chunk = decoder.decode(value, { stream: true });
       const lines = chunk.split('\n').filter(line => line.trim() !== '');
-      
       for (const line of lines) {
         if (line.includes('[DONE]')) continue;
         if (line.startsWith('data: ')) {
           try {
             const dataStr = line.replace('data: ', '');
             if(dataStr.startsWith('[ERROR]')) { streamContent.innerHTML += `<br><span style="color:#ff6b6b">${dataStr}</span>`; continue; }
-            
-            const data = JSON.parse(dataStr);
-            const content = data.choices[0]?.delta?.content || "";
-            htmlBuffer += content;
-            
+            const data = JSON.parse(dataStr); const content = data.choices[0]?.delta?.content || ""; htmlBuffer += content;
             let displayHtml = htmlBuffer.replace(/```html/gi, '').replace(/```/g, '');
             streamContent.innerHTML = displayHtml;
             document.getElementById("readingWrapper").scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -269,28 +255,23 @@ async function fetchStream(question, userName, cards) {
         }
       }
     }
-  } catch (error) {
-    streamContent.innerHTML = `<span style="color:#ff6b6b">🔮 宇宙连接中断: ${error.message}</span>`;
+  } catch (error) { streamContent.innerHTML = `<span style="color:#ff6b6b">🔮 宇宙连接中断: ${error.message}</span>`;
   } finally {
     cursor.style.display = "none";
+    if(aiStatus) aiStatus.style.display = "none"; // 隐藏大师头像
     document.getElementById("actionBtns").style.display = "flex";
   }
 }
 
-/* 7. 每日一抽 (日签逻辑，使用 Emoji) */
+/* 7. 日签逻辑 */
 async function startDailyDraw() {
-  document.getElementById("controlPanel").style.display = "none";
-  document.getElementById("spreadContainer").style.display = "none";
+  document.getElementById("mainContainer").style.display = "none";
   document.getElementById("dailyCardArea").style.display = "block";
-  document.getElementById("actionBtns").style.display = "flex";
   document.getElementById("dailyBtn").style.display = "none";
 
-  const today = new Date();
-  document.getElementById("dailyDate").innerText = `${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日`;
-
+  const today = new Date(); document.getElementById("dailyDate").innerText = `${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日`;
   const randomMajor = deck[Math.floor(Math.random() * 22)];
-  document.getElementById("dailyEmoji").innerText = randomMajor.emoji;
-  document.getElementById("dailyName").innerText = randomMajor.name;
+  document.getElementById("dailyEmoji").innerText = randomMajor.emoji; document.getElementById("dailyName").innerText = randomMajor.name;
 
   try {
     const response = await fetch("/api/tarot", {
@@ -298,31 +279,23 @@ async function startDailyDraw() {
       body: JSON.stringify({ isDaily: true, cards: [randomMajor] })
     });
     if (response.ok) {
-      const data = await response.json();
-      document.getElementById("dailyQuote").innerText = `“${data.reading}”`;
-    } else {
-      document.getElementById("dailyQuote").innerText = "“跟随内心的指引，今天也是充满奇迹的一天。”";
-    }
-  } catch(e) {
-    document.getElementById("dailyQuote").innerText = "“跟随内心的指引，今天也是充满奇迹的一天。”";
-  }
+      const data = await response.json(); document.getElementById("dailyQuote").innerText = `“${data.reading}”`;
+    } else { document.getElementById("dailyQuote").innerText = "“跟随内心的指引，今天也是充满奇迹的一天。”"; }
+  } catch(e) { document.getElementById("dailyQuote").innerText = "“跟随内心的指引，今天也是充满奇迹的一天。”"; }
+  
+  // 生成一个返回按钮
+  const backBtn = document.createElement("button");
+  backBtn.className = "save-btn restart"; backBtn.innerText = "返回命运星盘";
+  backBtn.style.display = "block"; backBtn.style.margin = "30px auto";
+  backBtn.onclick = () => window.location.reload();
+  document.getElementById("dailyCardArea").appendChild(backBtn);
 }
 
-/* 音效、星空与分享截图 */
+/* 音效与星空 */
 let isMusicPlaying = false;
 function toggleMusic() {
   const bgMusic = document.getElementById("bgMusic"); const btn = document.getElementById("musicToggle");
-  // 浏览器可能会拦截，我们需要捕获异常
-  if (isMusicPlaying) { 
-      bgMusic.pause(); 
-      btn.innerText = "🎵 灵性环境音"; 
-  } else { 
-      bgMusic.volume = 0.4; 
-      let playPromise = bgMusic.play(); 
-      if (playPromise !== undefined) {
-          playPromise.then(_ => { btn.innerText = "🔇 关闭环境音"; }).catch(e => { alert("请先点击网页任意位置再开启音效"); });
-      }
-  }
+  if (isMusicPlaying) { bgMusic.pause(); btn.innerText = "🎵 灵性环境音"; } else { bgMusic.volume = 0.4; let p = bgMusic.play(); if(p!==undefined){p.catch(e=>{});} btn.innerText = "🔇 关闭环境音"; }
   isMusicPlaying = !isMusicPlaying;
 }
 function playSound(id) { const audio = document.getElementById(id); audio.currentTime = 0; audio.volume = 0.7; audio.play().catch(e => {}); }
@@ -335,24 +308,39 @@ function initStarfield() {
   window.addEventListener('resize', resize); resize(); draw();
 }
 
-function saveAsImage() {
-  const captureArea = document.getElementById("captureArea");
-  const shareHeader = document.getElementById("shareHeader");
-  const shareFooter = document.getElementById("shareFooter");
-  const btn = document.getElementById("saveBtn");
+/* 高端海报生成 */
+function generateHighEndPoster() {
+  const captureArea = document.getElementById("posterCaptureArea");
   
-  if(shareHeader) shareHeader.style.display = "block"; 
-  if(shareFooter) shareFooter.style.display = "block";
+  // 1. 把当前的数据填入隐藏的海报模板中
+  document.getElementById("posterQuestion").innerText = "疑惑：" + document.getElementById("questionInput").value.trim();
+  
+  const posterCards = document.getElementById("posterCards");
+  posterCards.innerHTML = "";
+  drawnCardsData.forEach(card => {
+    posterCards.innerHTML += `
+      <div class="poster-card">
+         <div class="emoji">${card.emoji}</div>
+         <div class="name">${card.cardName.replace(' ', '<br>')}</div>
+      </div>
+    `;
+  });
+  
+  // 提取大模型回答里的第一句话作为金句
+  const fullText = document.getElementById("streamContent").innerText;
+  const firstSentence = fullText.split('。')[0] + "。";
+  document.getElementById("posterQuote").innerText = `“${firstSentence}”`;
+
+  const btn = document.getElementById("saveBtn");
   btn.innerText = "正在生成..."; btn.disabled = true;
   
-  const originalBg = captureArea.style.background;
-  captureArea.style.background = isNightMode ? "#0d0614" : "#1a1a2e"; 
-  captureArea.style.padding = "20px"; captureArea.style.borderRadius = "20px";
-
-  html2canvas(captureArea, { scale: 2, useCORS: true, backgroundColor: isNightMode ? "#0d0614" : "#1a1a2e" }).then(canvas => {
-    if(shareHeader) shareHeader.style.display = "none"; 
-    if(shareFooter) shareFooter.style.display = "none";
-    captureArea.style.background = originalBg; btn.innerText = "📸 保存专属卡片"; btn.disabled = false;
-    const link = document.createElement("a"); link.download = "塔罗启示.png"; link.href = canvas.toDataURL("image/png"); link.click();
+  // 显示出来但藏在屏幕外，让 html2canvas 能截到
+  captureArea.style.top = "0"; captureArea.style.left = "0"; captureArea.style.position = "relative";
+  
+  html2canvas(captureArea, { scale: 2, useCORS: true, backgroundColor: "#1a1a2e" }).then(canvas => {
+    // 恢复原状
+    captureArea.style.position = "absolute"; captureArea.style.top = "-9999px"; captureArea.style.left = "-9999px";
+    btn.innerText = "📸 保存专属命运海报"; btn.disabled = false;
+    const link = document.createElement("a"); link.download = "命运星盘海报.png"; link.href = canvas.toDataURL("image/png"); link.click();
   });
 }
