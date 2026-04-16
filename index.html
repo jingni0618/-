@@ -13,56 +13,66 @@
   <div id="nightOverlay" class="night-overlay"></div>
   <canvas id="starfield"></canvas>
 
-  <!-- 音效统管 -->
   <audio id="bgMusic" loop src="https://cdn.pixabay.com/download/audio/2022/10/25/audio_244dc1f162.mp3"></audio>
   <audio id="drawSound" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_c6ccf3232f.mp3"></audio>
   <audio id="revealSound" src="https://cdn.pixabay.com/download/audio/2021/08/09/audio_dc39bde807.mp3"></audio>
 
-  <!-- 需要在沉浸模式下隐藏的所有 UI 元素都包裹在这里 -->
+  <!-- 需要在沉浸模式下隐藏的所有首屏元素 (包含 C位日签 和 导航) -->
   <div id="uiElements" class="ui-wrapper">
     <div class="top-nav">
       <button id="musicToggle" class="icon-btn" onclick="toggleMusic()">🎵 灵性环境音</button>
-      <button id="dailyBtn" class="icon-btn highlight" onclick="startDailyDraw()">✨ 今日神谕签</button>
     </div>
 
     <div class="container">
-      <h1 id="mainTitle" class="classic-title">命运的星盘</h1>
-      <p id="mainSubtitle" class="subtitle">倾听宇宙的回音，洞见灵魂的轨迹</p>
-
-      <!-- 灵魂灵数计算器 -->
-      <div class="soul-calc-box">
-        <label>✨ 测算你的灵魂专属塔罗 (选填)</label>
-        <div style="display: flex; gap: 10px; margin-top: 10px;">
-          <input type="text" id="birthInput" placeholder="输入出生年月日 (如 19950821)" maxlength="8">
-          <button class="small-gold-btn" onclick="calculateSoulCard()">计算</button>
-        </div>
-        <div id="soulCardResult" class="soul-result" style="display: none;"></div>
+      
+      <!-- ✅ 修复：找回首屏 C 位的“今日神谕”入口 -->
+      <div class="daily-entrance" id="dailyEntrance">
+        <div class="daily-halo"></div>
+        <h3>✨ 抽取今日命运签</h3>
+        <p>无需困惑，倾听宇宙今天想对你说的话</p>
+        <button class="daily-btn" onclick="startDailyDraw()">开启今日指引</button>
       </div>
 
-      <!-- 控制面板 -->
-      <div class="control-panel" id="controlPanel">
-        <div class="input-group">
-          <label>你心中的疑惑是什么？</label>
-          <input type="text" id="questionInput" placeholder="越具体，星空的启示越深刻...">
+      <!-- 深度占卜区 -->
+      <div class="divination-section" id="divinationSection">
+        <h1 id="mainTitle" class="classic-title">命运星盘</h1>
+        <p id="mainSubtitle" class="subtitle">在迷茫时，向星空提问</p>
+
+        <!-- 灵魂灵数计算器 -->
+        <div class="soul-calc-box">
+          <label>✨ 测算你的灵魂专属塔罗 (选填)</label>
+          <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <input type="text" id="birthInput" placeholder="输入出生年月日 (如 19950821)" maxlength="8">
+            <button class="small-gold-btn" onclick="calculateSoulCard()">计算</button>
+          </div>
+          <div id="soulCardResult" class="soul-result" style="display: none;"></div>
         </div>
-        
-        <div class="input-group">
-          <label>请选择星空牌阵：</label>
-          <select id="spreadSelect" onchange="renderSpread()">
-            <optgroup label="基础指引 (免费体验)">
-              <option value="single">单牌神谕 (1张：直觉指引)</option>
-              <option value="yesno">是非决断阵 (3张：支持/反对/答案)</option>
-              <option value="time">时间之流 (3张：过去/现在/未来)</option>
-            </optgroup>
-            <optgroup label="👑 深度专栏 (能量交换)">
-              <option value="relationship">情感透视阵 (4张：你/对方/阻碍/未来)</option>
-              <option value="career">财富事业阵 (4张：现状/机遇/风险/走向)</option>
-              <option value="choice">二选一岔路阵 (5张：现状/选A/选B/A结局/B结局)</option>
-              <option value="cross" selected>灵感十字阵 (5张：核心/阻碍/目标/潜意识/结局)</option>
-            </optgroup>
-          </select>
+
+        <!-- 控制面板 -->
+        <div class="control-panel" id="controlPanel">
+          <div class="input-group">
+            <label>你心中的疑惑是什么？</label>
+            <input type="text" id="questionInput" placeholder="越具体，星空的启示越深刻...">
+          </div>
+          
+          <div class="input-group">
+            <label>请选择星空牌阵：</label>
+            <select id="spreadSelect" onchange="renderSpread()">
+              <optgroup label="基础指引 (免费体验)">
+                <option value="single">单牌神谕 (1张：直觉指引)</option>
+                <option value="yesno">是非决断阵 (3张：支持/反对/答案)</option>
+                <option value="time">时间之流 (3张：过去/现在/未来)</option>
+              </optgroup>
+              <optgroup label="👑 深度专栏 (打赏解锁)">
+                <option value="relationship">情感透视阵 (4张：你/对方/阻碍/未来)</option>
+                <option value="career">财富事业阵 (4张：现状/机遇/风险/走向)</option>
+                <option value="choice">二选一岔路阵 (5张：现状/选A/选B/A结局/B结局)</option>
+                <option value="cross" selected>灵感十字阵 (5张：核心/阻碍/目标/潜意识/结局)</option>
+              </optgroup>
+            </select>
+          </div>
+          <button id="startBtn" class="main-btn" onclick="checkVipAndStart()">进入冥想与洗牌</button>
         </div>
-        <button id="startBtn" class="main-btn" onclick="checkVipAndStart()">进入冥想与洗牌</button>
       </div>
     </div>
   </div> <!-- uiElements 结束 -->
@@ -82,22 +92,29 @@
     </div>
   </div>
 
-  <!-- 沉浸式动画区 (洗牌、划牌、展牌) -->
-  <div class="immersive-container">
+  <!-- 沉浸式动画区 (包裹所有洗牌、展牌和结果) -->
+  <div class="immersive-container" id="captureArea">
     
-    <div id="shuffleArea" class="deck-area" style="display: none;">
-       <h3 class="ritual-text">洗牌中...将潜意识注入星盘</h3>
+    <!-- 冥想遮罩 -->
+    <div id="meditationOverlay" class="meditation-overlay" style="display: none;">
+      <div class="breathe-circle"></div>
+      <p id="breatheText" class="breathe-text">深呼吸...将精神集中在你的问题上...</p>
+    </div>
+
+    <!-- 洗牌区 -->
+    <div id="shuffleArea" class="deck-area" style="display: none; align-items: center; justify-content: center; flex-direction: column;">
+       <h3 class="ritual-text" style="animation: pulseText 1s infinite;">洗牌中...将潜意识注入星盘</h3>
        <div class="shuffling-deck"></div>
     </div>
 
-    <!-- 交互抽牌区 -->
+    <!-- 划牌区 -->
     <div id="deckArea" class="deck-area" style="display: none;">
       <h3 id="instructionText" class="ritual-text">请划动抽取 <span id="cardsLeft">0</span> 张牌</h3>
       <div class="fan-deck" id="fanDeck"></div>
     </div>
 
-    <!-- 悬念揭秘与牌阵区 -->
-    <div id="revealInstruction" class="ritual-text" style="display: none; margin-top: 20px;">命运已就位，请依次点击牌背揭晓...</div>
+    <!-- 牌阵区 -->
+    <div id="revealInstruction" class="ritual-text" style="display: none; margin-top: 40px; margin-bottom: 20px;">命运已就位，请依次点击牌背揭晓...</div>
     <div class="spread-container" id="spreadContainer"></div>
 
     <!-- 羊皮纸长文解析区 -->
@@ -115,11 +132,11 @@
     
     <div id="actionBtns" style="margin-top: 30px; display: none; justify-content: center; gap: 15px; padding-bottom: 50px;">
       <button id="saveBtn" class="save-btn" onclick="saveAsImage()">📸 保存羊皮卷轴</button>
-      <button id="restartBtn" class="save-btn restart" onclick="window.location.reload()">重新占卜</button>
+      <button id="restartBtn" class="save-btn restart" onclick="window.location.reload()">返回首页</button>
     </div>
-  </div>
+  </div> <!-- immersive-container 结束 -->
 
-  <!-- 朋友圈日签专属展示区 (初始隐藏) -->
+  <!-- 朋友圈日签专属展示区 -->
   <div id="dailyCardArea" class="daily-card-area" style="display: none;">
       <div class="daily-title">今日神谕</div>
       <div class="daily-date" id="dailyDate"></div>
