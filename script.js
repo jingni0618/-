@@ -1,44 +1,43 @@
-/* 全局变量与图库 (国内免墙 CDN) */
-const baseImageUrl = "https://cdn.jsdelivr.net/gh/howarder3/tarot-json@master/src/assets/images/";
+/* 全局变量与 Emoji 牌库 */
 const deck = [
-  { name: "愚者 (The Fool)", emoji: "🚶‍♂️", img: baseImageUrl + "m00.jpg", meaning: "新的开始、自发性、信念的飞跃" },
-  { name: "魔术师 (The Magician)", emoji: "🪄", img: baseImageUrl + "m01.jpg", meaning: "创造力、技能、意志力、显化" },
-  { name: "女祭司 (The High Priestess)", emoji: "🌙", img: baseImageUrl + "m02.jpg", meaning: "直觉、潜意识、神秘" },
-  { name: "女皇 (The Empress)", emoji: "👑", img: baseImageUrl + "m03.jpg", meaning: "丰收、母性、自然、富足" },
-  { name: "皇帝 (The Emperor)", emoji: "🏰", img: baseImageUrl + "m04.jpg", meaning: "权威、结构、逻辑、稳定" },
-  { name: "教皇 (The Hierophant)", emoji: "📜", img: baseImageUrl + "m05.jpg", meaning: "传统、信仰、精神指引" },
-  { name: "恋人 (The Lovers)", emoji: "❤️", img: baseImageUrl + "m06.jpg", meaning: "爱、和谐、关系、价值观对齐" },
-  { name: "战车 (The Chariot)", emoji: " रथ", img: baseImageUrl + "m07.jpg", meaning: "控制、意志力、行动" },
-  { name: "力量 (Strength)", emoji: "🦁", img: baseImageUrl + "m08.jpg", meaning: "勇气、耐心、同情与温柔" },
-  { name: "隐士 (The Hermit)", emoji: "🏮", img: baseImageUrl + "m09.jpg", meaning: "灵魂探索、内省、内在指引" },
-  { name: "命运之轮 (Wheel of Fortune)", emoji: "🎡", img: baseImageUrl + "m10.jpg", meaning: "好运、业力、转折点" },
-  { name: "正义 (Justice)", emoji: "⚖️", img: baseImageUrl + "m11.jpg", meaning: "公平、真相、因果、平衡" },
-  { name: "倒吊人 (The Hanged Man)", emoji: "🦇", img: baseImageUrl + "m12.jpg", meaning: "暂停、放手、换个视角" },
-  { name: "死神 (Death)", emoji: "💀", img: baseImageUrl + "m13.jpg", meaning: "结束、转变、彻底重生" },
-  { name: "节制 (Temperance)", emoji: "⛲", img: baseImageUrl + "m14.jpg", meaning: "平衡、中庸、耐心、目的" },
-  { name: "恶魔 (The Devil)", emoji: "👿", img: baseImageUrl + "m15.jpg", meaning: "沉迷、物质主义、束缚" },
-  { name: "高塔 (The Tower)", emoji: "⚡", img: baseImageUrl + "m16.jpg", meaning: "突变、混乱、旧信念的崩塌" },
-  { name: "星星 (The Star)", emoji: "⭐", img: baseImageUrl + "m17.jpg", meaning: "希望、信念、灵感、治愈" },
-  { name: "月亮 (The Moon)", emoji: "🌖", img: baseImageUrl + "m18.jpg", meaning: "幻觉、恐惧、潜意识" },
-  { name: "太阳 (The Sun)", emoji: "☀️", img: baseImageUrl + "m19.jpg", meaning: "积极、活力、成功、快乐" },
-  { name: "审判 (Judgement)", emoji: "📯", img: baseImageUrl + "m20.jpg", meaning: "重生、内在呼唤、宽恕" },
-  { name: "世界 (The World)", emoji: "🌍", img: baseImageUrl + "m21.jpg", meaning: "完成、整合、成就、圆满" },
-  { name: "权杖一", emoji: "🔥", img: baseImageUrl + "w01.jpg", meaning: "灵感、新机会、成长" },
-  { name: "权杖二", emoji: "🗺️", img: baseImageUrl + "w02.jpg", meaning: "未来规划、决策" },
-  { name: "权杖三", emoji: "🚢", img: baseImageUrl + "w03.jpg", meaning: "远见、探索、扩张与合作" },
-  { name: "权杖十", emoji: "🪵", img: baseImageUrl + "w10.jpg", meaning: "重担、责任过重、压力" },
-  { name: "圣杯一", emoji: "💧", img: baseImageUrl + "c01.jpg", meaning: "纯粹的爱、创造力" },
-  { name: "圣杯二", emoji: "🥂", img: baseImageUrl + "c02.jpg", meaning: "统一、伴侣关系、平等结合" },
-  { name: "圣杯三", emoji: "🍻", img: baseImageUrl + "c03.jpg", meaning: "庆祝、友谊、社交聚会" },
-  { name: "圣杯十", emoji: "🌈", img: baseImageUrl + "c10.jpg", meaning: "神圣的爱、家庭、和谐" },
-  { name: "宝剑一", emoji: "🗡️", img: baseImageUrl + "s01.jpg", meaning: "突破、清晰、锐利的思想" },
-  { name: "宝剑二", emoji: "盲", img: baseImageUrl + "s02.jpg", meaning: "僵局、困难的选择、逃避现实" },
-  { name: "宝剑三", emoji: "💔", img: baseImageUrl + "s03.jpg", meaning: "心碎、悲痛、痛苦的分离" },
-  { name: "宝剑十", emoji: "📌", img: baseImageUrl + "s10.jpg", meaning: "痛苦的结局、背叛、低谷" },
-  { name: "星币一", emoji: "🪙", img: baseImageUrl + "p01.jpg", meaning: "新的财务机会、繁荣、物质" },
-  { name: "星币二", emoji: "🤹", img: baseImageUrl + "p02.jpg", meaning: "平衡、适应能力、资金管理" },
-  { name: "星币三", emoji: "🤝", img: baseImageUrl + "p03.jpg", meaning: "团队合作、专业的技能" },
-  { name: "星币十", emoji: "🏡", img: baseImageUrl + "p10.jpg", meaning: "财富传承、家庭、长期成功" }
+  { name: "愚者", emoji: "🚶‍♂️", meaning: "新的开始、自发性、信念的飞跃" },
+  { name: "魔术师", emoji: "🪄", meaning: "创造力、技能、意志力、显化" },
+  { name: "女祭司", emoji: "🌙", meaning: "直觉、潜意识、神秘" },
+  { name: "女皇", emoji: "👑", meaning: "丰收、母性、自然、富足" },
+  { name: "皇帝", emoji: "🏰", meaning: "权威、结构、逻辑、稳定" },
+  { name: "教皇", emoji: "📜", meaning: "传统、信仰、精神指引" },
+  { name: "恋人", emoji: "❤️", meaning: "爱、和谐、关系、价值观对齐" },
+  { name: "战车", emoji: " रथ", meaning: "控制、意志力、行动" },
+  { name: "力量", emoji: "🦁", meaning: "勇气、耐心、同情与温柔" },
+  { name: "隐士", emoji: "🏮", meaning: "灵魂探索、内省、内在指引" },
+  { name: "命运之轮", emoji: "🎡", meaning: "好运、业力、转折点" },
+  { name: "正义", emoji: "⚖️", meaning: "公平、真相、因果、平衡" },
+  { name: "倒吊人", emoji: "🦇", meaning: "暂停、放手、换个视角" },
+  { name: "死神", emoji: "💀", meaning: "结束、转变、彻底重生" },
+  { name: "节制", emoji: "⛲", meaning: "平衡、中庸、耐心、目的" },
+  { name: "恶魔", emoji: "👿", meaning: "沉迷、物质主义、束缚" },
+  { name: "高塔", emoji: "⚡", meaning: "突变、混乱、旧信念的崩塌" },
+  { name: "星星", emoji: "⭐", meaning: "希望、信念、灵感、治愈" },
+  { name: "月亮", emoji: "🌖", meaning: "幻觉、恐惧、潜意识" },
+  { name: "太阳", emoji: "☀️", meaning: "积极、活力、成功、快乐" },
+  { name: "审判", emoji: "📯", meaning: "重生、内在呼唤、宽恕" },
+  { name: "世界", emoji: "🌍", meaning: "完成、整合、成就、圆满" },
+  { name: "权杖一", emoji: "🔥", meaning: "灵感、新机会、成长" },
+  { name: "权杖二", emoji: "🗺️", meaning: "未来规划、决策" },
+  { name: "权杖三", emoji: "🚢", meaning: "远见、探索、扩张与合作" },
+  { name: "权杖十", emoji: "🪵", meaning: "重担、责任过重、压力" },
+  { name: "圣杯一", emoji: "💧", meaning: "纯粹的爱、创造力" },
+  { name: "圣杯二", emoji: "🥂", meaning: "统一、伴侣关系、平等结合" },
+  { name: "圣杯三", emoji: "🍻", meaning: "庆祝、友谊、社交聚会" },
+  { name: "圣杯十", emoji: "🌈", meaning: "神圣的爱、家庭、和谐" },
+  { name: "宝剑一", emoji: "🗡️", meaning: "突破、清晰、锐利的思想" },
+  { name: "宝剑二", emoji: "盲", meaning: "僵局、困难的选择、逃避现实" },
+  { name: "宝剑三", emoji: "💔", meaning: "心碎、悲痛、痛苦的分离" },
+  { name: "宝剑十", emoji: "📌", meaning: "痛苦的结局、背叛、低谷" },
+  { name: "星币一", emoji: "🪙", meaning: "新的财务机会、繁荣、物质" },
+  { name: "星币二", emoji: "🤹", meaning: "平衡、适应能力、资金管理" },
+  { name: "星币三", emoji: "🤝", meaning: "团队合作、专业的技能" },
+  { name: "星币十", emoji: "🏡", meaning: "财富传承、家庭、长期成功" }
 ];
 
 const spreadsOptions = {
@@ -59,13 +58,11 @@ let shuffledDeck = [];
 let isNightMode = false;
 
 window.onload = function() {
-  checkNightMode(); // 检测是否深夜
+  checkNightMode(); 
   initStarfield(); 
   renderSpread();
-  preloadImages(); 
 };
 
-// 6. 深夜模式检测
 function checkNightMode() {
   const hour = new Date().getHours();
   if (hour >= 22 || hour <= 4) {
@@ -76,15 +73,13 @@ function checkNightMode() {
   }
 }
 
-// 预加载所有图片，保证翻牌秒开
-function preloadImages() { deck.forEach(card => { const img = new Image(); img.src = card.img; }); }
-
 function shuffle(array) {
   let currentIndex = array.length, randomIndex;
   while (currentIndex !== 0) { randomIndex = Math.floor(Math.random() * currentIndex); currentIndex--; [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]]; }
   return array;
 }
 
+// 因为不要图片了，改回 Emoji 渲染方式
 function renderSpread() {
   const spreadType = document.getElementById("spreadSelect").value;
   currentSpreadLayout = spreadsOptions[spreadType];
@@ -100,8 +95,8 @@ function renderSpread() {
         <div class="card" id="card-${index}">
           <div class="card-face card-back">✧</div>
           <div class="card-face card-front">
-            <img id="img-${index}" class="tarot-image" src="" style="display:none;">
-            <div class="name-overlay" id="name-${index}">等待抽取</div>
+            <div class="emoji" id="emoji-${index}">❓</div>
+            <div class="name" id="name-${index}">等待抽取</div>
           </div>
         </div>
       </div>
@@ -109,7 +104,7 @@ function renderSpread() {
   });
 }
 
-/* VIP 付费墙逻辑 */
+/* 拦截流程：洗牌 -> 冥想 -> 划牌 */
 function checkVipAndStart() {
   const question = document.getElementById("questionInput").value.trim();
   if (!question) { alert("星空需要知道你的疑惑，请在上方输入问题。"); return; }
@@ -121,7 +116,7 @@ function checkVipAndStart() {
     confirmBtn.style.opacity = "1";
     document.getElementById("vipModal").style.display = "flex";
   } else {
-    startRitual();
+    startShuffling(); // 免费阵法直接进入洗牌
   }
 }
 function closeVipModal() { document.getElementById("vipModal").style.display = "none"; }
@@ -129,18 +124,32 @@ function confirmVip() {
   const confirmBtn = document.getElementById("vipConfirmBtn");
   confirmBtn.innerText = "🔄 正在核实能量交换...";
   confirmBtn.disabled = true; confirmBtn.style.opacity = "0.7";
-  setTimeout(() => { document.getElementById("vipModal").style.display = "none"; startRitual(); }, 3500);
+  setTimeout(() => { document.getElementById("vipModal").style.display = "none"; startShuffling(); }, 3500);
 }
 
-/* 冥想与抽牌交互 */
-function startRitual() {
+// 新增功能：洗牌动画
+function startShuffling() {
+  document.getElementById("controlPanel").style.display = "none";
+  playSound("drawSound"); // 播放洗牌音
+  if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 100]); // 手机震动模拟洗牌
+  
+  const shuffleArea = document.getElementById("shuffleArea");
+  shuffleArea.style.display = "flex";
+
+  // 洗牌 3 秒后进入冥想
+  setTimeout(() => {
+    shuffleArea.style.display = "none";
+    startMeditation();
+  }, 3000);
+}
+
+function startMeditation() {
   const overlay = document.getElementById("meditationOverlay");
   overlay.style.display = "flex";
-  document.getElementById("controlPanel").style.display = "none";
   
   setTimeout(() => {
     overlay.style.display = "none";
-    document.getElementById("deckArea").style.display = "block";
+    document.getElementById("deckArea").style.display = "flex";
     
     cardsDrawn = 0; drawnCardsData = []; shuffledDeck = shuffle([...deck]);
     const fanDeck = document.getElementById("fanDeck");
@@ -163,8 +172,7 @@ function startRitual() {
 
 function userDrawsOneCard(clickedCardElement) {
   playSound("drawSound"); 
-  // 5. 手机震动反馈
-  if (navigator.vibrate) navigator.vibrate(50);
+  if (navigator.vibrate) navigator.vibrate(50); // 抽牌单次震动
 
   clickedCardElement.classList.add("drawn");
   const cardData = shuffledDeck.pop();
@@ -176,7 +184,7 @@ function userDrawsOneCard(clickedCardElement) {
     cardName: cardData.name + reversedText,
     meaning: cardData.meaning,
     isReversed: isReversed,
-    img: cardData.img 
+    emoji: cardData.emoji // 记录 Emoji
   });
 
   const targetSlotCard = document.getElementById(`card-${cardsDrawn}`);
@@ -195,11 +203,10 @@ async function revealCardsAndRead() {
   for (let i = 0; i < requiredCardsCount; i++) {
     await new Promise(r => setTimeout(r, 600)); 
     playSound("revealSound"); 
-    if (navigator.vibrate) navigator.vibrate(100); // 翻牌重震
+    if (navigator.vibrate) navigator.vibrate(80); 
     
     const data = drawnCardsData[i];
-    const imgEl = document.getElementById(`img-${i}`);
-    imgEl.src = data.img; imgEl.style.display = "block";
+    document.getElementById(`emoji-${i}`).innerText = data.emoji;
     document.getElementById(`name-${i}`).innerText = data.cardName;
     
     const cardElement = document.getElementById(`card-${i}`);
@@ -208,7 +215,7 @@ async function revealCardsAndRead() {
   }
 
   const question = document.getElementById("questionInput").value.trim();
-  const userName = document.getElementById("nameInput").value.trim();
+  const userName = document.getElementById("nameInput") ? document.getElementById("nameInput").value.trim() : "";
   document.getElementById("readingWrapper").style.display = "block";
   document.getElementById("readingBox").classList.add("visible");
   
@@ -226,8 +233,7 @@ async function fetchStream(question, userName, cards) {
 
   try {
     const response = await fetch("/api/tarot", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+      method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ question, cards, userName, isNight: isNightMode })
     });
 
@@ -268,28 +274,22 @@ async function fetchStream(question, userName, cards) {
   } finally {
     cursor.style.display = "none";
     document.getElementById("actionBtns").style.display = "flex";
-    document.getElementById("saveBtn").style.display = "inline-block";
-    document.getElementById("restartBtn").style.display = "inline-block";
   }
 }
 
-/* 7. 每日一抽 (日签逻辑) */
+/* 7. 每日一抽 (日签逻辑，使用 Emoji) */
 async function startDailyDraw() {
   document.getElementById("controlPanel").style.display = "none";
   document.getElementById("spreadContainer").style.display = "none";
   document.getElementById("dailyCardArea").style.display = "block";
   document.getElementById("actionBtns").style.display = "flex";
-  document.getElementById("saveBtn").style.display = "inline-block";
-  document.getElementById("restartBtn").style.display = "inline-block";
   document.getElementById("dailyBtn").style.display = "none";
 
-  // 日期
   const today = new Date();
   document.getElementById("dailyDate").innerText = `${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日`;
 
-  // 随机抽一张大牌 (前22张)
   const randomMajor = deck[Math.floor(Math.random() * 22)];
-  document.getElementById("dailyImg").src = randomMajor.img;
+  document.getElementById("dailyEmoji").innerText = randomMajor.emoji;
   document.getElementById("dailyName").innerText = randomMajor.name;
 
   try {
@@ -308,14 +308,25 @@ async function startDailyDraw() {
   }
 }
 
-/* 音效与星空 */
+/* 音效、星空与分享截图 */
 let isMusicPlaying = false;
 function toggleMusic() {
   const bgMusic = document.getElementById("bgMusic"); const btn = document.getElementById("musicToggle");
-  if (isMusicPlaying) { bgMusic.pause(); btn.innerText = "🎵 灵性环境音"; } else { bgMusic.volume = 0.4; bgMusic.play(); btn.innerText = "🔇 关闭环境音"; }
+  // 浏览器可能会拦截，我们需要捕获异常
+  if (isMusicPlaying) { 
+      bgMusic.pause(); 
+      btn.innerText = "🎵 灵性环境音"; 
+  } else { 
+      bgMusic.volume = 0.4; 
+      let playPromise = bgMusic.play(); 
+      if (playPromise !== undefined) {
+          playPromise.then(_ => { btn.innerText = "🔇 关闭环境音"; }).catch(e => { alert("请先点击网页任意位置再开启音效"); });
+      }
+  }
   isMusicPlaying = !isMusicPlaying;
 }
 function playSound(id) { const audio = document.getElementById(id); audio.currentTime = 0; audio.volume = 0.7; audio.play().catch(e => {}); }
+
 function initStarfield() {
   const canvas = document.getElementById('starfield'); const ctx = canvas.getContext('2d'); let width, height, stars = [];
   function resize() { width = window.innerWidth; height = window.innerHeight; canvas.width = width; canvas.height = height; initStars(); }
