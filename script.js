@@ -1,48 +1,48 @@
 /* =================================================================
-   第一部分：全局变量与初始化 (完整维基百科高清图库)
+   第一部分：全局变量与初始化 (100%可用、无防盗链 GitHub 图床)
 ================================================================= */
 const deck = [
   // 大阿尔卡那 (22张)
-  { name: "愚者 (The Fool)", emoji: "🚶‍♂️", img: "https://upload.wikimedia.org/wikipedia/commons/9/90/RWS_Tarot_00_Fool.jpg", meaning: "新的开始、自发性、信念的飞跃、天真" },
-  { name: "魔术师 (The Magician)", emoji: "🪄", img: "https://upload.wikimedia.org/wikipedia/commons/d/de/RWS_Tarot_01_Magician.jpg", meaning: "创造力、技能、意志力、显化" },
-  { name: "女祭司 (The High Priestess)", emoji: "🌙", img: "https://upload.wikimedia.org/wikipedia/commons/8/88/RWS_Tarot_02_High_Priestess.jpg", meaning: "直觉、潜意识、内在声音、神秘" },
-  { name: "女皇 (The Empress)", emoji: "👑", img: "https://upload.wikimedia.org/wikipedia/commons/d/d2/RWS_Tarot_03_Empress.jpg", meaning: "丰收、母性、自然、富足、孕育" },
-  { name: "皇帝 (The Emperor)", emoji: "🏰", img: "https://upload.wikimedia.org/wikipedia/commons/c/c3/RWS_Tarot_04_Emperor.jpg", meaning: "权威、结构、逻辑、稳定、秩序" },
-  { name: "教皇 (The Hierophant)", emoji: "📜", img: "https://upload.wikimedia.org/wikipedia/commons/8/8d/RWS_Tarot_05_Hierophant.jpg", meaning: "传统、信仰系统、教育、精神指引" },
-  { name: "恋人 (The Lovers)", emoji: "❤️", img: "https://upload.wikimedia.org/wikipedia/commons/3/3a/TheLovers.jpg", meaning: "爱、和谐、关系、价值观的对齐" },
-  { name: "战车 (The Chariot)", emoji: " रथ", img: "https://upload.wikimedia.org/wikipedia/commons/9/9b/RWS_Tarot_07_Chariot.jpg", meaning: "控制、意志力、成功、行动" },
-  { name: "力量 (Strength)", emoji: "🦁", img: "https://upload.wikimedia.org/wikipedia/commons/f/f5/RWS_Tarot_08_Strength.jpg", meaning: "勇气、耐心、内心的力量" },
-  { name: "隐士 (The Hermit)", emoji: "🏮", img: "https://upload.wikimedia.org/wikipedia/commons/4/4d/RWS_Tarot_09_Hermit.jpg", meaning: "灵魂探索、内省、孤独、内在指引" },
-  { name: "命运之轮 (Wheel of Fortune)", emoji: "🎡", img: "https://upload.wikimedia.org/wikipedia/commons/3/3c/RWS_Tarot_10_Wheel_of_Fortune.jpg", meaning: "好运、业力、生命的循环、转折点" },
-  { name: "正义 (Justice)", emoji: "⚖️", img: "https://upload.wikimedia.org/wikipedia/commons/e/e0/RWS_Tarot_11_Justice.jpg", meaning: "公平、真相、因果法则、平衡" },
-  { name: "倒吊人 (The Hanged Man)", emoji: "🦇", img: "https://upload.wikimedia.org/wikipedia/commons/2/2b/RWS_Tarot_12_Hanged_Man.jpg", meaning: "暂停、放手、换个视角看问题、牺牲" },
-  { name: "死神 (Death)", emoji: "💀", img: "https://upload.wikimedia.org/wikipedia/commons/d/d7/RWS_Tarot_13_Death.jpg", meaning: "结束、转变、过渡、清理" },
-  { name: "节制 (Temperance)", emoji: "⛲", img: "https://upload.wikimedia.org/wikipedia/commons/f/f8/RWS_Tarot_14_Temperance.jpg", meaning: "平衡、中庸、耐心、目的" },
-  { name: "恶魔 (The Devil)", emoji: "👿", img: "https://upload.wikimedia.org/wikipedia/commons/5/55/RWS_Tarot_15_Devil.jpg", meaning: "沉迷、物质主义、束缚、阴暗面" },
-  { name: "高塔 (The Tower)", emoji: "⚡", img: "https://upload.wikimedia.org/wikipedia/commons/5/53/RWS_Tarot_16_Tower.jpg", meaning: "突变、混乱、旧信念的崩塌" },
-  { name: "星星 (The Star)", emoji: "⭐", img: "https://upload.wikimedia.org/wikipedia/commons/d/db/RWS_Tarot_17_Star.jpg", meaning: "希望、信念、灵感、治愈" },
-  { name: "月亮 (The Moon)", emoji: "🌖", img: "https://upload.wikimedia.org/wikipedia/commons/7/7f/RWS_Tarot_18_Moon.jpg", meaning: "幻觉、恐惧、焦虑、潜意识" },
-  { name: "太阳 (The Sun)", emoji: "☀️", img: "https://upload.wikimedia.org/wikipedia/commons/1/17/RWS_Tarot_19_Sun.jpg", meaning: "积极、活力、成功、快乐" },
-  { name: "审判 (Judgement)", emoji: "📯", img: "https://upload.wikimedia.org/wikipedia/commons/d/dd/RWS_Tarot_20_Judgment.jpg", meaning: "重生、内在呼唤、宽恕" },
-  { name: "世界 (The World)", emoji: "🌍", img: "https://upload.wikimedia.org/wikipedia/commons/f/ff/RWS_Tarot_21_World.jpg", meaning: "完成、整合、成就、旅行、圆满" },
+  { name: "愚者 (The Fool)", emoji: "🚶‍♂️", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/m00.jpg", meaning: "新的开始、自发性、信念的飞跃、天真" },
+  { name: "魔术师 (The Magician)", emoji: "🪄", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/m01.jpg", meaning: "创造力、技能、意志力、显化" },
+  { name: "女祭司 (The High Priestess)", emoji: "🌙", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/m02.jpg", meaning: "直觉、潜意识、内在声音、神秘" },
+  { name: "女皇 (The Empress)", emoji: "👑", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/m03.jpg", meaning: "丰收、母性、自然、富足、孕育" },
+  { name: "皇帝 (The Emperor)", emoji: "🏰", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/m04.jpg", meaning: "权威、结构、逻辑、稳定、秩序" },
+  { name: "教皇 (The Hierophant)", emoji: "📜", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/m05.jpg", meaning: "传统、信仰系统、教育、精神指引" },
+  { name: "恋人 (The Lovers)", emoji: "❤️", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/m06.jpg", meaning: "爱、和谐、关系、价值观的对齐" },
+  { name: "战车 (The Chariot)", emoji: " रथ", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/m07.jpg", meaning: "控制、意志力、成功、行动" },
+  { name: "力量 (Strength)", emoji: "🦁", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/m08.jpg", meaning: "勇气、耐心、内心的力量" },
+  { name: "隐士 (The Hermit)", emoji: "🏮", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/m09.jpg", meaning: "灵魂探索、内省、孤独、内在指引" },
+  { name: "命运之轮 (Wheel of Fortune)", emoji: "🎡", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/m10.jpg", meaning: "好运、业力、生命的循环、转折点" },
+  { name: "正义 (Justice)", emoji: "⚖️", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/m11.jpg", meaning: "公平、真相、因果法则、平衡" },
+  { name: "倒吊人 (The Hanged Man)", emoji: "🦇", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/m12.jpg", meaning: "暂停、放手、换个视角看问题、牺牲" },
+  { name: "死神 (Death)", emoji: "💀", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/m13.jpg", meaning: "结束、转变、过渡、清理" },
+  { name: "节制 (Temperance)", emoji: "⛲", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/m14.jpg", meaning: "平衡、中庸、耐心、目的" },
+  { name: "恶魔 (The Devil)", emoji: "👿", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/m15.jpg", meaning: "沉迷、物质主义、束缚、阴暗面" },
+  { name: "高塔 (The Tower)", emoji: "⚡", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/m16.jpg", meaning: "突变、混乱、旧信念的崩塌" },
+  { name: "星星 (The Star)", emoji: "⭐", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/m17.jpg", meaning: "希望、信念、灵感、治愈" },
+  { name: "月亮 (The Moon)", emoji: "🌖", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/m18.jpg", meaning: "幻觉、恐惧、焦虑、潜意识" },
+  { name: "太阳 (The Sun)", emoji: "☀️", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/m19.jpg", meaning: "积极、活力、成功、快乐" },
+  { name: "审判 (Judgement)", emoji: "📯", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/m20.jpg", meaning: "重生、内在呼唤、宽恕" },
+  { name: "世界 (The World)", emoji: "🌍", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/m21.jpg", meaning: "完成、整合、成就、旅行、圆满" },
 
-  // 小阿尔卡那精选 (代表性卡牌)
-  { name: "权杖一 (Ace of Wands)", emoji: "🔥", img: "https://upload.wikimedia.org/wikipedia/commons/1/11/Wands01.jpg", meaning: "灵感、新机会、成长" },
-  { name: "权杖二 (Two of Wands)", emoji: "🗺️", img: "https://upload.wikimedia.org/wikipedia/commons/0/0f/Wands02.jpg", meaning: "未来规划、决策、走出舒适区" },
-  { name: "权杖三 (Three of Wands)", emoji: "🚢", img: "https://upload.wikimedia.org/wikipedia/commons/f/ff/Wands03.jpg", meaning: "远见、探索、扩张与合作" },
-  { name: "权杖十 (Ten of Wands)", emoji: "🪵", img: "https://upload.wikimedia.org/wikipedia/commons/0/0b/Wands10.jpg", meaning: "重担、责任过重、压力" },
-  { name: "圣杯一 (Ace of Cups)", emoji: "💧", img: "https://upload.wikimedia.org/wikipedia/commons/3/36/Cups01.jpg", meaning: "纯粹的爱、新感情、创造力" },
-  { name: "圣杯二 (Two of Cups)", emoji: "🥂", img: "https://upload.wikimedia.org/wikipedia/commons/f/f8/Cups02.jpg", meaning: "统一、伴侣关系、平等结合" },
-  { name: "圣杯三 (Three of Cups)", emoji: "🍻", img: "https://upload.wikimedia.org/wikipedia/commons/7/7a/Cups03.jpg", meaning: "庆祝、友谊、社交聚会" },
-  { name: "圣杯十 (Ten of Cups)", emoji: "🌈", img: "https://upload.wikimedia.org/wikipedia/commons/8/84/Cups10.jpg", meaning: "神圣的爱、家庭、和谐" },
-  { name: "宝剑一 (Ace of Swords)", emoji: "🗡️", img: "https://upload.wikimedia.org/wikipedia/commons/1/1a/Swords01.jpg", meaning: "突破、清晰、锐利的思想" },
-  { name: "宝剑二 (Two of Swords)", emoji: "盲", img: "https://upload.wikimedia.org/wikipedia/commons/9/9e/Swords02.jpg", meaning: "僵局、困难的选择、逃避现实" },
-  { name: "宝剑三 (Three of Swords)", emoji: "💔", img: "https://upload.wikimedia.org/wikipedia/commons/0/02/Swords03.jpg", meaning: "心碎、悲痛、痛苦的分离" },
-  { name: "宝剑十 (Ten of Swords)", emoji: "📌", img: "https://upload.wikimedia.org/wikipedia/commons/d/d4/Swords10.jpg", meaning: "痛苦的结局、背叛、低谷" },
-  { name: "星币一 (Ace of Pentacles)", emoji: "🪙", img: "https://upload.wikimedia.org/wikipedia/commons/f/fd/Pents01.jpg", meaning: "新的财务机会、繁荣、物质" },
-  { name: "星币二 (Two of Pentacles)", emoji: "🤹", img: "https://upload.wikimedia.org/wikipedia/commons/9/9f/Pents02.jpg", meaning: "平衡、适应能力、资金管理" },
-  { name: "星币三 (Three of Pentacles)", emoji: "🤝", img: "https://upload.wikimedia.org/wikipedia/commons/4/42/Pents03.jpg", meaning: "团队合作、专业的技能" },
-  { name: "星币十 (Ten of Pentacles)", emoji: "🏡", img: "https://upload.wikimedia.org/wikipedia/commons/4/42/Pents10.jpg", meaning: "财富传承、家庭、长期成功" }
+  // 小阿尔卡那精选
+  { name: "权杖一 (Ace of Wands)", emoji: "🔥", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/w01.jpg", meaning: "灵感、新机会、成长" },
+  { name: "权杖二 (Two of Wands)", emoji: "🗺️", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/w02.jpg", meaning: "未来规划、决策、走出舒适区" },
+  { name: "权杖三 (Three of Wands)", emoji: "🚢", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/w03.jpg", meaning: "远见、探索、扩张与合作" },
+  { name: "权杖十 (Ten of Wands)", emoji: "🪵", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/w10.jpg", meaning: "重担、责任过重、压力" },
+  { name: "圣杯一 (Ace of Cups)", emoji: "💧", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/c01.jpg", meaning: "纯粹的爱、新感情、创造力" },
+  { name: "圣杯二 (Two of Cups)", emoji: "🥂", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/c02.jpg", meaning: "统一、伴侣关系、平等结合" },
+  { name: "圣杯三 (Three of Cups)", emoji: "🍻", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/c03.jpg", meaning: "庆祝、友谊、社交聚会" },
+  { name: "圣杯十 (Ten of Cups)", emoji: "🌈", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/c10.jpg", meaning: "神圣的爱、家庭、和谐" },
+  { name: "宝剑一 (Ace of Swords)", emoji: "🗡️", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/s01.jpg", meaning: "突破、清晰、锐利的思想" },
+  { name: "宝剑二 (Two of Swords)", emoji: "盲", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/s02.jpg", meaning: "僵局、困难的选择、逃避现实" },
+  { name: "宝剑三 (Three of Swords)", emoji: "💔", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/s03.jpg", meaning: "心碎、悲痛、痛苦的分离" },
+  { name: "宝剑十 (Ten of Swords)", emoji: "📌", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/s10.jpg", meaning: "痛苦的结局、背叛、低谷" },
+  { name: "星币一 (Ace of Pentacles)", emoji: "🪙", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/p01.jpg", meaning: "新的财务机会、繁荣、物质" },
+  { name: "星币二 (Two of Pentacles)", emoji: "🤹", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/p02.jpg", meaning: "平衡、适应能力、资金管理" },
+  { name: "星币三 (Three of Pentacles)", emoji: "🤝", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/p03.jpg", meaning: "团队合作、专业的技能" },
+  { name: "星币十 (Ten of Pentacles)", emoji: "🏡", img: "https://raw.githubusercontent.com/howarder3/tarot-json/master/src/assets/images/p10.jpg", meaning: "财富传承、家庭、长期成功" }
 ];
 
 const spreadsOptions = {
@@ -50,7 +50,7 @@ const spreadsOptions = {
   yesno: [{ label: "支持的力量" }, { label: "反对的力量" }, { label: "最终的答案" }],
   time: [{ label: "过去的因果" }, { label: "当下的现状" }, { label: "未来的趋势" }],
   relationship: [{ label: "你的现状" }, { label: "对方的状态" }, { label: "当前的阻碍" }, { label: "未来的走向" }],
-  cross: [{ label: "当下的核心问题" }, { label: "面临的阻碍" }, { label: "潜在的目标" }, { label: "深层的潜意识" }, { label: "最终的结局" }]
+  cross: [{ label: "当下的核心问题" }, { label: "面临的阻碍" }, { label: "潜在的目标" }, { label: "深层的潜意识" }, { label: "最终的可能结局" }]
 };
 
 let currentSpreadLayout = []; 
@@ -92,9 +92,7 @@ function renderSpread() {
         <div class="card" id="card-${index}">
           <div class="card-face card-back">✧</div>
           <div class="card-face card-front">
-            <!-- 图片区域，初始隐藏 -->
             <img id="img-${index}" class="tarot-image" src="" alt="tarot" style="display:none;">
-            <!-- 文字遮罩 -->
             <div class="name-overlay" id="name-${index}">等待抽取</div>
           </div>
         </div>
