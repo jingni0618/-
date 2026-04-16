@@ -22,7 +22,7 @@ window.onload = function() {
   isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   checkNightMode(); initStarfield(); renderSpread();
   
-  const introStr = isNightMode ? "亲爱的旅人，夜深了。\n闭上眼，告诉我你心中的困惑..." : "亲爱的旅人，欢迎来到命运星盘。\n深呼吸，告诉我你的困惑...";
+  const introStr = isNightMode ? "亲爱的旅人，夜深了。\n闭上眼，告诉我你心中的困惑..." : "亲爱的旅人，欢迎来到命运星盘。\n深呼吸，告诉我你最想问的是什么...";
   let i = 0;
   function typeIntro() {
     if(i < introStr.length) {
@@ -39,7 +39,11 @@ window.onload = function() {
 
 function checkNightMode() {
   const hour = new Date().getHours();
-  if (hour >= 22 || hour <= 4) { isNightMode = true; document.body.classList.add("night-mode"); document.getElementById("mainTitle").innerText = "🌙 深夜星盘"; }
+  if (hour >= 22 || hour <= 4) {
+    isNightMode = true;
+    document.body.classList.add("night-mode");
+    document.getElementById("mainSubtitle").innerText = "夜深星象更清晰，静心倾听宇宙。";
+  }
 }
 function shuffle(array) { let cur = array.length, rnd; while (cur !== 0) { rnd = Math.floor(Math.random() * cur); cur--; [array[cur], array[rnd]] = [array[rnd], array[cur]]; } return array; }
 function forcePlayMusic() { if (!isMusicPlaying) { const bgMusic = document.getElementById("bgMusic"); bgMusic.volume = 0.4; let p = bgMusic.play(); if (p !== undefined) { p.then(_ => { isMusicPlaying = true; document.getElementById("musicToggle").innerText = "🔇 静音"; }).catch(e => {}); } } }
@@ -47,7 +51,7 @@ function playSound(id) { const audio = document.getElementById(id); audio.curren
 
 function calculateSoulCard() {
   const input = document.getElementById("birthInput").value.trim();
-  if(!/^\d{8}$/.test(input)) { alert("请输入连续的8位数字，如 19950821 / Please enter 8 digits, e.g. 19950821"); return; }
+  if(!/^\d{8}$/.test(input)) { alert("请输入连续8位数字，如 19950821 / Please enter 8 digits, e.g. 19950821"); return; }
   let sum = 0; for(let char of input) sum += parseInt(char);
   while(sum > 22) { let temp = 0; for(let char of sum.toString()) temp += parseInt(char); sum = temp; }
   if(sum === 22) sum = 0; userSoulCard = deck[sum];
@@ -71,7 +75,7 @@ function renderSpread() {
 
 function checkVipAndStart(requireQuestion = true) {
   const q = document.getElementById("questionInput").value.trim();
-  if (requireQuestion && !q) { alert("星空需要知道你的疑惑... / The stars need to know your question..."); return; }
+  if (requireQuestion && !q) { alert("请先输入你的问题，星空才能回应。 / Please enter your question first so the stars can answer."); return; }
   if (requiredCardsCount > 3) {
     document.getElementById("vipModal").style.display = "flex";
     if (isMobile) { document.getElementById("mobilePayBtn").style.display = "block"; document.getElementById("pcPayBtn").style.display = "none"; } else { document.getElementById("mobilePayBtn").style.display = "none"; document.getElementById("pcPayBtn").style.display = "block"; }
@@ -244,10 +248,22 @@ function toggleMusic() {
 }
 
 function initStarfield() {
-  const canvas = document.getElementById('starfield'); const ctx = canvas.getContext('2d'); let width, height, stars = [];
+  const canvas = document.getElementById('starfield'); const ctx = canvas.getContext('2d'); let width, height, stars = [], shootingStars = [];
   function resize() { width = window.innerWidth; height = window.innerHeight; canvas.width = width; canvas.height = height; initStars(); }
-  function initStars() { stars = []; const numStars = window.innerWidth < 768 ? 100 : 180; const colors = ["rgba(255,255,255,", "rgba(240,220,165,", "rgba(195,160,90,"]; for (let i = 0; i < numStars; i++) { stars.push({ x: Math.random() * width, y: Math.random() * height, radius: Math.random() * 1.8 + 0.3, vx: (Math.random() - 0.5) * 12, vy: (Math.random() - 0.5) * 12, opacity: Math.random() * 0.8 + 0.2, color: colors[Math.floor(Math.random() * colors.length)] }); } }
-  function draw() { ctx.clearRect(0, 0, width, height); for (let star of stars) { star.x += star.vx / 100; star.y += star.vy / 100; if (star.x < 0 || star.x > width) star.vx = -star.vx; if (star.y < 0 || star.y > height) star.vy = -star.vy; star.opacity += (Math.random() - 0.5) * 0.08; star.opacity = Math.max(0.15, Math.min(1, star.opacity)); ctx.beginPath(); ctx.arc(star.x, star.y, star.radius, 0, 2 * Math.PI); ctx.fillStyle = `${star.color}${star.opacity})`; ctx.shadowColor = `${star.color}${star.opacity * 0.8})`; ctx.shadowBlur = star.radius * 2; ctx.fill(); ctx.shadowBlur = 0; } requestAnimationFrame(draw); }
+  function initStars() { stars = []; const numStars = window.innerWidth < 768 ? 90 : 180; const colors = ["rgba(255,255,255,", "rgba(240,220,165,", "rgba(195,160,90,"]; for (let i = 0; i < numStars; i++) { stars.push({ x: Math.random() * width, y: Math.random() * height, radius: Math.random() * 1.8 + 0.3, vx: (Math.random() - 0.5) * 12, vy: (Math.random() - 0.5) * 12, opacity: Math.random() * 0.8 + 0.15, color: colors[Math.floor(Math.random() * colors.length)] }); } shootingStars = []; }
+  function createShootingStar() { shootingStars.push({ x: Math.random() * width * 0.5 + width * 0.25, y: Math.random() * height * 0.4 + 20, length: Math.random() * 120 + 90, vx: Math.random() * 8 + 10, vy: Math.random() * 1.2 - 0.4, opacity: 0.85, life: 1 }); }
+  function draw() { ctx.clearRect(0, 0, width, height); for (let star of stars) { star.x += star.vx / 100; star.y += star.vy / 100; if (star.x < 0 || star.x > width) star.vx = -star.vx; if (star.y < 0 || star.y > height) star.vy = -star.vy; star.opacity += (Math.random() - 0.5) * 0.06; star.opacity = Math.max(0.15, Math.min(1, star.opacity)); ctx.beginPath(); ctx.arc(star.x, star.y, star.radius, 0, 2 * Math.PI); ctx.fillStyle = `${star.color}${star.opacity})`; ctx.shadowColor = `${star.color}${star.opacity * 0.8})`; ctx.shadowBlur = star.radius * 1.8; ctx.fill(); ctx.shadowBlur = 0; }
+    if (Math.random() < 0.008 && shootingStars.length < 3) createShootingStar();
+    for (let i = shootingStars.length - 1; i >= 0; i--) {
+      const sh = shootingStars[i]; sh.x += sh.vx; sh.y += sh.vy; sh.life -= 0.01; if (sh.x > width + 80 || sh.y < -50 || sh.life <= 0) { shootingStars.splice(i, 1); continue; }
+      const grad = ctx.createLinearGradient(sh.x, sh.y, sh.x - sh.length, sh.y - sh.length * 0.2);
+      grad.addColorStop(0, `rgba(255,255,255,${sh.opacity})`);
+      grad.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.strokeStyle = grad; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(sh.x, sh.y); ctx.lineTo(sh.x - sh.length, sh.y - sh.length * 0.2); ctx.stroke();
+      ctx.fillStyle = `rgba(255,255,255,${sh.opacity})`; ctx.beginPath(); ctx.arc(sh.x, sh.y, 2.2, 0, 2 * Math.PI); ctx.fill();
+    }
+    requestAnimationFrame(draw);
+  }
   window.addEventListener('resize', resize); resize(); draw();
 }
 
