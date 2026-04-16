@@ -64,18 +64,22 @@ function addHistoryRecord(record) {
 function renderHistory() {
   const card = document.getElementById("historyCardArea"); const list = document.getElementById("historyList");
   if (!card || !list) return;
+  card.style.display = "block";
+  list.innerHTML = "";
   if (historyRecords.length === 0) {
-    card.style.display = "block";
-    list.innerHTML = `<div class="history-item">暂无记录，开始你的第一场命运占卜。</div>`;
+    const item = document.createElement("div"); item.className = "history-item";
+    item.textContent = "暂无记录，开始你的第一场命运占卜。";
+    list.appendChild(item);
     return;
   }
-  card.style.display = "block";
-  list.innerHTML = historyRecords.map(r => `
-      <div class="history-item">
-        ${r.mode} · ${r.spread} · ${r.date}
-        <span>问题：${r.question || '未输入'} · 风格：${r.style}</span>
-      </div>
-    `).join('');
+  historyRecords.forEach(r => {
+    const item = document.createElement("div"); item.className = "history-item";
+    const title = document.createElement("div"); title.textContent = `${r.mode} · ${r.spread} · ${r.date}`;
+    const detail = document.createElement("span"); detail.textContent = `问题：${r.question || '未输入'} · 风格：${r.style}`;
+    item.appendChild(title);
+    item.appendChild(detail);
+    list.appendChild(item);
+  });
 }
 function clearHistory() { historyRecords = []; saveHistory(); renderHistory(); updateStatus("记录已清空，重新开始你的占卜旅程。"); }
 
