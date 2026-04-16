@@ -1,143 +1,106 @@
-/* 1. 基础重置与字体 (整体调亮) */
-body {
-  margin: 0; background-color: #1a1a2e; color: #f0f4f8;
-  font-family: "PingFang SC", "Helvetica Neue", serif;
-  display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden;
-}
+body { margin: 0; background-color: #1a1a2e; color: #f0f4f8; font-family: "PingFang SC", "Helvetica Neue", serif; display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
+#starfield { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -2; background: radial-gradient(circle at center, #2b1b3d 0%, #0d0614 100%); }
 
-#starfield {
-  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -1;
-  background: radial-gradient(circle at center, #2b1b3d 0%, #0d0614 100%);
-}
+/* 深夜模式遮罩 */
+.night-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0,0,0,0.6); z-index: -1; opacity: 0; pointer-events: none; transition: opacity 2s ease; }
+.night-mode .night-overlay { opacity: 1; }
 
-.container { text-align: center; padding: 40px 20px; width: 100%; max-width: 900px; position: relative; z-index: 1; }
-h1 { color: #f9d342; letter-spacing: 3px; text-shadow: 0 0 20px rgba(249, 211, 66, 0.6); font-weight: 400; font-size: 2.4rem; margin-bottom: 10px; }
-.subtitle { color: #a8b2d1; margin-bottom: 40px; font-size: 1rem; }
+.container { text-align: center; padding: 60px 20px 40px 20px; width: 100%; max-width: 900px; position: relative; z-index: 1; }
+h1 { color: #f9d342; letter-spacing: 3px; text-shadow: 0 0 20px rgba(249, 211, 66, 0.6); font-weight: 400; font-size: 2.2rem; margin-bottom: 10px; transition: color 1s;}
+.night-mode h1 { color: #b3c2e1; text-shadow: 0 0 20px rgba(179, 194, 225, 0.4); }
+.subtitle { color: #a8b2d1; margin-bottom: 40px; font-size: 0.95rem; }
 
-/* 2. 控制面板与输入框 (增加亮度和磨砂感) */
-.control-panel {
-  background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(249, 211, 66, 0.3); padding: 30px; border-radius: 16px;
-  max-width: 650px; margin: 0 auto 40px auto; text-align: left; backdrop-filter: blur(15px); box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-}
+/* 控制面板 */
+.control-panel { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(249, 211, 66, 0.3); padding: 30px; border-radius: 16px; max-width: 650px; margin: 0 auto 40px auto; text-align: left; backdrop-filter: blur(15px); box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
 .input-group { margin-bottom: 22px; }
 .input-group label { display: block; font-size: 14.5px; color: #f9d342; margin-bottom: 10px; font-weight: bold; }
-.input-group input, .input-group select {
-  width: 100%; padding: 14px 16px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(0, 0, 0, 0.2); color: white; font-size: 15px; box-sizing: border-box; transition: all 0.3s; appearance: none;
-}
-.input-group input:focus, .input-group select:focus { outline: none; border-color: #f9d342; box-shadow: 0 0 15px rgba(249, 211, 66, 0.3); background: rgba(0, 0, 0, 0.4); }
-select option { background: #2b1b3d; color: white; }
-optgroup { color: #f9d342; font-style: normal; font-weight: bold; background: #0d0614; }
+.night-mode .input-group label { color: #b3c2e1; }
+.input-group input, .input-group select { width: 100%; padding: 14px 16px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.2); background: rgba(0, 0, 0, 0.3); color: white; font-size: 15px; box-sizing: border-box; transition: all 0.3s; appearance: none; }
+.input-group input:focus, .input-group select:focus { outline: none; border-color: #f9d342; box-shadow: 0 0 15px rgba(249, 211, 66, 0.3); background: rgba(0, 0, 0, 0.5); }
+select option { background: #1a1a2e; color: white; }
+optgroup { color: #f9d342; font-weight: bold; background: #0d0614; }
 
-/* 3. 按钮样式 (更加明亮耀眼) */
-.main-btn, .save-btn {
-  background: linear-gradient(135deg, #f9d342 0%, #d4af37 100%); color: #1a1a2e; border: none; padding: 16px 30px; 
-  font-size: 1.1rem; font-weight: bold; border-radius: 30px; cursor: pointer; transition: all 0.3s; margin-top: 10px; letter-spacing: 2px; width: 100%;
-}
+/* 按钮 */
+.main-btn, .save-btn { background: linear-gradient(135deg, #f9d342 0%, #d4af37 100%); color: #1a1a2e; border: none; padding: 16px 30px; font-size: 1.1rem; font-weight: bold; border-radius: 30px; cursor: pointer; transition: all 0.3s; margin-top: 10px; letter-spacing: 2px; width: 100%; }
 .main-btn:hover, .save-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(249, 211, 66, 0.5); }
-.save-btn { width: auto; display: inline-block; margin-bottom: 40px; }
+.save-btn { width: auto; display: inline-block; margin-bottom: 0; }
 .save-btn.restart { background: transparent; border: 2px solid #f9d342; color: #f9d342; }
-.music-btn {
-  position: fixed; top: 20px; right: 20px; background: rgba(255,255,255,0.1); border: 1px solid #f9d342;
-  color: #f9d342; padding: 8px 15px; border-radius: 20px; cursor: pointer; z-index: 100; font-size: 12px; backdrop-filter: blur(8px);
-}
 
-/* 4. 扇形抽牌区 */
+/* 悬浮小按钮 */
+.music-btn { position: fixed; top: 20px; left: 20px; background: rgba(255,255,255,0.1); border: 1px solid #f9d342; color: #f9d342; padding: 8px 15px; border-radius: 20px; cursor: pointer; z-index: 100; font-size: 12px; backdrop-filter: blur(8px); }
+.daily-btn { position: fixed; top: 20px; right: 20px; background: rgba(249, 211, 66, 0.15); border: 1px solid #f9d342; color: #f9d342; padding: 8px 15px; border-radius: 20px; cursor: pointer; z-index: 100; font-size: 12px; backdrop-filter: blur(8px); font-weight: bold; transition: all 0.3s;}
+.daily-btn:hover { background: #f9d342; color: #1a1a2e; }
+
+/* 抽牌区 */
 .deck-area { margin: 40px 0; height: 250px; position: relative; }
 .ritual-text { color: #f9d342; font-weight: normal; margin-bottom: 5px; animation: pulseText 2s infinite; font-size: 1.2rem; }
 .fan-deck { position: relative; width: 100%; height: 200px; display: flex; justify-content: center; }
-.deck-card {
-  position: absolute; width: 80px; height: 140px; bottom: 0; background: radial-gradient(circle at center, #4b3e7c 0%, #2a1645 100%);
-  border: 1px solid rgba(249, 211, 66, 0.6); border-radius: 6px; transform-origin: bottom center; cursor: pointer; transition: transform 0.3s, margin-bottom 0.3s;
-  box-shadow: -2px 0 8px rgba(0,0,0,0.6);
-}
+.deck-card { position: absolute; width: 80px; height: 140px; bottom: 0; background: radial-gradient(circle at center, #4b3e7c 0%, #2a1645 100%); border: 1px solid rgba(249, 211, 66, 0.6); border-radius: 6px; transform-origin: bottom center; cursor: pointer; transition: transform 0.3s, margin-bottom 0.3s; box-shadow: -2px 0 8px rgba(0,0,0,0.6); }
 .deck-card:hover { transform: translateY(-20px) !important; border-color: #f9d342; z-index: 100 !important; box-shadow: 0 0 20px rgba(249, 211, 66, 0.9); }
 .deck-card.drawn { opacity: 0; pointer-events: none; }
 
-/* 5. 牌阵展示区与 3D 翻转 */
+/* 牌阵展示区 */
 .spread-container { display: flex; justify-content: center; gap: 20px; margin-bottom: 40px; flex-wrap: wrap; min-height: 320px; }
 .card-slot { width: 150px; height: 260px; perspective: 1000px; display: flex; flex-direction: column; }
 .slot-label { font-size: 14px; color: #f9d342; margin-bottom: 12px; opacity: 0; transition: opacity 0.5s; letter-spacing: 1px; font-weight: bold; }
 .slot-label.visible { opacity: 1; }
 
-.card {
-  width: 100%; height: 100%; position: relative; transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  transform-style: preserve-3d; opacity: 0; transform: scale(0.1) translateY(-500px);
-}
+.card { width: 100%; height: 100%; position: relative; transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); transform-style: preserve-3d; opacity: 0; transform: scale(0.1) translateY(-500px); }
 .card.dealt { opacity: 1; transform: scale(1) translateY(0); }
 .card.flipped { transform: rotateY(180deg); }
 .card.flipped.reversed { transform: rotateY(180deg) rotateZ(180deg); }
 
-.card-face {
-  position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 12px; overflow: hidden;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 12px 25px rgba(0,0,0,0.6); border: 2px solid #d4af37;
-  background-color: #fdfbf7;
-}
+.card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 12px 25px rgba(0,0,0,0.6); border: 2px solid #f9d342; background-color: #fdfbf7; }
 .card-back { background: radial-gradient(circle at center, #4b3e7c 0%, #2a1645 100%); color: rgba(249, 211, 66, 0.9); font-size: 45px; }
 .card-back::before { content: ''; position: absolute; width: 85%; height: 90%; border: 1px dashed rgba(249, 211, 66, 0.5); border-radius: 8px; }
-
 .card-front { transform: rotateY(180deg); background-color: #fdfbf7; position: relative; width: 100%; height: 100%; }
 .card-front img.tarot-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 10px; z-index: 1; }
-.card-front .name-overlay {
-  position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0, 0, 0, 0.75); color: #fff;
-  font-size: 13px; font-weight: 600; padding: 10px 0; text-align: center; backdrop-filter: blur(8px);
-  border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; z-index: 10;
-}
+.card-front .name-overlay { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0, 0, 0, 0.75); color: #fff; font-size: 13px; font-weight: 600; padding: 10px 0; text-align: center; backdrop-filter: blur(8px); border-bottom-left-radius: 10px; border-bottom-right-radius: 10px; z-index: 10; }
 
-/* 6. 冥想与弹窗 (包含微信二维码样式) */
+/* 朋友圈日签专属排版 */
+.daily-card-area { background: rgba(255,255,255,0.05); border: 1px solid rgba(249,211,66,0.4); padding: 30px; border-radius: 16px; max-width: 350px; margin: 0 auto 40px auto; backdrop-filter: blur(15px); box-shadow: 0 15px 40px rgba(0,0,0,0.5); }
+.daily-title { color: #f9d342; font-size: 1.5rem; font-weight: bold; letter-spacing: 2px; margin-bottom: 5px; }
+.daily-date { color: #a8b2d1; font-size: 0.9rem; margin-bottom: 25px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; }
+.daily-img { width: 100%; height: 420px; object-fit: cover; border-radius: 12px; border: 2px solid #d4af37; box-shadow: 0 10px 20px rgba(0,0,0,0.5); margin-bottom: 20px; }
+.daily-name { color: #fff; font-size: 1.3rem; font-weight: bold; margin-bottom: 15px; }
+.daily-quote { font-size: 1.1rem; line-height: 1.8; color: #e2e8f0; font-style: italic; text-align: left;}
+
+/* 冥想与打赏弹窗 */
 .meditation-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #0b0f19; z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .breathe-circle { width: 100px; height: 100px; border-radius: 50%; background: radial-gradient(circle, #f9d342 0%, transparent 70%); animation: breathe 4s ease-in-out infinite; opacity: 0.5; }
+.night-mode .breathe-circle { background: radial-gradient(circle, #b3c2e1 0%, transparent 70%); }
 .breathe-text { color: #f9d342; font-size: 1.2rem; margin-top: 30px; letter-spacing: 2px; }
 @keyframes breathe { 0% { transform: scale(1); opacity: 0.3; } 50% { transform: scale(2.5); opacity: 0.8; } 100% { transform: scale(1); opacity: 0.3; } }
 
 .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 100; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
-.modal-content { background: #2b1b3d; border: 1px solid #f9d342; padding: 30px; border-radius: 16px; text-align: center; max-width: 350px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
+.modal-content { background: #1a1a2e; border: 1px solid #f9d342; padding: 30px; border-radius: 16px; text-align: center; max-width: 320px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
 .modal-content h3 { color: #f9d342; margin-top: 0; font-size: 1.5rem; }
 .qr-container { background: #fff; padding: 10px; border-radius: 10px; margin: 20px auto; width: 220px; height: 220px; }
 .qr-container img { width: 100%; height: 100%; object-fit: contain; }
 .modal-btns { display: flex; justify-content: space-between; gap: 10px; margin-top: 20px;}
-.modal-btns button { margin-top: 0; padding: 12px 15px; font-size: 1rem; border-radius: 10px; }
-.cancel-btn { background: transparent !important; color: #a8b2d1 !important; border: 1px solid #a8b2d1 !important; width: 40%;}
+.modal-btns button { margin-top: 0; padding: 12px 10px; font-size: 0.95rem; border-radius: 10px; }
+.cancel-btn { background: transparent !important; color: #a8b2d1 !important; border: 1px solid #a8b2d1 !important; width: 35%;}
 .confirm-btn { flex: 1; background: #f9d342 !important; color: #1a1a2e !important; }
 
-/* 7. AI 解读流式输出区 (彻底杀灭空行和乱排版) */
-.loading-box { display: none; color: #f9d342; font-style: italic; margin-bottom: 30px; animation: pulseText 1.5s infinite; font-size: 1.15rem; font-weight: bold; }
+/* AI 解读流式输出区 (极简防崩溃排版) */
+.loading-box { display: none; color: #f9d342; margin-bottom: 30px; animation: pulseText 1.5s infinite; font-size: 1.15rem; font-weight: bold; }
 @keyframes pulseText { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+.reading-box { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(249, 211, 66, 0.3); padding: 40px; border-radius: 16px; line-height: 1.9; text-align: left; font-size: 1.05rem; backdrop-filter: blur(20px); color: #f0f4f8; font-family: "PingFang SC", serif !important; box-shadow: 0 15px 40px rgba(0,0,0,0.6); }
 
-.reading-wrapper { position: relative; max-width: 800px; margin: 0 auto; }
-.reading-box {
-  background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(249, 211, 66, 0.4); padding: 40px; border-radius: 16px;
-  display: none; line-height: 1.9; text-align: left; font-size: 1.15rem; backdrop-filter: blur(20px); color: #f0f4f8;
-  font-family: "PingFang SC", "Microsoft YaHei", sans-serif !important; box-shadow: 0 15px 40px rgba(0,0,0,0.6);
-}
-.reading-box.visible { display: block; animation: fadeIn 1s; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-/* 强制清除大模型带来的废话和空隙 */
+/* 强制重置大模型恶心的内部样式 */
 .stream-content { display: block; word-break: break-word; }
 .stream-content * { font-family: inherit !important; background-color: transparent !important; color: inherit !important; margin: 0 !important; padding: 0 !important; }
-
-/* 重新定义各元素的极致紧凑间距 */
-.stream-content h1, .stream-content h2, .stream-content h3, .stream-content h4, .stream-content h5 { 
-  color: #f9d342 !important; border-bottom: 1px solid rgba(249, 211, 66, 0.2) !important; 
-  padding-bottom: 8px !important; margin-top: 25px !important; margin-bottom: 10px !important; 
-  font-size: 1.35rem !important; font-weight: bold; display: block;
-}
+.stream-content h1, .stream-content h2, .stream-content h3, .stream-content h4, .stream-content h5 { color: #f9d342 !important; border-bottom: 1px solid rgba(249, 211, 66, 0.2) !important; padding-bottom: 8px !important; margin-top: 25px !important; margin-bottom: 10px !important; font-size: 1.25rem !important; font-weight: bold; display: block; }
 .stream-content h1:first-child, .stream-content h2:first-child, .stream-content h3:first-child, .stream-content h4:first-child { margin-top: 0 !important; }
-
 .stream-content ul { padding-left: 20px !important; margin-bottom: 15px !important; display: block; }
 .stream-content li { margin-bottom: 8px !important; }
 .stream-content p { margin-bottom: 12px !important; display: block; line-height: 1.8 !important;}
-
-/* 杀灭空行和无效标签的终极代码 */
 .stream-content p:empty, .stream-content br { display: none !important; }
+.stream-content strong, .stream-content b { color: #ffffff !important; font-weight: 800 !important; text-shadow: 0 0 5px rgba(255,255,255,0.3); }
 
-/* 高亮加粗和闪烁光标 */
-.stream-content strong, .stream-content b { color: #ffffff !important; font-weight: 800 !important; text-shadow: 0 0 5px rgba(255,255,255,0.4); }
 .typing-cursor { display: inline-block; width: 6px; height: 18px; background: #f9d342; vertical-align: middle; margin-left: 4px; animation: blink 1s step-end infinite; }
 @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
 
-/* 截图时的水印样式 */
 .share-only { display: none; text-align: center; color: #a8b2d1; font-size: 14px; font-style: italic; }
 #shareHeader { margin-bottom: 25px; font-size: 20px; color: #f9d342; letter-spacing: 3px; font-weight: bold; text-align: center; }
 #shareFooter { margin-top: 25px; border-top: 1px dashed #666; padding-top: 15px; text-align: center; }
