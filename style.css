@@ -1,5 +1,6 @@
 /* 基础与古典质感 */
-body { margin: 0; background-color: #0a0a0c; color: #d8c8b8; font-family: "Georgia", "Times New Roman", "PingFang SC", serif; display: flex; justify-content: center; min-height: 100vh; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; }
+body { margin: 0; background-color: #0a0a0c; color: #d8c8b8; font-family: "Georgia", "Times New Roman", "PingFang SC", serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
 #starfield { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -2; background: radial-gradient(circle at center, #1b1725 0%, #0a0a0c 100%); }
 .night-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0,0,0,0.65); z-index: -1; opacity: 0; pointer-events: none; transition: opacity 2s ease; }
 .night-mode .night-overlay { opacity: 1; }
