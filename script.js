@@ -107,6 +107,7 @@ function closeHistoryPanel() {
   document.getElementById("dailyCardArea").style.display = "none";
   aside.style.display = "none";
   document.getElementById("uiElements").style.display = "block";
+  setAsideMode(false);
   updateStatus("回到星盘界面，继续你的占卜旅程。");
 }
 function clearHistory() { historyRecords = []; saveHistory(); renderHistory(); updateStatus("记录已清空，重新开始你的占卜旅程。"); }
@@ -317,6 +318,7 @@ async function startDailyDraw() {
   forcePlayMusic();
   const aside = document.querySelector(".aside-panel");
   if (aside) aside.style.display = "flex";
+  setAsideMode(true);
   document.getElementById("uiElements").style.display = "none";
   document.getElementById("historyCardArea").style.display = "none";
   document.getElementById("dailyCardArea").style.display = "block";
@@ -334,6 +336,7 @@ async function startDailyDraw() {
   backBtn.onclick = () => {
     document.getElementById("dailyCardArea").style.display = "none";
     document.getElementById("uiElements").style.display = "block";
+    setAsideMode(false);
     updateStatus("回到星盘界面，继续你的占卜旅程。");
   };
   if(!document.getElementById("backBtnId")) { backBtn.id = "backBtnId"; document.getElementById("dailyCardArea").appendChild(backBtn); }
