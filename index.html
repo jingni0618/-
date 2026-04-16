@@ -31,30 +31,18 @@
     </div>
 
     <div class="container">
-      <button id="quickDrawTopBtn" class="primary-hero-btn" onclick="quickDrawSingleCard()">无需提问，直接抽取一张牌</button>
-      <div class="hero-hint">快速入口 · 直觉一键开启单牌神谕</div>
       <h1 id="mainTitle" class="classic-title">命运的星盘</h1>
-      <p id="mainSubtitle" class="subtitle">倾听宇宙的回音，洞见灵魂的轨迹</p>
-
-      <!-- 灵魂灵数计算器 -->
-      <div class="soul-calc-box">
-        <label>✨ 测算灵魂专属牌（选填）</label>
-        <div style="display: flex; gap: 10px; margin-top: 10px;">
-          <input type="text" id="birthInput" placeholder="出生年月 (如 19950821)" maxlength="8">
-          <button class="small-gold-btn" onclick="calculateSoulCard()">推演</button>
-        </div>
-        <div id="soulCardResult" class="soul-result" style="display: none;"></div>
-      </div>
+      <p id="mainSubtitle" class="subtitle">倾听宇宙的回音，洞见灵魂的轨迹 / Hear the cosmos, reveal your path</p>
 
       <!-- 控制面板 -->
       <div class="control-panel" id="controlPanel">
         <div class="input-group">
-          <label>你心中的疑惑是什么？/ What is your question?</label>
-          <input type="text" id="questionInput" placeholder="越具体，星空的启示越深刻...">
+          <label>你心中的疑惑是什么？ / What is your question?</label>
+          <input type="text" id="questionInput" placeholder="越具体，星空的启示越深刻... / The more specific, the deeper the guidance...">
         </div>
         
         <div class="input-group">
-          <label>请选择解牌流派：</label>
+          <label>请选择解牌流派 / Choose your reading tone:</label>
           <select id="styleSelect">
             <option value="classic">🔮 经典韦特流 (客观、睿智、中正)</option>
             <option value="healing">🌸 星空疗愈流 (极度温柔、情绪安抚)</option>
@@ -63,22 +51,25 @@
         </div>
 
         <div class="input-group">
-          <label>请选择星空牌阵：</label>
+          <label>请选择星空牌阵 / Choose the tarot spread:</label>
           <select id="spreadSelect" onchange="renderSpread()">
-            <optgroup label="基础指引（免费体验）">
-              <option value="single">单牌神谕（1张：直觉指引）</option>
-              <option value="yesno">是非决断阵（3张：支持/反对/答案）</option>
-              <option value="time">时间之流（3张：过去/现在/未来）</option>
+            <optgroup label="基础指引 / Free guidance">
+              <option value="single">单牌神谕（1张：直觉指引） / Single card insight</option>
+              <option value="yesno">是非决断阵（3张：支持/反对/答案） / Yes/No decision</option>
+              <option value="time">时间之流（3张：过去/现在/未来） / Past/Present/Future</option>
             </optgroup>
-            <optgroup label="👑 深度专栏（能量交换）">
-              <option value="relationship">情感透视阵（4张：你/对方/阻碍/未来）</option>
-              <option value="career">财富事业阵（4张：现状/机遇/风险/走向）</option>
-              <option value="choice">二选一岔路阵（5张：现状/选A/选B/A结局/B结局）</option>
-              <option value="cross" selected>灵感十字阵（5张：核心/阻碍/目标/潜意识/结局）</option>
+            <optgroup label="👑 深度专栏 / Premium spread">
+              <option value="relationship">情感透视阵（4张：你/对方/阻碍/未来） / Relationship lens</option>
+              <option value="career">财富事业阵（4张：现状/机遇/风险/走向） / Career path</option>
+              <option value="choice">二选一岔路阵（5张：现状/选A/选B/A结局/B结局） / Choice crossroads</option>
+              <option value="cross" selected>灵感十字阵（5张：核心/阻碍/目标/潜意识/结局） / Cross spread</option>
             </optgroup>
           </select>
         </div>
-        <button id="startBtn" class="main-btn" onclick="checkVipAndStart()">进入冥想与洗牌</button>
+        <div class="choice-row">
+          <button id="startBtn" class="main-btn" onclick="checkVipAndStart()">输入问题并测算 / Ask & Calculate</button>
+          <button id="quickDrawBtn" class="secondary-btn" onclick="quickDrawSingleCard()">直接抽取一张牌 / Direct draw</button>
+        </div>
       </div>
     </div>
   </div> 
@@ -99,6 +90,23 @@
   </div>
 
   <!-- 沉浸式交互区 -->
+  <div class="aside-panel">
+    <div class="daily-card-area" id="dailyCardArea" style="display: none;">
+      <div class="daily-title">今日神谕 / Daily Oracle</div>
+      <div class="daily-date" id="dailyDate"></div>
+      <div class="daily-emoji-card"><div id="dailyEmoji" class="daily-emoji">✨</div><div id="dailyName" class="daily-name">牌名 / Card</div></div>
+      <div class="daily-quote" id="dailyQuote">正在连线宇宙生成箴言... / Connecting with the cosmos...</div>
+    </div>
+    <div class="soul-calc-box" style="display: none;" id="asideSoulCalc">
+      <label>✨ 测算灵魂专属牌（选填） / Soul number reading (optional)</label>
+      <div style="display: flex; gap: 10px; margin-top: 10px;">
+        <input type="text" id="birthInput" placeholder="出生年月 (如 19950821)">
+        <button class="small-gold-btn" onclick="calculateSoulCard()">推演 / Reveal</button>
+      </div>
+      <div id="soulCardResult" class="soul-result" style="display: none;"></div>
+    </div>
+  </div>
+
   <div class="immersive-container">
     <!-- 能量交互文字 -->
     <div id="energyText" class="energy-text" style="display: none;"></div>
@@ -133,17 +141,17 @@
     </div>
     
     <div id="actionBtns" style="margin-top: 30px; display: none; justify-content: center; gap: 15px; padding-bottom: 50px;">
-      <button id="saveBtn" class="save-btn" onclick="saveAsImage()">📸 保存羊皮卷轴</button>
-      <button id="restartBtn" class="save-btn restart" onclick="window.location.reload()">重新占卜</button>
+      <button id="saveBtn" class="save-btn" onclick="saveAsImage()">📸 保存羊皮卷轴 / Save reading</button>
+      <button id="restartBtn" class="save-btn restart" onclick="window.location.reload()">重新占卜 / Restart</button>
     </div>
   </div>
 
   <!-- 日签展示区 -->
   <div id="dailyCardArea" class="daily-card-area" style="display: none;">
-      <div class="daily-title">今日神谕</div>
+      <div class="daily-title">今日神谕 / Daily Oracle</div>
       <div class="daily-date" id="dailyDate"></div>
-      <div class="daily-emoji-card"><div id="dailyEmoji" class="daily-emoji">✨</div><div id="dailyName" class="daily-name">牌名</div></div>
-      <div class="daily-quote" id="dailyQuote">正在连线宇宙生成箴言...</div>
+      <div class="daily-emoji-card"><div id="dailyEmoji" class="daily-emoji">✨</div><div id="dailyName" class="daily-name">牌名 / Card</div></div>
+      <div class="daily-quote" id="dailyQuote">正在连线宇宙生成箴言... / Connecting with the cosmos...</div>
   </div>
 
   <script src="script.js"></script>
