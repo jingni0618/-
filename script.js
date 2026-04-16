@@ -104,11 +104,8 @@ function showHistoryPanel() {
 }
 
 function closeHistoryPanel() {
-  const aside = document.querySelector(".aside-panel");
-  if (!aside) return;
   document.getElementById("historyCardArea").style.display = "none";
   document.getElementById("dailyCardArea").style.display = "none";
-  aside.style.display = "none";
   document.getElementById("uiElements").style.display = "block";
   setAsideMode(false);
   updateStatus("回到星盘界面，继续你的占卜旅程。");
@@ -319,8 +316,6 @@ async function fetchStream(question, style, userName, cards) {
 /* 日签逻辑 */
 async function startDailyDraw() {
   forcePlayMusic();
-  const aside = document.querySelector(".aside-panel");
-  if (aside) aside.style.display = "flex";
   setAsideMode(true);
   document.getElementById("uiElements").style.display = "none";
   document.getElementById("historyCardArea").style.display = "none";
