@@ -5,22 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>AI 塔罗占星师</title>
   <link rel="stylesheet" href="style.css">
+  <!-- 引入截屏插件，用于生成专属卡片 -->
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
 
-  <!-- 背景与音效 -->
+  <!-- 背景：动态星空 -->
   <canvas id="starfield"></canvas>
+
+  <!-- 全局音效 -->
   <audio id="bgMusic" loop src="https://assets.codepen.io/1468070/ambient-space.mp3" preload="auto"></audio>
   <audio id="drawSound" src="https://assets.codepen.io/1468070/card-flip.mp3" preload="auto"></audio>
   <audio id="revealSound" src="https://assets.codepen.io/1468070/chime.mp3" preload="auto"></audio>
+
+  <!-- 右上角环境音开关 -->
   <button id="musicToggle" class="music-btn" onclick="toggleMusic()">🎵 开启灵性环境音</button>
 
   <div class="container" id="captureArea">
     <h1>✨ 命运的星盘</h1>
     <p class="subtitle">倾听宇宙的回音，洞见灵魂的轨迹</p>
 
-    <!-- 控制面板 -->
+    <!-- 控制面板：输入问题与选择牌阵 -->
     <div class="control-panel" id="controlPanel">
       <div class="input-group">
         <label>你心中的疑惑是什么？</label>
@@ -41,10 +46,11 @@
           </optgroup>
         </select>
       </div>
+
       <button id="startBtn" class="main-btn" onclick="checkVipAndStart()">开始洗牌与展开</button>
     </div>
 
-    <!-- VIP 打赏弹窗 (换上了你真实的收款码) -->
+    <!-- VIP 打赏弹窗 (带你的真实二维码) -->
     <div id="vipModal" class="modal-overlay" style="display: none;">
       <div class="modal-content">
         <h3>👑 解锁深度命盘</h3>
@@ -53,7 +59,7 @@
         
         <!-- 你的真实微信收款码图片 -->
         <div class="qr-container">
-          <img src="https://i.postimg.cc/k47Zf9q0/wechat-pay.jpg" alt="微信赞赏码">
+          <img src="https://i.postimg.cc/vBRq8rJn/IMG-9022.jpg" alt="微信赞赏码">
         </div>
         
         <p style="font-size: 12px; color: #a8b2d1; margin-top: 15px;">（赞赏完成后，请点击下方按钮验证状态）</p>
@@ -65,37 +71,42 @@
       </div>
     </div>
 
-    <!-- 冥想呼吸遮罩 -->
+    <!-- 冥想呼吸遮罩 (增强仪式感) -->
     <div id="meditationOverlay" class="meditation-overlay" style="display: none;">
       <div class="breathe-circle"></div>
       <p class="breathe-text">深呼吸...将精神集中在你的问题上...</p>
     </div>
 
-    <!-- 洗牌交互区 -->
+    <!-- 洗牌交互区：用户自己抽牌的地方 (默认隐藏) -->
     <div id="deckArea" class="deck-area" style="display: none;">
       <h3 id="instructionText" class="ritual-text">凭直觉抽取 <span id="cardsLeft">0</span> 张牌</h3>
       <div class="fan-deck" id="fanDeck"></div>
     </div>
 
-    <!-- 牌阵展示区 -->
+    <!-- 牌阵展示区：被抽中的牌飞到这里 -->
     <div class="spread-container" id="spreadContainer"></div>
 
-    <!-- 流式输出报告区 -->
+    <!-- 加载动画和解读结果区域 -->
+    <div id="loadingBox" class="loading-box">🌌 宇宙磁场连接中，星空正在落笔...</div>
+    
+    <!-- 解读报告盒子 (带水印) -->
     <div class="reading-wrapper" id="readingWrapper">
       <div class="reading-box" id="readingBox">
         <h4 style="margin-top:0; color:#f9d342;">🌌 星空的启示正在生成...</h4>
         <div id="streamContent" class="stream-content"></div>
         <span id="cursor" class="typing-cursor"></span>
       </div>
+      <!-- 截图专属水印 (平时隐藏) -->
       <div id="shareHeader" class="share-only">✨ 我的星空启示 · AI塔罗占星师 ✨</div>
       <div id="shareFooter" class="share-only">扫码或访问 tarotwheel.top 开启你的占卜</div>
     </div>
     
-    <!-- 底部按钮 -->
+    <!-- 保存与重置按钮 (解析完毕后出现) -->
     <div style="margin-top: 30px;">
       <button id="saveBtn" class="save-btn" style="display: none;" onclick="saveAsImage()">📸 保存专属命运卡片</button>
       <button id="restartBtn" class="save-btn restart" style="display: none; margin-left: 15px;" onclick="window.location.reload()">重新占卜</button>
     </div>
+
   </div>
 
   <script src="script.js"></script>
