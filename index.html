@@ -9,34 +9,35 @@
 </head>
 <body>
 
-  <!-- 深夜模式遮罩 -->
+  <!-- 星空与深夜遮罩 -->
   <div id="nightOverlay" class="night-overlay"></div>
   <canvas id="starfield"></canvas>
 
-  <!-- 音效统管 (修复播放问题) -->
+  <!-- 音效统管 -->
   <audio id="bgMusic" loop src="https://cdn.pixabay.com/download/audio/2022/10/25/audio_244dc1f162.mp3"></audio>
   <audio id="drawSound" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_c6ccf3232f.mp3"></audio>
   <audio id="revealSound" src="https://cdn.pixabay.com/download/audio/2021/08/09/audio_dc39bde807.mp3"></audio>
 
-  <!-- 顶部操作栏 -->
-  <div class="top-nav">
-    <button id="musicToggle" class="icon-btn" onclick="toggleMusic()">🎵 静音</button>
-  </div>
-
-  <div class="container" id="mainContainer">
-    
-    <!-- 💡 痛点三解决：首屏 C 位的“今日神谕”入口 -->
-    <div class="daily-entrance" id="dailyEntrance">
-      <div class="daily-halo"></div>
-      <h3>✨ 抽取今日命运签</h3>
-      <p>无需困惑，倾听宇宙今天想对你说的话</p>
-      <button class="daily-btn" onclick="startDailyDraw()">开启今日指引</button>
+  <!-- 需要在沉浸模式下隐藏的所有 UI 元素都包裹在这里 -->
+  <div id="uiElements" class="ui-wrapper">
+    <div class="top-nav">
+      <button id="musicToggle" class="icon-btn" onclick="toggleMusic()">🎵 灵性环境音</button>
+      <button id="dailyBtn" class="icon-btn highlight" onclick="startDailyDraw()">✨ 今日神谕签</button>
     </div>
 
-    <!-- 深度占卜区 -->
-    <div class="divination-section" id="divinationSection">
-      <h1 id="mainTitle">命运星盘</h1>
-      <p id="mainSubtitle" class="subtitle">在迷茫时，向星空提问</p>
+    <div class="container">
+      <h1 id="mainTitle" class="classic-title">命运的星盘</h1>
+      <p id="mainSubtitle" class="subtitle">倾听宇宙的回音，洞见灵魂的轨迹</p>
+
+      <!-- 灵魂灵数计算器 -->
+      <div class="soul-calc-box">
+        <label>✨ 测算你的灵魂专属塔罗 (选填)</label>
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+          <input type="text" id="birthInput" placeholder="输入出生年月日 (如 19950821)" maxlength="8">
+          <button class="small-gold-btn" onclick="calculateSoulCard()">计算</button>
+        </div>
+        <div id="soulCardResult" class="soul-result" style="display: none;"></div>
+      </div>
 
       <!-- 控制面板 -->
       <div class="control-panel" id="controlPanel">
@@ -61,40 +62,32 @@
             </optgroup>
           </select>
         </div>
-        <button id="startBtn" class="main-btn" onclick="checkVipAndStart()">开始净化与洗牌</button>
+        <button id="startBtn" class="main-btn" onclick="checkVipAndStart()">进入冥想与洗牌</button>
       </div>
     </div>
+  </div> <!-- uiElements 结束 -->
 
-    <!-- 💡 痛点五解决：神级交互打赏弹窗 -->
-    <div id="vipModal" class="modal-overlay" style="display: none;">
-      <div class="modal-content">
-        <h3>👑 深度命盘解锁</h3>
-        <p style="font-size: 14px; margin-bottom: 10px; color: #a8b2d1;">高级牌阵将触发超长专业解析，宇宙需要等价的能量交换。</p>
-        
-        <div class="qr-container">
-          <img id="qrImage" src="https://i.postimg.cc/vBRq8rJn/IMG-9022.jpg" alt="微信赞赏码">
-        </div>
-        
-        <!-- 移动端神级体验按钮 -->
-        <button id="mobilePayBtn" class="confirm-btn pulse-btn" style="margin-top: 15px; width: 100%;" onclick="mobilePayFlow()">📱 保存收款码并前往微信赞赏 1 元</button>
-        
-        <!-- PC 端或回退按钮 -->
-        <div class="modal-btns" style="margin-top: 15px;">
-          <button onclick="closeVipModal()" class="cancel-btn">返回修改</button>
-          <button id="pcPayBtn" onclick="pcPayFlow()" class="confirm-btn" style="display: none;">✅ 我已扫码赞赏</button>
-        </div>
+  <!-- VIP 赞赏弹窗 -->
+  <div id="vipModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <h3 class="classic-title" style="font-size: 1.5rem; margin-top:0;">👑 解锁深度命盘</h3>
+      <p style="font-size: 13px; margin-bottom: 10px; color: #a8b2d1;">高级牌阵将触发千字专业长文解析，请交换一点能量以开启星空指引。</p>
+      <p style="font-size: 14px; color: #c5a059; font-weight: bold; margin-bottom: 15px;">👉 扫码或长按赞赏 1 元</p>
+      <div class="qr-container"><img id="qrImage" src="https://i.postimg.cc/vBRq8rJn/IMG-9022.jpg" alt="微信赞赏码"></div>
+      <button id="mobilePayBtn" class="confirm-btn pulse-btn" style="margin-top: 15px; width: 100%; display:none;" onclick="mobilePayFlow()">📱 保存二维码并前往微信</button>
+      <div class="modal-btns" style="margin-top: 15px;">
+        <button onclick="closeVipModal()" class="cancel-btn">返回修改</button>
+        <button id="pcPayBtn" onclick="pcPayFlow()" class="confirm-btn">✅ 我已赞赏，开启</button>
       </div>
     </div>
+  </div>
 
-    <!-- 💡 洗牌与冥想动画 -->
-    <div id="shuffleArea" class="deck-area" style="display: none; align-items: center; justify-content: center; flex-direction: column;">
-       <h3 class="ritual-text" style="animation: pulseText 1s infinite;">洗牌中...将潜意识注入星盘</h3>
+  <!-- 沉浸式动画区 (洗牌、划牌、展牌) -->
+  <div class="immersive-container">
+    
+    <div id="shuffleArea" class="deck-area" style="display: none;">
+       <h3 class="ritual-text">洗牌中...将潜意识注入星盘</h3>
        <div class="shuffling-deck"></div>
-    </div>
-
-    <div id="meditationOverlay" class="meditation-overlay" style="display: none;">
-      <div class="breathe-circle"></div>
-      <p id="breatheText" class="breathe-text">深呼吸...专注你的问题...</p>
     </div>
 
     <!-- 交互抽牌区 -->
@@ -103,44 +96,38 @@
       <div class="fan-deck" id="fanDeck"></div>
     </div>
 
-    <!-- 朋友圈日签专属展示区 -->
-    <div id="dailyCardArea" class="daily-card-area" style="display: none;">
-        <div class="daily-title">今日神谕</div>
-        <div class="daily-date" id="dailyDate"></div>
-        <div class="daily-emoji-card">
-           <div id="dailyEmoji" class="daily-emoji">✨</div>
-           <div id="dailyName" class="daily-name">牌名</div>
-        </div>
-        <div class="daily-quote" id="dailyQuote">正在连线宇宙生成箴言...</div>
-    </div>
-
-    <!-- 常规牌阵展示区 -->
+    <!-- 悬念揭秘与牌阵区 -->
+    <div id="revealInstruction" class="ritual-text" style="display: none; margin-top: 20px;">命运已就位，请依次点击牌背揭晓...</div>
     <div class="spread-container" id="spreadContainer"></div>
 
-    <!-- 💡 痛点一解决：陪伴式大模型流式输出区 -->
+    <!-- 羊皮纸长文解析区 -->
     <div class="reading-wrapper" id="readingWrapper" style="display: none;">
-      <div class="reading-box" id="readingBox">
+      <div class="parchment-box" id="readingBox">
         <div class="ai-status" id="aiStatus">
           <div class="crystal-ball">🔮</div>
-          <span style="color:#f9d342; font-weight:bold; letter-spacing:1px;">塔罗师正在为你推演星象...</span>
+          <span>大师正在为你推演星象...</span>
         </div>
-        <div id="streamContent" class="stream-content"></div>
+        <div id="streamContent" class="stream-content parchment-text"></div>
         <span id="cursor" class="typing-cursor"></span>
       </div>
+      <div id="shareHeader" class="share-only" style="color: #2c241b; font-weight: bold; margin-bottom: 20px;">✨ 命运星盘 · 专属占卜报告 ✨</div>
     </div>
     
-    <div style="margin-top: 30px; display: none; justify-content: center; gap: 15px;" id="actionBtns">
-      <!-- 💡 痛点二解决：海报级截图专属包裹区 (不可见，仅用于截图) -->
-      <div id="posterCaptureArea" class="poster-capture-area">
-         <div class="poster-header">✨ 我的星空启示 ✨</div>
-         <div class="poster-question" id="posterQuestion"></div>
-         <div class="poster-cards" id="posterCards"></div>
-         <div class="poster-quote" id="posterQuote"></div>
-         <div class="poster-footer">测算于 AI塔罗星盘 (tarotwheel.top)</div>
-      </div>
-      <button id="saveBtn" class="save-btn" onclick="generateHighEndPoster()">📸 生成专属命运海报</button>
+    <div id="actionBtns" style="margin-top: 30px; display: none; justify-content: center; gap: 15px; padding-bottom: 50px;">
+      <button id="saveBtn" class="save-btn" onclick="saveAsImage()">📸 保存羊皮卷轴</button>
       <button id="restartBtn" class="save-btn restart" onclick="window.location.reload()">重新占卜</button>
     </div>
+  </div>
+
+  <!-- 朋友圈日签专属展示区 (初始隐藏) -->
+  <div id="dailyCardArea" class="daily-card-area" style="display: none;">
+      <div class="daily-title">今日神谕</div>
+      <div class="daily-date" id="dailyDate"></div>
+      <div class="daily-emoji-card">
+         <div id="dailyEmoji" class="daily-emoji">✨</div>
+         <div id="dailyName" class="daily-name">牌名</div>
+      </div>
+      <div class="daily-quote" id="dailyQuote">正在连线宇宙生成箴言...</div>
   </div>
 
   <script src="script.js"></script>
