@@ -1,4 +1,6 @@
-/* 1. 基础数据 */
+/* =================================================================
+   第一部分：全局数据与映射
+================================================================= */
 const deck = [
   { name: "愚者", emoji: "🚶‍♂️", meaning: "新的开始、自发性、信念的飞跃" }, { name: "魔术师", emoji: "🪄", meaning: "创造力、技能、意志力" }, { name: "女祭司", emoji: "🌙", meaning: "直觉、潜意识、神秘" }, { name: "女皇", emoji: "👑", meaning: "丰收、母性、自然" }, { name: "皇帝", emoji: "🏰", meaning: "权威、结构、稳定" }, { name: "教皇", emoji: "📜", meaning: "传统、信仰、指引" }, { name: "恋人", emoji: "❤️", meaning: "爱、和谐、关系" }, { name: "战车", emoji: " रथ", meaning: "控制、意志力、行动" }, { name: "力量", emoji: "🦁", meaning: "勇气、耐心、温柔" }, { name: "隐士", emoji: "🏮", meaning: "灵魂探索、孤独、内省" }, { name: "命运之轮", emoji: "🎡", meaning: "好运、业力、转折点" }, { name: "正义", emoji: "⚖️", meaning: "公平、真相、因果" }, { name: "倒吊人", emoji: "🦇", meaning: "暂停、放手、换视角" }, { name: "死神", emoji: "💀", meaning: "结束、转变、彻底重生" }, { name: "节制", emoji: "⛲", meaning: "平衡、中庸、耐心" }, { name: "恶魔", emoji: "👿", meaning: "沉迷、物质主义、束缚" }, { name: "高塔", emoji: "⚡", meaning: "突变、混乱、崩塌" }, { name: "星星", emoji: "⭐", meaning: "希望、信念、治愈" }, { name: "月亮", emoji: "🌖", meaning: "幻觉、恐惧、潜意识" }, { name: "太阳", emoji: "☀️", meaning: "积极、活力、成功" }, { name: "审判", emoji: "📯", meaning: "重生、呼唤、宽恕" }, { name: "世界", emoji: "🌍", meaning: "完成、整合、圆满" },
   { name: "权杖一", emoji: "🔥", meaning: "灵感、新机会" }, { name: "权杖二", emoji: "🗺️", meaning: "未来规划、决策" }, { name: "权杖三", emoji: "🚢", meaning: "远见、探索" }, { name: "权杖十", emoji: "🪵", meaning: "重担、压力" },
@@ -18,14 +20,27 @@ const spreadsOptions = {
   cross: { cssClass: 'cross', cards: [{ label: "核心问题" }, { label: "面临的阻碍" }, { label: "潜在的目标" }, { label: "深层的潜意识" }, { label: "最终的结局" }] }
 };
 
-let currentSpreadConfig = {}; let requiredCardsCount = 0; let cardsDrawn = 0; let cardsFlipped = 0; let drawnCardsData = []; let shuffledDeck = []; let userSoulCard = null; let isMobile = false; let paymentPending = false; let isMusicPlaying = false; let isNightMode = false;
+let currentSpreadConfig = {}; 
+let requiredCardsCount = 0; 
+let cardsDrawn = 0; 
+let cardsFlipped = 0; 
+let drawnCardsData = []; 
+let shuffledDeck = []; 
+let userSoulCard = null; 
+let isMobile = false; 
+let paymentPending = false; 
+let isMusicPlaying = false; 
+let isNightMode = false; // [修复BUG] 确保定义了深夜变量
 
-/* [UX-1] 开场打字机动画 */
+/* =================================================================
+   第二部分：开场与基础渲染
+================================================================= */
 window.onload = function() {
   isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   checkNightMode(); initStarfield(); renderSpread();
   
-  const introStr = isNightMode ? "亲爱的旅人，夜深了。\n请将手放在胸口，告诉我你心中的困惑..." : "亲爱的旅人，欢迎来到命运星盘。\n深呼吸，告诉我你的困惑...";
+  // [UX-1] 打字机开场动画
+  const introStr = isNightMode ? "亲爱的旅人，夜深了。\n闭上眼，告诉我你心中的困惑..." : "亲爱的旅人，欢迎来到命运星盘。\n深呼吸，告诉我你的困惑...";
   let i = 0;
   function typeIntro() {
     if(i < introStr.length) {
@@ -48,19 +63,19 @@ function shuffle(array) { let cur = array.length, rnd; while (cur !== 0) { rnd =
 function forcePlayMusic() { if (!isMusicPlaying) { const bgMusic = document.getElementById("bgMusic"); bgMusic.volume = 0.4; let p = bgMusic.play(); if (p !== undefined) { p.then(_ => { isMusicPlaying = true; document.getElementById("musicToggle").innerText = "🔇 静音"; }).catch(e => {}); } } }
 function playSound(id) { const audio = document.getElementById(id); audio.currentTime = 0; audio.volume = 0.4; audio.play().catch(e => {}); }
 
-/* 灵魂计算器 */
+/* 灵魂卡牌推演 */
 function calculateSoulCard() {
   const input = document.getElementById("birthInput").value.trim();
-  if(!/^\d{8}$/.test(input)) { alert("请严格输入8位数字，如 19950821"); return; }
+  if(!/^\d{8}$/.test(input)) { alert("请输入连续的8位数字，如 19950821"); return; }
   let sum = 0; for(let char of input) sum += parseInt(char);
   while(sum > 22) { let temp = 0; for(let char of sum.toString()) temp += parseInt(char); sum = temp; }
   if(sum === 22) sum = 0; userSoulCard = deck[sum];
   const resBox = document.getElementById("soulCardResult");
-  resBox.innerHTML = `🔮 你的灵魂本命牌：<strong>${userSoulCard.name}</strong><br><span style="font-size:12px;">塔罗师已感知到你的灵魂底色</span>`;
+  resBox.innerHTML = `🔮 灵魂本命牌：<strong>${userSoulCard.name}</strong><br><span style="font-size:12px; color:#8e8579;">大师将在解盘时融入你的灵魂底色</span>`;
   resBox.style.display = "block";
 }
 
-/* 渲染带有物理结构的牌阵 */
+/* 渲染带有真实物理网格的牌阵 */
 function renderSpread() {
   const spreadType = document.getElementById("spreadSelect").value;
   currentSpreadConfig = spreadsOptions[spreadType];
@@ -68,15 +83,16 @@ function renderSpread() {
   
   const container = document.getElementById("spreadContainer"); 
   container.innerHTML = ""; 
-  // 动态赋予 CSS Class 来排列网格
   container.className = `spread-container layout-${currentSpreadConfig.cssClass}`;
 
   currentSpreadConfig.cards.forEach((pos, index) => {
-    container.innerHTML += `<div class="card-slot" id="slot-${index}"><div class="slot-label" id="label-${index}">${pos.label}</div><div class="card" id="card-${index}"><div class="card-face card-back">✧</div><div class="card-face card-front"><div class="emoji" id="emoji-${index}">❓</div><div class="name" id="name-${index}">等待抽取</div></div></div></div>`;
+    container.innerHTML += `<div class="card-slot" id="slot-${index}"><div class="slot-label" id="label-${index}">${pos.label}</div><div class="card" id="card-${index}"><div class="card-face card-back">✧</div><div class="card-face card-front"><div class="emoji" id="emoji-${index}">❓</div><div class="name" id="name-${index}">等待</div></div></div></div>`;
   });
 }
 
-/* VIP 打赏与 [UX-3] 能量吸收特效 */
+/* =================================================================
+   第三部分：交互流程 (VIP -> 隐退 -> 洗牌 -> 划牌 -> 点击翻秘)
+================================================================= */
 function checkVipAndStart() {
   const q = document.getElementById("questionInput").value.trim();
   if (!q) { alert("星空需要知道你的疑惑..."); return; }
@@ -102,10 +118,9 @@ document.addEventListener("visibilitychange", function() {
   }
 });
 
-/* [UX-2] 能量吸收与隐退动画 */
+/* [UX-2] 能量汇聚与 UI 沉浸式隐退 */
 function showEnergyEffect(isVip = false) {
   forcePlayMusic();
-  // 隐藏 UI，进入暗室
   document.getElementById("uiElements").classList.add("fade-out");
   const energyText = document.getElementById("energyText");
   energyText.innerText = isVip ? "能量已接收...深层的因果锁链已被解开" : "灵感已汇聚...星盘开始转动";
@@ -147,6 +162,7 @@ function userDrawsOneCard(clickedCardElement) {
     setTimeout(() => {
       document.getElementById("deckArea").style.display = "none"; 
       document.getElementById("revealInstruction").style.display = "block";
+      // 允许用户亲手点击每张牌背来揭开命运
       for(let i=0; i<requiredCardsCount; i++) { document.getElementById(`card-${i}`).onclick = function() { userFlipsCard(i); }; }
     }, 1000); 
   }
@@ -168,10 +184,14 @@ function userFlipsCard(i) {
     const question = document.getElementById("questionInput").value.trim();
     const style = document.getElementById("styleSelect").value;
     document.getElementById("readingWrapper").style.display = "block"; document.getElementById("readingBox").classList.add("visible");
+    // [修复BUG] 确保这里传入的参数正确
     fetchStream(question, style, drawnCardsData);
   }
 }
 
+/* =================================================================
+   第四部分：大模型通信 (修复解析消失Bug)
+================================================================= */
 async function fetchStream(question, style, cards) {
   const streamContent = document.getElementById("streamContent"); const cursor = document.getElementById("cursor");
   streamContent.innerHTML = ""; let htmlBuffer = "";
@@ -203,12 +223,15 @@ async function fetchStream(question, style, cards) {
     }
   } catch (error) { streamContent.innerHTML = `<span style="color:#ff6b6b">🔮 宇宙连接中断: ${error.message}</span>`;
   } finally {
+    // 隐藏加载状态，显示保存按钮，但绝不隐藏 readingWrapper 本身
     if(cursor) cursor.style.display = "none"; if(aiStatus) aiStatus.style.display = "none"; 
     const actionBtns = document.getElementById("actionBtns"); if(actionBtns) actionBtns.style.display = "flex";
   }
 }
 
-/* 7. 日签逻辑 */
+/* =================================================================
+   第五部分：日签逻辑、特效与保存
+================================================================= */
 async function startDailyDraw() {
   forcePlayMusic();
   document.getElementById("uiElements").style.display = "none"; document.getElementById("dailyCardArea").style.display = "block";
@@ -235,5 +258,7 @@ function initStarfield() {
   window.addEventListener('resize', resize); resize(); draw();
 }
 
-function toggleMusic() { const bgMusic = document.getElementById("bgMusic"); const btn = document.getElementById("musicToggle"); if (isMusicPlaying) { bgMusic.pause(); btn.innerText = "🎵 灵性环境音"; } else { bgMusic.volume = 0.4; let p = bgMusic.play(); if(p !== undefined) { p.then(_ => { btn.innerText = "🔇 静音"; }).catch(e => {}); } } isMusicPlaying = !isMusicPlaying; }
-function saveAsImage() { const captureArea = document.getElementById("readingWrapper"); document.getElementById("shareHeader").style.display = "block"; const btn = document.getElementById("saveBtn"); btn.innerText = "正在生成..."; btn.disabled = true; html2canvas(captureArea, { scale: 2, useCORS: true, backgroundColor: "#0a0a0c" }).then(canvas => { document.getElementById("shareHeader").style.display = "none"; btn.innerText = "📸 保存羊皮卷轴"; btn.disabled = false; const link = document.createElement("a"); link.download = "塔罗启示.png"; link.href = canvas.toDataURL("image/png"); link.click(); }); }
+function saveAsImage() {
+  const captureArea = document.getElementById("readingWrapper"); document.getElementById("shareHeader").style.display = "block"; const btn = document.getElementById("saveBtn"); btn.innerText = "正在卷起羊皮纸..."; btn.disabled = true;
+  html2canvas(captureArea, { scale: 2, useCORS: true, backgroundColor: "#0a0a0c" }).then(canvas => { document.getElementById("shareHeader").style.display = "none"; btn.innerText = "📸 保存羊皮卷轴"; btn.disabled = false; const link = document.createElement("a"); link.download = "塔罗启示.png"; link.href = canvas.toDataURL("image/png"); link.click(); }); 
+}

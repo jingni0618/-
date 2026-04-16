@@ -9,9 +9,11 @@
 </head>
 <body>
 
+  <!-- 星空与深夜遮罩 -->
   <div id="nightOverlay" class="night-overlay"></div>
   <canvas id="starfield"></canvas>
 
+  <!-- 音效统管 -->
   <audio id="bgMusic" loop src="https://cdn.pixabay.com/download/audio/2022/11/06/audio_29fb63d596.mp3"></audio>
   <audio id="drawSound" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_3d19114cb3.mp3"></audio>
   <audio id="revealSound" src="https://cdn.pixabay.com/download/audio/2022/02/10/audio_4d99430db6.mp3"></audio>
@@ -21,7 +23,7 @@
     <p id="introText" class="intro-text"></p>
   </div>
 
-  <!-- 主界面 (初始透明，打字结束后淡入) -->
+  <!-- 主界面 (初始透明) -->
   <div id="uiElements" class="ui-wrapper" style="opacity: 0;">
     <div class="top-nav">
       <button id="musicToggle" class="icon-btn" onclick="toggleMusic()">🎵 灵性环境音</button>
@@ -29,9 +31,10 @@
     </div>
 
     <div class="container">
-      <h1 id="mainTitle" class="classic-title">命运之轮</h1>
+      <h1 id="mainTitle" class="classic-title">命运的星盘</h1>
       <p id="mainSubtitle" class="subtitle">倾听宇宙的回音，洞见灵魂的轨迹</p>
 
+      <!-- 灵魂灵数计算器 -->
       <div class="soul-calc-box">
         <label>✨ 测算灵魂专属牌 (选填)</label>
         <div style="display: flex; gap: 10px; margin-top: 10px;">
@@ -41,6 +44,7 @@
         <div id="soulCardResult" class="soul-result" style="display: none;"></div>
       </div>
 
+      <!-- 控制面板 -->
       <div class="control-panel" id="controlPanel">
         <div class="input-group">
           <label>你心中的疑惑是什么？</label>
@@ -94,7 +98,7 @@
 
   <!-- 沉浸式交互区 -->
   <div class="immersive-container">
-    <!-- UX-3 & UX-2 能量交互文字 -->
+    <!-- 能量交互文字 -->
     <div id="energyText" class="energy-text" style="display: none;"></div>
 
     <div id="shuffleArea" class="deck-area" style="display: none;">
@@ -102,17 +106,24 @@
        <div class="shuffling-deck"></div>
     </div>
 
+    <div id="meditationOverlay" class="meditation-overlay" style="display: none;">
+      <div class="breathe-circle"></div><p class="breathe-text">深呼吸...专注你的问题...</p>
+    </div>
+
+    <!-- 交互抽牌区 -->
     <div id="deckArea" class="deck-area" style="display: none;">
       <h3 id="instructionText" class="ritual-text">请划动抽取 <span id="cardsLeft">0</span> 张牌</h3>
       <div class="fan-deck" id="fanDeck"></div>
     </div>
 
+    <!-- 悬念揭秘与牌阵区 -->
     <div id="revealInstruction" class="ritual-text" style="display: none; margin-top: 20px;">命运已就位，请依次点击牌背揭晓...</div>
     <div class="spread-container" id="spreadContainer"></div>
 
+    <!-- 羊皮纸长文解析区 -->
     <div class="reading-wrapper" id="readingWrapper" style="display: none;">
       <div class="parchment-box" id="readingBox">
-        <div class="ai-status" id="aiStatus"><div class="crystal-ball">🔮</div><span>塔罗师正在推演星象...</span></div>
+        <div class="ai-status" id="aiStatus"><div class="crystal-ball">🔮</div><span>塔罗师正在为你推演星象...</span></div>
         <div id="streamContent" class="stream-content parchment-text"></div>
         <span id="cursor" class="typing-cursor"></span>
       </div>
@@ -125,6 +136,7 @@
     </div>
   </div>
 
+  <!-- 日签展示区 -->
   <div id="dailyCardArea" class="daily-card-area" style="display: none;">
       <div class="daily-title">今日神谕</div>
       <div class="daily-date" id="dailyDate"></div>
