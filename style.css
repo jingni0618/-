@@ -1,6 +1,6 @@
 /* 基础与古典质感 */
 html, body { height: 100%; }
-body { margin: 0; background-color: #0a0a0c; color: #d8c8b8; font-family: "Georgia", "Times New Roman", "PingFang SC", serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
+body { margin: 0; background-color: #0a0a0c; color: #d8c8b8; font-family: "Georgia", "Times New Roman", "PingFang SC", serif; min-height: 100vh; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
 #starfield { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -2; background: radial-gradient(circle at center, #1b1725 0%, #0a0a0c 100%); }
 .night-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: rgba(0,0,0,0.65); z-index: -1; opacity: 0; pointer-events: none; transition: opacity 2s ease; }
 .night-mode .night-overlay { opacity: 1; }
@@ -10,7 +10,8 @@ body { margin: 0; background-color: #0a0a0c; color: #d8c8b8; font-family: "Georg
 .intro-text { color: #c5a059; font-size: 1.2rem; letter-spacing: 3px; font-style: italic; text-align: center; white-space: pre-wrap; line-height: 2; padding: 20px;}
 
 /* 核心修复：退场时彻底隐藏，不再占用空间 */
-.ui-wrapper { width: 100%; display: flex; flex-direction: column; align-items: center; transition: opacity 1s ease, transform 1s ease; position: relative;}
+#uiElements { width: 100%; display: flex; justify-content: center; padding: 50px 0 60px; box-sizing: border-box; }
+.ui-wrapper { width: min(100%, 920px); max-width: 920px; display: flex; flex-direction: column; align-items: center; margin: 0 auto; transition: opacity 1s ease, transform 1s ease; position: relative; }
 .ui-wrapper.fade-out { opacity: 0; pointer-events: none; transform: translateY(-20px); position: absolute; top: -9999px; height: 0; overflow: hidden; display: none; }
 .container { text-align: center; padding: 20px; width: 100%; max-width: 800px; z-index: 1; box-sizing: border-box; }
 
@@ -134,7 +135,7 @@ optgroup { color: #c5a059; background-color: #0a0a0c; font-style: normal; font-w
 .reading-keywords { background: rgba(109, 84, 56, 0.1); border-left: 4px solid #6d5438; padding: 15px; margin-bottom: 25px; font-weight: bold; color: #4a3622; font-family: "PingFang SC", sans-serif; border-radius: 0 8px 8px 0;}
 
 /* 日签卡片与分享 */
-.daily-card-area { background: rgba(20,20,25,0.8); border: 1px solid #c5a059; padding: 40px 30px; border-radius: 12px; max-width: 320px; margin: 40px auto; box-shadow: 0 15px 40px rgba(0,0,0,0.6); backdrop-filter: blur(10px); z-index: 10;}
+.daily-card-area { background: rgba(20,20,25,0.8); border: 1px solid #c5a059; padding: 40px 30px; border-radius: 12px; max-width: 320px; margin: 40px auto 60px; box-shadow: 0 15px 40px rgba(0,0,0,0.6); backdrop-filter: blur(10px); z-index: 10; text-align: center; }
 .daily-title { color: #c5a059; font-size: 1.4rem; font-weight: bold; letter-spacing: 2px; margin-bottom: 5px; }
 .daily-date { color: #8e8579; font-size: 0.85rem; margin-bottom: 20px; border-bottom: 1px dashed #444; padding-bottom: 15px; }
 .daily-emoji-card { width: 140px; height: 240px; background: #fdfbf7; background-image: radial-gradient(circle at top right, #ffffff 0%, #eee1c9 100%); border-radius: 8px; border: 2px solid #c5a059; box-shadow: 0 10px 20px rgba(0,0,0,0.5); margin: 0 auto 20px auto; display: flex; flex-direction: column; align-items: center; justify-content: center;}
