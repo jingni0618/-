@@ -62,16 +62,18 @@ function addHistoryRecord(record) {
   historyRecords.unshift(record); historyRecords = historyRecords.slice(0, 6); saveHistory(); renderHistory();
 }
 function renderHistory() {
-  const card = document.getElementById("historyCardArea"); const list = document.getElementById("historyList");
-  if (!card || !list) return;
-  card.style.display = "block";
+  const aside = document.querySelector(".aside-panel");
+  const card = document.getElementById("historyCardArea");
+  const list = document.getElementById("historyList");
+  if (!aside || !card || !list) return;
   list.innerHTML = "";
   if (historyRecords.length === 0) {
-    const item = document.createElement("div"); item.className = "history-item";
-    item.textContent = "暂无记录，开始你的第一场命运占卜。";
-    list.appendChild(item);
+    card.style.display = "none";
+    aside.style.display = "none";
     return;
   }
+  aside.style.display = "flex";
+  card.style.display = "block";
   historyRecords.forEach(r => {
     const item = document.createElement("div"); item.className = "history-item";
     const title = document.createElement("div"); title.textContent = `${r.mode} · ${r.spread} · ${r.date}`;
@@ -297,7 +299,10 @@ async function fetchStream(question, style, userName, cards) {
 /* 日签逻辑 */
 async function startDailyDraw() {
   forcePlayMusic();
-  document.getElementById("uiElements").style.display = "none"; document.getElementById("dailyCardArea").style.display = "block";
+  const aside = document.querySelector(".aside-panel");
+  if (aside) aside.style.display = "flex";
+  document.getElementById("uiElements").style.display = "none";
+  document.getElementById("dailyCardArea").style.display = "block";
   const today = new Date(); const dateCN = `${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日`; document.getElementById("dailyDate").innerText = dateCN;
   const randomMajor = deck[Math.floor(Math.random() * 22)];
   document.getElementById("dailyEmoji").innerText = randomMajor.emoji; document.getElementById("dailyName").innerText = randomMajor.name;

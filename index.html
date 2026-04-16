@@ -23,12 +23,13 @@
     <p id="introText" class="intro-text"></p>
   </div>
 
-  <!-- 主界面 (初始透明) -->
-  <div id="uiElements" class="ui-wrapper" style="opacity: 0;">
-    <div class="top-nav">
-      <button id="musicToggle" class="icon-btn" onclick="toggleMusic()">🎵 灵性环境音</button>
-      <button id="dailyBtn" class="icon-btn highlight" onclick="startDailyDraw()">✨ 今日神谕</button>
-    </div>
+  <div class="page-grid">
+    <!-- 主界面 (初始透明) -->
+    <div id="uiElements" class="ui-wrapper" style="opacity: 0;">
+      <div class="top-nav">
+        <button id="musicToggle" class="icon-btn" onclick="toggleMusic()">🎵 灵性环境音</button>
+        <button id="dailyBtn" class="icon-btn highlight" onclick="startDailyDraw()">✨ 今日神谕</button>
+      </div>
 
     <div class="container">
       <div class="hero-header">
@@ -89,21 +90,6 @@
         </div>
       </div>
     </div>
-  </div> 
-
-  <!-- VIP 赞赏弹窗 -->
-  <div id="vipModal" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
-      <h3 class="classic-title" style="font-size: 1.5rem; margin-top:0;">👑 解锁深度命盘</h3>
-      <p style="font-size: 13px; margin-bottom: 10px; color: #8e8579;">高级牌阵将解锁更深的专业解析，宇宙也需要等价的能量交换。</p>
-      <p style="font-size: 14px; color: #c5a059; font-weight: bold; margin-bottom: 15px;">👉 扫码或长按赞赏 1 元</p>
-      <div class="qr-container"><img id="qrImage" src="https://i.postimg.cc/vBRq8rJn/IMG-9022.jpg" alt="微信赞赏码"></div>
-      <button id="mobilePayBtn" class="confirm-btn pulse-btn" style="margin-top: 15px; width: 100%; display:none;" onclick="mobilePayFlow()">📱 保存二维码并前往微信</button>
-      <div class="modal-btns" style="margin-top: 15px;">
-        <button onclick="closeVipModal()" class="cancel-btn">返回</button>
-        <button id="pcPayBtn" onclick="pcPayFlow()" class="confirm-btn">✅ 我已赞赏</button>
-      </div>
-    </div>
   </div>
 
   <!-- 沉浸式交互区 -->
@@ -126,6 +112,21 @@
         <button class="small-gold-btn" onclick="calculateSoulCard()">推演</button>
       </div>
       <div id="soulCardResult" class="soul-result" style="display: none;"></div>
+    </div>
+  </div>
+
+  <!-- VIP 赞赏弹窗 -->
+  <div id="vipModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <h3 class="classic-title" style="font-size: 1.5rem; margin-top:0;">👑 解锁深度命盘</h3>
+      <p style="font-size: 13px; margin-bottom: 10px; color: #8e8579;">高级牌阵将解锁更深的专业解析，宇宙也需要等价的能量交换。</p>
+      <p style="font-size: 14px; color: #c5a059; font-weight: bold; margin-bottom: 15px;">👉 扫码或长按赞赏 1 元</p>
+      <div class="qr-container"><img id="qrImage" src="https://i.postimg.cc/vBRq8rJn/IMG-9022.jpg" alt="微信赞赏码"></div>
+      <button id="mobilePayBtn" class="confirm-btn pulse-btn" style="margin-top: 15px; width: 100%; display:none;" onclick="mobilePayFlow()">📱 保存二维码并前往微信</button>
+      <div class="modal-btns" style="margin-top: 15px;">
+        <button onclick="closeVipModal()" class="cancel-btn">返回</button>
+        <button id="pcPayBtn" onclick="pcPayFlow()" class="confirm-btn">✅ 我已赞赏</button>
+      </div>
     </div>
   </div>
 
