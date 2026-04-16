@@ -84,8 +84,12 @@ function renderHistory() {
 
 function setAsideMode(show) {
   const pageGrid = document.querySelector('.page-grid');
+  const aside = document.querySelector('.aside-panel');
   if (!pageGrid) return;
   pageGrid.classList.toggle('with-aside', show);
+  if (aside) {
+    aside.style.display = show ? 'flex' : 'none';
+  }
 }
 
 function showHistoryPanel() {
@@ -94,7 +98,6 @@ function showHistoryPanel() {
   document.getElementById("uiElements").style.display = "none";
   document.getElementById("dailyCardArea").style.display = "none";
   document.getElementById("historyCardArea").style.display = "block";
-  aside.style.display = "flex";
   setAsideMode(true);
   renderHistory();
   updateStatus("占卜记录已打开，查看你的历史占卜。");
