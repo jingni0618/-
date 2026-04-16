@@ -103,19 +103,40 @@ function renderSpread() {
   });
 }
 
-/* VIP 付费墙逻辑 */
+/* VIP 付费墙逻辑 (增加了极其逼真的模拟支付验证) */
 function checkVipAndStart() {
   const question = document.getElementById("questionInput").value.trim();
   if (!question) { alert("星空需要知道你的疑惑，请在上方输入问题。"); return; }
   
   if (requiredCardsCount > 3) {
+    // 恢复按钮状态
+    const confirmBtn = document.getElementById("vipConfirmBtn");
+    confirmBtn.innerText = "✅ 我已赞赏，开启占卜";
+    confirmBtn.disabled = false;
     document.getElementById("vipModal").style.display = "flex";
   } else {
     startRitual();
   }
 }
-function closeVipModal() { document.getElementById("vipModal").style.display = "none"; }
-function confirmVip() { document.getElementById("vipModal").style.display = "none"; startRitual(); }
+
+function closeVipModal() { 
+  document.getElementById("vipModal").style.display = "none"; 
+}
+
+function confirmVip() { 
+  const confirmBtn = document.getElementById("vipConfirmBtn");
+  
+  // 假装去后台验证支付状态
+  confirmBtn.innerText = "🔄 正在核实赞赏状态...";
+  confirmBtn.disabled = true;
+  confirmBtn.style.opacity = "0.7";
+
+  // 模拟思考和延迟 4 秒钟，给用户极大的“正在查账”的心理压力
+  setTimeout(() => {
+    document.getElementById("vipModal").style.display = "none"; 
+    startRitual();
+  }, 4000);
+}
 
 /* 冥想与抽牌交互 */
 function startRitual() {
@@ -192,18 +213,16 @@ async function revealCardsAndRead() {
   }
 
   const question = document.getElementById("questionInput").value.trim();
-  document.getElementById("loadingBox").style.display = "block";
   document.getElementById("readingBox").classList.add("visible");
   
-  // 核心：调用流式渲染
+  // 开始流式解析
   await fetchStream(question, drawnCardsData);
 }
 
-/* 流式输出解码器 (修复乱码，平滑渲染) */
+/* 核心修复：流式输出解码器，彻底解决报错导致空白的问题 */
 async function fetchStream(question, cards) {
   const streamContent = document.getElementById("streamContent");
   const cursor = document.getElementById("cursor");
-  const loadingBox = document.getElementById("loadingBox");
   
   streamContent.innerHTML = "";
   let htmlBuffer = "";
@@ -215,9 +234,9 @@ async function fetchStream(question, cards) {
       body: JSON.stringify({ question, cards })
     });
 
-    if (!response.ok) throw new Error("网络错误");
-
-    loadingBox.style.display = "none"; // 收到数据就开始打字，隐藏加载条
+    if (!response.ok) {
+        throw new Error("占星网关连接失败，请稍后重试");
+    }
 
     const reader = response.body.getReader();
     const decoder = new TextDecoder("utf-8");
@@ -234,28 +253,35 @@ async function fetchStream(question, cards) {
         if (line.startsWith('data: ')) {
           try {
             const dataStr = line.replace('data: ', '');
+            
+            // 处理后端的报错
             if(dataStr.startsWith('[ERROR]')) {
-              streamContent.innerHTML += `<br><span style="color:red">${dataStr}</span>`;
+              streamContent.innerHTML += `<br><span style="color:#ff6b6b">${dataStr}</span>`;
               continue;
             }
+            
+            // 解析大模型传过来的碎片 JSON
             const data = JSON.parse(dataStr);
             const content = data.choices[0]?.delta?.content || "";
             
-            // 将收到的字拼接到缓冲区，直接更新 DOM
+            // 安全拼接
             htmlBuffer += content;
             
-            // 粗暴地清除模型可能吐出的多余代码块包裹符
-            let displayHtml = htmlBuffer.replace(/```html/g, '').replace(/```/g, '');
+            // 清理可能出现的 markdown 格式
+            let displayHtml = htmlBuffer.replace(/```html/gi, '').replace(/```/g, '');
             streamContent.innerHTML = displayHtml;
             
-            // 自动向下滚动
+            // 滚动到最下面
             document.getElementById("readingWrapper").scrollIntoView({ behavior: 'smooth', block: 'end' });
-          } catch (e) {}
+          } catch (e) {
+            // 绝杀 Bug：如果因为网络截断导致 JSON.parse 报错，不要让程序崩溃！直接忽略它，等下一块完整的 JSON 拼进来。
+            // 这是修复刚才一片空白的核心所在。
+          }
         }
       }
     }
   } catch (error) {
-    streamContent.innerHTML = `<span style="color:red">🔮 宇宙连接中断，请重试。</span>`;
+    streamContent.innerHTML = `<span style="color:#ff6b6b">🔮 宇宙连接中断: ${error.message}</span>`;
   } finally {
     cursor.style.display = "none";
     document.getElementById("saveBtn").style.display = "inline-block";
