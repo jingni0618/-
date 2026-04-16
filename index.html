@@ -9,11 +9,11 @@
 </head>
 <body>
 
+  <!-- 背景与音效 -->
   <canvas id="starfield"></canvas>
   <audio id="bgMusic" loop src="https://assets.codepen.io/1468070/ambient-space.mp3" preload="auto"></audio>
   <audio id="drawSound" src="https://assets.codepen.io/1468070/card-flip.mp3" preload="auto"></audio>
   <audio id="revealSound" src="https://assets.codepen.io/1468070/chime.mp3" preload="auto"></audio>
-
   <button id="musicToggle" class="music-btn" onclick="toggleMusic()">🎵 开启灵性环境音</button>
 
   <div class="container" id="captureArea">
@@ -24,18 +24,18 @@
     <div class="control-panel" id="controlPanel">
       <div class="input-group">
         <label>你心中的疑惑是什么？</label>
-        <input type="text" id="questionInput">
+        <input type="text" id="questionInput" placeholder="越具体，星空的启示越清晰...">
       </div>
       
       <div class="input-group">
         <label>请选择你要使用的牌阵：</label>
         <select id="spreadSelect" onchange="renderSpread()">
-          <optgroup label="免费阵法 (基础指引)">
+          <optgroup label="基础指引 (免费)">
             <option value="single">单牌神谕 (1张：每日指引)</option>
             <option value="yesno">是非决断阵 (3张：支持/反对/答案)</option>
             <option value="time">时间之流 (3张：过去/现在/未来)</option>
           </optgroup>
-          <optgroup label="👑 深度专栏 (解锁可见)">
+          <optgroup label="👑 深度专栏 (打赏解锁)">
             <option value="relationship">情感/关系阵 (4张：你/对方/阻碍/未来)</option>
             <option value="cross">灵感十字阵 (5张：核心/阻碍/目标/潜意识/结局)</option>
           </optgroup>
@@ -44,21 +44,28 @@
       <button id="startBtn" class="main-btn" onclick="checkVipAndStart()">开始洗牌与展开</button>
     </div>
 
-    <!-- VIP 打赏弹窗 -->
+    <!-- VIP 打赏弹窗 (带你的真实二维码) -->
     <div id="vipModal" class="modal-overlay" style="display: none;">
       <div class="modal-content">
         <h3>👑 解锁深度命盘</h3>
-        <p>您选择的是高级牌阵，宇宙需要交换更多的能量。</p>
-        <p style="font-size: 13px; color: #a8b2d1;">（演示阶段：请点击“已赞赏”直接体验）</p>
-        <div class="qr-placeholder">📱 这里放你的微信赞赏码</div>
+        <p style="font-size: 14px; margin-bottom: 10px;">您选择的是高级牌阵，请交换一点能量以开启星空的指引。</p>
+        <p style="font-size: 15px; color: #f9d342; font-weight: bold; margin-bottom: 20px;">👉 请长按或扫码赞赏 1 元</p>
+        
+        <!-- 你的真实微信收款码图片 -->
+        <div class="qr-container">
+          <img src="https://file.elecho.dev/wechat_pay_jingni.jpg" alt="微信赞赏码" onerror="this.src='https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=pay'">
+        </div>
+        
+        <p style="font-size: 12px; color: #a8b2d1; margin-top: 15px;">（赞赏完成后，请点击下方按钮进入占卜）</p>
+        
         <div class="modal-btns">
-          <button onclick="closeVipModal()" class="cancel-btn">返回</button>
-          <button onclick="confirmVip()" class="confirm-btn">我已赞赏，开启占卜</button>
+          <button onclick="closeVipModal()" class="cancel-btn">返回修改牌阵</button>
+          <button onclick="confirmVip()" class="confirm-btn">✅ 我已赞赏，开启占卜</button>
         </div>
       </div>
     </div>
 
-    <!-- 冥想呼吸遮罩 (增强仪式感) -->
+    <!-- 冥想呼吸遮罩 -->
     <div id="meditationOverlay" class="meditation-overlay" style="display: none;">
       <div class="breathe-circle"></div>
       <p class="breathe-text">深呼吸...将精神集中在你的问题上...</p>
@@ -73,10 +80,10 @@
     <!-- 牌阵展示区 -->
     <div class="spread-container" id="spreadContainer"></div>
 
-    <!-- 打字机流式输出报告区 -->
+    <!-- 流式输出报告区 -->
     <div class="reading-wrapper" id="readingWrapper">
       <div class="reading-box" id="readingBox">
-        <h4 style="margin-top:0; color:#d4af37;">🌌 星空的启示正在生成...</h4>
+        <h4 style="margin-top:0; color:#f9d342;">🌌 星空的启示正在生成...</h4>
         <div id="streamContent" class="stream-content"></div>
         <span id="cursor" class="typing-cursor"></span>
       </div>
@@ -84,7 +91,8 @@
       <div id="shareFooter" class="share-only">扫码或访问 tarotwheel.top 开启你的占卜</div>
     </div>
     
-    <div style="margin-top: 20px;">
+    <!-- 底部按钮 -->
+    <div style="margin-top: 30px;">
       <button id="saveBtn" class="save-btn" style="display: none;" onclick="saveAsImage()">📸 保存专属命运卡片</button>
       <button id="restartBtn" class="save-btn restart" style="display: none; margin-left: 15px;" onclick="window.location.reload()">重新占卜</button>
     </div>

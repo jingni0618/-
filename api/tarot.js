@@ -12,16 +12,17 @@ export default async function handler(req, res) {
 
   const { question, cards } = req.body || {};
   
-  const promptContext = `你是一位拥有极高同理心的心理咨询师和塔罗牌解读大师。
-访客的问题是：“${question}”
-抽到的牌阵情况：
-${cards.map(c => `- ${c.position}: ${c.cardName}。核心含义：${c.meaning}`).join('\n')}
+  // 🚨 核心改动点：强制要求 AI 像一个接地气的好闺蜜一样解牌，严禁任何废话！
+  const promptContext = `你现在是我最懂塔罗牌的知心闺蜜，说话一针见血但不失温柔。
+我现在的疑惑是：“${question}”
+我抽到的牌阵情况如下：
+${cards.map(c => `- ${c.position}: 抽到了 ${c.cardName}。这代表 ${c.meaning}`).join('\n')}
 
-请给出一段富有神秘感、温柔的长篇解读。包含：
-1. 🔮 【命运的启示】：直接回应问题。
-2. 🌟 【牌面深度解析】：把牌串联成故事。
-3. ✨ 【行动建议】。
-要求：使用基础 HTML 标签排版（如 <h4>, <p>, <strong>）。绝对禁止输出 markdown 代码块和 <style> 标签。`;
+请你给我一份解牌报告。必须严格遵守以下规则：
+1. 【整体结论】：开头第一段必须用加粗的大白话（<p><strong>...</strong></p>），直接正面回答我的问题！不要用“能量”、“连接”等虚词，直接告诉我“大概率没戏”、“很有希望”或“你会成功”。
+2. 【拆解原因】：结合我抽到的具体牌，简短指出为什么会是这个结果。如果是测感情，就直接说对方现在怎么想的；如果是测工作，就说哪里有问题。
+3. 【行动建议】：最后给出 1-2 条我今天或明天就能照着做的大白话建议。比如“今天别发微信”、“赶紧去投简历”。
+4. 【排版要求】：你只能使用基础 HTML 标签排版（<h4>, <p>, <strong>, <ul>, <li>）。绝对禁止输出带有尖括号的普通文本！绝对禁止输出代码块符号（如 \`\`\`html）！绝对不要加任何 <style> 标签。`;
 
   try {
     const response = await fetch("https://api.deepseek.com/chat/completions", {
@@ -30,24 +31,20 @@ ${cards.map(c => `- ${c.position}: ${c.cardName}。核心含义：${c.meaning}`)
       body: JSON.stringify({
         model: "deepseek-chat", 
         messages: [
-          { "role": "system", "content": "你是一个极具同理心、只输出干净HTML的塔罗助手。" },
+          { "role": "system", "content": "你是一个说话极度直白、接地气、直接给出是或否结论的塔罗师。严格使用干净的 HTML 标签排版。" },
           { "role": "user", "content": promptContext }
         ],
-        temperature: 0.8,
-        stream: true // 开启流式传输！
+        temperature: 0.7,
+        stream: true 
       })
     });
 
-    if (!response.ok) {
-      return res.status(response.status).json({ error: 'DeepSeek 接口报错' });
-    }
+    if (!response.ok) { return res.status(response.status).json({ error: '大模型连接失败' }); }
 
-    // 设置响应头为流式数据
     res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
 
-    // 将大模型的水管直接接到客户端的水管上
     const reader = response.body.getReader();
     const decoder = new TextDecoder("utf-8");
 
