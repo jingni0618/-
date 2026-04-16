@@ -60,13 +60,16 @@ h1, h2, h3, h4, h5, h6 { font-family: "Georgia", "Times New Roman", serif; }
 .choice-row .secondary-btn:hover { background: rgba(38, 38, 58, 0.95); border-color: rgba(255,255,255,0.22); }
 .page-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(320px, 360px);
+  grid-template-columns: minmax(0, 1fr);
   gap: 24px;
   width: min(100%, 1320px);
   margin: 0 auto;
   padding: 20px 16px 0;
   box-sizing: border-box;
   align-items: start;
+}
+.page-grid.with-aside {
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 360px);
 }
 .aside-panel {
   display: none;
