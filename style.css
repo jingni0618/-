@@ -41,9 +41,12 @@ optgroup { color: #c5a059; background-color: #0a0a0c; font-style: normal; font-w
 
 /* 按钮与弹窗 */
 .main-btn, .save-btn { background: linear-gradient(135deg, #d4af37 0%, #a67c00 100%); color: #000; border: none; padding: 15px 30px; font-size: 1.1rem; font-weight: bold; border-radius: 6px; cursor: pointer; transition: all 0.3s; margin-top: 10px; letter-spacing: 2px; width: 100%; font-family: inherit; }
+.primary-hero-btn { background: linear-gradient(135deg, #f9dc7c 0%, #d09b2e 100%); color: #221900; border: none; padding: 18px 30px; font-size: 1.05rem; font-weight: bold; border-radius: 16px; box-shadow: 0 18px 40px rgba(212, 175, 55, 0.35); width: 100%; margin-bottom: 12px; letter-spacing: 1px; }
+.primary-hero-btn:hover { transform: translateY(-2px); box-shadow: 0 20px 48px rgba(212, 175, 55, 0.45); }
 .secondary-btn { background: transparent; color: #c5a059; border: 1px solid rgba(197, 160, 89, 0.6); padding: 14px 28px; margin-top: 12px; width: 100%; font-size: 0.95rem; letter-spacing: 1px; }
 .secondary-btn:hover { background: rgba(197,160,89,0.08); transform: translateY(-1px); }
-.hint-text { color: #8e8579; font-size: 0.88rem; margin-top: 8px; line-height: 1.5; text-align: center; }
+.hint-text, .hero-hint { color: #e5c677; font-size: 0.95rem; margin-top: 8px; line-height: 1.5; text-align: center; }
+.hero-hint { margin-bottom: 18px; font-weight: 600; }
 .main-btn:hover, .save-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(197, 160, 89, 0.3); }
 .save-btn { width: auto; display: inline-block; margin: 0; }
 .save-btn.restart { background: transparent; border: 1px solid #c5a059; color: #c5a059; }

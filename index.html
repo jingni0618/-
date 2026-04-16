@@ -27,18 +27,18 @@
   <div id="uiElements" class="ui-wrapper" style="opacity: 0;">
     <div class="top-nav">
       <button id="musicToggle" class="icon-btn" onclick="toggleMusic()">🎵 灵性环境音</button>
-      <button id="dailyBtn" class="icon-btn highlight" onclick="startDailyDraw()">✨ 今日神谕签</button>
+      <button id="dailyBtn" class="icon-btn highlight" onclick="startDailyDraw()">✨ 今日神谕</button>
     </div>
 
     <div class="container">
-      <button id="quickDrawTopBtn" class="secondary-btn" onclick="quickDrawSingleCard()">无需提问，直接抽取一张牌</button>
-      <div class="hint-text" style="margin-bottom:20px;">该方式将自动进入“单牌神谕”，适合快速直觉指引。</div>
+      <button id="quickDrawTopBtn" class="primary-hero-btn" onclick="quickDrawSingleCard()">无需提问，直接抽取一张牌</button>
+      <div class="hero-hint">快速入口 · 直觉一键开启单牌神谕</div>
       <h1 id="mainTitle" class="classic-title">命运的星盘</h1>
       <p id="mainSubtitle" class="subtitle">倾听宇宙的回音，洞见灵魂的轨迹</p>
 
       <!-- 灵魂灵数计算器 -->
       <div class="soul-calc-box">
-        <label>✨ 测算灵魂专属牌 (选填)</label>
+        <label>✨ 测算灵魂专属牌（选填）</label>
         <div style="display: flex; gap: 10px; margin-top: 10px;">
           <input type="text" id="birthInput" placeholder="出生年月 (如 19950821)" maxlength="8">
           <button class="small-gold-btn" onclick="calculateSoulCard()">推演</button>
@@ -49,7 +49,7 @@
       <!-- 控制面板 -->
       <div class="control-panel" id="controlPanel">
         <div class="input-group">
-          <label>你心中的疑惑是什么？</label>
+          <label>你心中的疑惑是什么？/ What is your question?</label>
           <input type="text" id="questionInput" placeholder="越具体，星空的启示越深刻...">
         </div>
         
@@ -65,22 +65,20 @@
         <div class="input-group">
           <label>请选择星空牌阵：</label>
           <select id="spreadSelect" onchange="renderSpread()">
-            <optgroup label="基础指引 (免费体验)">
-              <option value="single">单牌神谕 (1张：直觉指引)</option>
-              <option value="yesno">是非决断阵 (3张：支持/反对/答案)</option>
-              <option value="time">时间之流 (3张：过去/现在/未来)</option>
+            <optgroup label="基础指引（免费体验）">
+              <option value="single">单牌神谕（1张：直觉指引）</option>
+              <option value="yesno">是非决断阵（3张：支持/反对/答案）</option>
+              <option value="time">时间之流（3张：过去/现在/未来）</option>
             </optgroup>
-            <optgroup label="👑 深度专栏 (能量交换)">
-              <option value="relationship">情感透视阵 (4张：你/对方/阻碍/未来)</option>
-              <option value="career">财富事业阵 (4张：现状/机遇/风险/走向)</option>
-              <option value="choice">二选一岔路阵 (5张：现状/选A/选B/A结局/B结局)</option>
-              <option value="cross" selected>灵感十字阵 (5张：核心/阻碍/目标/潜意识/结局)</option>
+            <optgroup label="👑 深度专栏（能量交换）">
+              <option value="relationship">情感透视阵（4张：你/对方/阻碍/未来）</option>
+              <option value="career">财富事业阵（4张：现状/机遇/风险/走向）</option>
+              <option value="choice">二选一岔路阵（5张：现状/选A/选B/A结局/B结局）</option>
+              <option value="cross" selected>灵感十字阵（5张：核心/阻碍/目标/潜意识/结局）</option>
             </optgroup>
           </select>
         </div>
         <button id="startBtn" class="main-btn" onclick="checkVipAndStart()">进入冥想与洗牌</button>
-        <button id="quickDrawBtn" class="secondary-btn" onclick="checkVipAndStart(false)">无需问题，直接抽牌</button>
-        <div class="hint-text">不输入问题也可以开始，占卜会直接聚焦你当前的能量场。</div>
       </div>
     </div>
   </div> 

@@ -14,7 +14,6 @@ const spreadsOptions = {
   career: { cssClass: 'grid', cards: [{ label: "事业现状" }, { label: "潜在机遇" }, { label: "未知风险" }, { label: "财务走向" }] },
   choice: { cssClass: 'cross', cards: [{ label: "当前现状" }, { label: "选A的走向" }, { label: "选B的走向" }, { label: "选A结局" }, { label: "选B结局" }] },
   cross: { cssClass: 'cross', cards: [{ label: "核心问题" }, { label: "面临的阻碍" }, { label: "潜在的目标" }, { label: "深层的潜意识" }, { label: "最终的可能结局" }] }
-};
 
 let currentSpreadConfig = {}; let requiredCardsCount = 0; let cardsDrawn = 0; let cardsFlipped = 0; let drawnCardsData = []; let shuffledDeck = []; let userSoulCard = null; let isMobile = false; let paymentPending = false; let isMusicPlaying = false; let isNightMode = false;
 
@@ -47,12 +46,12 @@ function playSound(id) { const audio = document.getElementById(id); audio.curren
 
 function calculateSoulCard() {
   const input = document.getElementById("birthInput").value.trim();
-  if(!/^\d{8}$/.test(input)) { alert("请输入连续的8位数字，如 19950821"); return; }
+  if(!/^\d{8}$/.test(input)) { alert("请输入连续的8位数字，如 19950821 / Please enter 8 digits, e.g. 19950821"); return; }
   let sum = 0; for(let char of input) sum += parseInt(char);
   while(sum > 22) { let temp = 0; for(let char of sum.toString()) temp += parseInt(char); sum = temp; }
   if(sum === 22) sum = 0; userSoulCard = deck[sum];
   const resBox = document.getElementById("soulCardResult");
-  resBox.innerHTML = `🔮 灵魂本命牌：<strong>${userSoulCard.name}</strong><br><span style="font-size:12px; color:#8e8579;">大师将在解盘时融入你的灵魂底色</span>`;
+  resBox.innerHTML = `🔮 灵魂本命牌：<strong>${userSoulCard.name}</strong><br><span style="font-size:12px; color:#8e8579;">大师将在解盘时融入你的灵魂底色。</span>`;
   resBox.style.display = "block";
 }
 
@@ -71,7 +70,7 @@ function renderSpread() {
 
 function checkVipAndStart(requireQuestion = true) {
   const q = document.getElementById("questionInput").value.trim();
-  if (requireQuestion && !q) { alert("星空需要知道你的疑惑..."); return; }
+  if (requireQuestion && !q) { alert("星空需要知道你的疑惑... / The stars need to know your question..."); return; }
   if (requiredCardsCount > 3) {
     document.getElementById("vipModal").style.display = "flex";
     if (isMobile) { document.getElementById("mobilePayBtn").style.display = "block"; document.getElementById("pcPayBtn").style.display = "none"; } else { document.getElementById("mobilePayBtn").style.display = "none"; document.getElementById("pcPayBtn").style.display = "block"; }
@@ -89,7 +88,7 @@ function pcPayFlow() { const btn = document.getElementById("pcPayBtn"); btn.inne
 function mobilePayFlow() {
   const btn = document.getElementById("mobilePayBtn"); const imgUrl = document.getElementById("qrImage").src; btn.innerText = "🔄 正在跳转微信..."; paymentPending = true; 
   fetch(imgUrl).then(res => res.blob()).then(blob => {
-    const url = window.URL.createObjectURL(blob); const a = document.createElement('a'); a.style.display = 'none'; a.href = url; a.download = '微信赞赏码.jpg'; document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
+    const url = window.URL.createObjectURL(blob); const a = document.createElement('a'); a.style.display = 'none'; a.href = url; a.download = 'WeChat_Tip_QR.jpg'; document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
     setTimeout(() => { window.location.href = "weixin://"; btn.innerText = "扫码完成后请切回"; }, 1000);
   }).catch(() => { window.location.href = "weixin://"; btn.innerText = "请自行截图前往微信"; });
 }
@@ -192,7 +191,7 @@ async function fetchStream(question, style, userName, cards) {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ question: question, cards: cards, readingStyle: style, userName: userName, soulCard: userSoulCard, isNight: isNightMode })
     });
-    if (!response.ok) throw new Error("宇宙网关拥堵，请稍后重试");
+    if (!response.ok) throw new Error("宇宙网关拥堵，请稍后重试 / The cosmic gateway is busy, please try again later");
     const reader = response.body.getReader(); const decoder = new TextDecoder("utf-8");
 
     while (true) {
@@ -211,7 +210,7 @@ async function fetchStream(question, style, userName, cards) {
         }
       }
     }
-  } catch (error) { streamContent.innerHTML = `<span style="color:#ff6b6b">🔮 宇宙连接中断: ${error.message}</span>`;
+  } catch (error) { streamContent.innerHTML = `<span style="color:#ff6b6b">🔮 宇宙连接中断: ${error.message} / Connection to the cosmos failed</span>`;
   } finally {
     if(cursor) cursor.style.display = "none"; if(aiStatus) aiStatus.style.display = "none"; 
     const actionBtns = document.getElementById("actionBtns"); if(actionBtns) actionBtns.style.display = "flex";
@@ -222,7 +221,7 @@ async function fetchStream(question, style, userName, cards) {
 async function startDailyDraw() {
   forcePlayMusic();
   document.getElementById("uiElements").style.display = "none"; document.getElementById("dailyCardArea").style.display = "block";
-  const today = new Date(); document.getElementById("dailyDate").innerText = `${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日`;
+  const today = new Date(); const dateCN = `${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日`; document.getElementById("dailyDate").innerText = dateCN;
   const randomMajor = deck[Math.floor(Math.random() * 22)];
   document.getElementById("dailyEmoji").innerText = randomMajor.emoji; document.getElementById("dailyName").innerText = randomMajor.name;
 
@@ -253,5 +252,5 @@ function initStarfield() {
 
 function saveAsImage() {
   const captureArea = document.getElementById("readingWrapper"); document.getElementById("shareHeader").style.display = "block"; const btn = document.getElementById("saveBtn"); btn.innerText = "正在生成..."; btn.disabled = true;
-  html2canvas(captureArea, { scale: 2, useCORS: true, backgroundColor: "#0a0a0c" }).then(canvas => { document.getElementById("shareHeader").style.display = "none"; btn.innerText = "📸 保存羊皮卷轴"; btn.disabled = false; const link = document.createElement("a"); link.download = "塔罗启示.png"; link.href = canvas.toDataURL("image/png"); link.click(); }); 
+  html2canvas(captureArea, { scale: 2, useCORS: true, backgroundColor: "#0a0a0c" }).then(canvas => { document.getElementById("shareHeader").style.display = "none"; btn.innerText = "📸 保存羊皮卷轴"; btn.disabled = false; const link = document.createElement("a"); link.download = "Tarot_Oracle.png"; link.href = canvas.toDataURL("image/png"); link.click(); }); 
 }
