@@ -12,6 +12,48 @@ const spreadsOptions = {
   cross: { cssClass: 'cross', cards: [{ label: "核心问题" }, { label: "面临的阻碍" }, { label: "潜在的目标" }, { label: "深层的潜意识" }, { label: "最终的可能结局" }] }
 };
 
+import { fetchReading } from './api.js';
+import { playSound, updateStatus } from './ui.js';
+
+function userFlipsCard(index) {
+    console.log(`Entering userFlipsCard for card ${index}`);
+    const card = state.drawnCardsData[index];
+    if (!card || card.isFlipped) return;
+
+    const cardElement = document.getElementById(`card-${index}`);
+    if (!cardElement) return;
+
+    playSound("revealSound");
+    if (navigator.vibrate) navigator.vibrate(30);
+    cardElement.classList.add("flipped");
+    card.isFlipped = true;
+    state.incrementCardsFlipped();
+
+    document.getElementById(`emoji-${index}`).innerText = card.emoji;
+    document.getElementById(`name-${index}`).innerText = card.cardName.replace(/ \(.*?\)/, '');
+
+    updateStatus(`你翻开了【${card.cardName}】...`);
+
+    if (state.cardsFlipped === state.requiredCardsCount) {
+        console.log("All cards flipped, fetching reading...");
+        document.getElementById("revealInstruction").style.display = "none";
+        const readingWrapper = document.getElementById("readingWrapper");
+        readingWrapper.style.display = "block";
+        
+        const question = document.getElementById("questionInput").value;
+        const style = document.getElementById("styleSelect").value;
+        
+        fetchReading(
+            question,
+            style,
+            "默认用户", 
+            state.drawnCardsData,
+            null, 
+            state.isNightMode
+        );
+    }
+}
+
 function userDrawsOneCard(clickedCardElement) {
     console.log("Entering userDrawsOneCard");
     // playSound("drawSound"); 
@@ -26,7 +68,8 @@ function userDrawsOneCard(clickedCardElement) {
         cardName: cardData.name + reversedText, 
         meaning: cardData.meaning, 
         isReversed: isReversed, 
-        emoji: cardData.emoji 
+        emoji: cardData.emoji,
+        isFlipped: false
     });
 
     const targetSlotCard = document.getElementById(`card-${state.cardsDrawn}`);
@@ -45,8 +88,7 @@ function userDrawsOneCard(clickedCardElement) {
             // updateStatus("牌已到位，依次点击牌背揭晓答案。");
             for(let i=0; i<state.requiredCardsCount; i++) {
                 document.getElementById(`card-${i}`).onclick = function() { 
-                    // userFlipsCard(i); // This also needs to be implemented
-                    console.log(`Card ${i} clicked to be flipped`);
+                    userFlipsCard(i);
                 }; 
             }
         }, 1000);
