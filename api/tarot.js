@@ -1,8 +1,41 @@
+import crypto from 'node:crypto';
+
+function applyCors(req, res) {
+  const origin = req.headers.origin;
+  const allowed = (process.env.ALLOWED_ORIGINS || '').split(',').map(s => s.trim()).filter(Boolean);
+  const isAllowed = origin && allowed.includes(origin);
+
+  if (isAllowed) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Vary', 'Origin');
+  }
+
+  res.setHeader('Access-Control-Allow-Methods', 'POST,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+}
+
+function verifyVipToken(token, secret) {
+  if (!token || !secret) return false;
+  const parts = token.split('.');
+  if (parts.length !== 2) return false;
+
+  const payloadB64 = parts[0];
+  const signature = parts[1];
+  const expected = crypto.createHmac('sha256', secret).update(payloadB64).digest('hex');
+  if (signature !== expected) return false;
+
+  try {
+    const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf-8'));
+    if (!payload?.exp) return false;
+    return Date.now() < payload.exp;
+  } catch {
+    return false;
+  }
+}
+
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Credentials', true);
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version');
+  applyCors(req, res);
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: '只接受 POST 请求' });
@@ -10,7 +43,17 @@ export default async function handler(req, res) {
   const API_KEY = process.env.OPENAI_API_KEY;
   if (!API_KEY) return res.status(500).json({ error: '后端未配置 API Key' });
 
-  const { question, cards, readingStyle, soulCard, isDaily, isNight } = req.body || {};
+  const { question, cards, readingStyle, soulCard, isDaily, isNight, vipToken, fallbackShort } = req.body || {};
+  const safeCards = Array.isArray(cards) ? cards : [];
+  const vipUnlockCode = process.env.VIP_UNLOCK_CODE;
+  const vipSigningSecret = process.env.VIP_SIGNING_SECRET || API_KEY;
+
+  if (!isDaily && safeCards.length > 3 && vipUnlockCode) {
+    const ok = verifyVipToken(vipToken, vipSigningSecret);
+    if (!ok) {
+      return res.status(402).json({ error: '高级牌阵需要VIP解锁验证' });
+    }
+  }
   
   let promptContext = "";
   let systemRole = "";
@@ -20,7 +63,10 @@ export default async function handler(req, res) {
   // 模式 A：朋友圈日签模式
   if (isDaily) {
     systemRole = "你是一位极具诗意和疗愈感的占星诗人。";
-    promptContext = `今天抽到的日签是【${cards[0].cardName}】(核心含义:${cards[0].meaning})。
+    const dailyCard = safeCards[0] || {};
+    const dailyCardName = dailyCard.cardName || dailyCard.name || "未知之牌";
+    const dailyCardMeaning = dailyCard.meaning || "未知含义";
+    promptContext = `今天抽到的日签是【${dailyCardName}】(核心含义:${dailyCardMeaning})。
 写一段 60 字左右的绝美散文诗作为今日箴言。不要解释牌意，直接输出文字，不带任何标签。`;
   } 
   // 模式 B：超长专业解盘模式（动态流派）
@@ -32,12 +78,12 @@ export default async function handler(req, res) {
 
     if (isNight) styleDesc += " 此时正值深夜，你的语气要变得极度轻柔、催眠，安抚深夜容易焦虑的灵魂。";
     
-    systemRole = styleDesc + " 你必须输出 1000 - 1500 字的深度解析。";
+    systemRole = styleDesc + (fallbackShort ? " 你需要输出 250 - 450 字的简版解析。" : " 你必须输出 1000 - 1500 字的深度解析。");
     
     promptContext = `${soulCall}
 TA的疑惑：“${question}”
 抽到的阵法：
-${cards.map(c => `- ${c.position}: 抽到 ${c.cardName}。含义：${c.meaning}`).join('\n')}
+${safeCards.map(c => `- ${c.position}: 抽到 ${c.cardName}。含义：${c.meaning}`).join('\n')}
 
 你的解盘必须严格遵守以下结构和 HTML 排版：
 1. 必须强制提取3个关键词，格式为：<div class="reading-keywords">【命运箴言】：词1 | 词2 | 词3</div>
@@ -58,18 +104,18 @@ ${cards.map(c => `- ${c.position}: 抽到 ${c.cardName}。含义：${c.meaning}`
       body: JSON.stringify({
         model: "deepseek-chat", 
         messages: [
-          { "role": "system", "content": "你是一个严格遵守排版规则的高级占卜助手。" },
+          { "role": "system", "content": systemRole || "你是一个严格遵守排版规则的高级占卜助手。" },
           { "role": "user", "content": promptContext }
         ],
         temperature: isDaily ? 0.9 : 0.8,
-        max_tokens: isDaily ? 150 : 2500,
-        stream: !isDaily 
+        max_tokens: isDaily ? 150 : (fallbackShort ? 900 : 2500),
+        stream: !isDaily && !fallbackShort
       })
     });
 
     if (!response.ok) return res.status(response.status).json({ error: '大模型连接失败' });
 
-    if (isDaily) {
+    if (isDaily || fallbackShort) {
       const data = await response.json();
       return res.status(200).json({ reading: data.choices[0].message.content });
     }

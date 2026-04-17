@@ -26,8 +26,8 @@
   <!-- 主界面 (初始透明) -->
   <div id="uiElements" class="ui-wrapper" style="opacity: 0;">
     <div class="top-nav">
-      <button id="musicToggle" class="icon-btn" onclick="toggleMusic()">🎵 灵性环境音</button>
-      <button id="dailyBtn" class="icon-btn highlight" onclick="startDailyDraw()">✨ 今日神谕</button>
+      <button id="musicToggle" class="icon-btn">🎵 灵性环境音</button>
+      <button id="dailyBtn" class="icon-btn highlight">✨ 今日神谕</button>
     </div>
 
     <div class="container">
@@ -45,7 +45,7 @@
           <div class="choice-card__icon">✨</div>
           <div class="choice-card__feature">单张解读 · 直觉优先 · 立即启示</div>
           <div class="choice-card__footer">
-            <button id="quickDrawBtn" class="secondary-btn" onclick="quickDrawSingleCard()">直接抽一张</button>
+            <button id="quickDrawBtn" class="secondary-btn">直接抽一张</button>
           </div>
         </div>
 
@@ -68,7 +68,7 @@
             </div>
             <div class="input-group">
               <label>选择牌阵</label>
-              <select id="spreadSelect" onchange="renderSpread()">
+              <select id="spreadSelect">
                 <optgroup label="基础指引">
                   <option value="single">单牌神谕（1张：直觉指引）</option>
                   <option value="yesno">是非决断阵（3张：支持/反对/答案）</option>
@@ -84,7 +84,7 @@
             </div>
           </div>
           <div class="choice-card__footer">
-            <button id="startBtn" class="main-btn" onclick="checkVipAndStart()">开始问卜</button>
+            <button id="startBtn" class="main-btn">开始问卜</button>
           </div>
         </div>
       </div>
@@ -98,10 +98,14 @@
       <p style="font-size: 13px; margin-bottom: 10px; color: #8e8579;">高级牌阵将解锁更深的专业解析，宇宙也需要等价的能量交换。</p>
       <p style="font-size: 14px; color: #c5a059; font-weight: bold; margin-bottom: 15px;">👉 扫码或长按赞赏 1 元</p>
       <div class="qr-container"><img id="qrImage" src="https://i.postimg.cc/vBRq8rJn/IMG-9022.jpg" alt="微信赞赏码"></div>
-      <button id="mobilePayBtn" class="confirm-btn pulse-btn" style="margin-top: 15px; width: 100%; display:none;" onclick="mobilePayFlow()">📱 保存二维码并前往微信</button>
+      <div style="display: flex; gap: 8px; margin: 12px 0 8px;">
+        <input id="vipCodeInput" type="password" placeholder="输入解锁口令" style="flex:1; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.25); background: rgba(10,10,14,0.35); color:#f8e6b5;">
+        <button id="verifyVipBtn" class="confirm-btn" style="white-space: nowrap;">验证</button>
+      </div>
+      <button id="mobilePayBtn" class="confirm-btn pulse-btn" style="margin-top: 15px; width: 100%; display:none;">📱 保存二维码并前往微信</button>
       <div class="modal-btns" style="margin-top: 15px;">
-        <button onclick="closeVipModal()" class="cancel-btn">返回</button>
-        <button id="pcPayBtn" onclick="pcPayFlow()" class="confirm-btn">✅ 我已赞赏</button>
+        <button id="closeVipBtn" class="cancel-btn">返回</button>
+        <button id="pcPayBtn" class="confirm-btn">✅ 我已赞赏</button>
       </div>
     </div>
   </div>
@@ -117,15 +121,7 @@
     <div class="history-card" id="historyCardArea" style="display: none;">
       <div class="history-title">占卜记录</div>
       <div id="historyList" class="history-list"></div>
-      <button class="history-clear-btn" onclick="clearHistory()">清空记录</button>
-    </div>
-    <div class="soul-calc-box" style="display: none;" id="asideSoulCalc">
-      <label>✨ 测算灵魂专属牌（选填）</label>
-      <div style="display: flex; gap: 10px; margin-top: 10px;">
-        <input type="text" id="birthInput" placeholder="出生年月（如 19950821）">
-        <button class="small-gold-btn" onclick="calculateSoulCard()">推演</button>
-      </div>
-      <div id="soulCardResult" class="soul-result" style="display: none;"></div>
+      <button id="clearHistoryBtn" class="history-clear-btn">清空记录</button>
     </div>
   </div>
 
@@ -136,10 +132,6 @@
     <div id="shuffleArea" class="deck-area" style="display: none;">
        <h3 class="ritual-text">洗牌中...潜意识正在注入星盘</h3>
        <div class="shuffling-deck"></div>
-    </div>
-
-    <div id="meditationOverlay" class="meditation-overlay" style="display: none;">
-      <div class="breathe-circle"></div><p class="breathe-text">深呼吸，专注你的问题...</p>
     </div>
 
     <!-- 交互抽牌区 -->
@@ -163,9 +155,24 @@
     </div>
     
     <div id="actionBtns" class="action-btns" style="margin-top: 30px; display: none; justify-content: center; gap: 15px; padding-bottom: 50px;">
-      <button id="saveBtn" class="save-btn" onclick="saveAsImage()">📸 保存羊皮卷轴</button>
-      <button id="copyBtn" class="save-btn" onclick="copyReadingText()">📋 复制解读</button>
-      <button id="restartBtn" class="save-btn restart" onclick="window.location.reload()">重新占卜</button>
+      <select id="shareThemeSelect" class="share-theme-select">
+        <option value="parchment">羊皮卷主题</option>
+        <option value="night">夜空主题</option>
+        <option value="nebula">星云主题</option>
+      </select>
+      <button id="saveBtn" class="save-btn">📸 保存羊皮卷轴</button>
+      <button id="copyBtn" class="save-btn">📋 复制解读</button>
+      <button id="restartBtn" class="save-btn restart">重新占卜</button>
+    </div>
+  </div>
+
+  <div id="historyDetailModal" class="modal-overlay" style="display:none;">
+    <div class="modal-content" style="max-width: 620px; text-align: left;">
+      <h3 style="margin-top:0; color:#f6e6b5;">占卜详情</h3>
+      <div id="historyDetailBody" style="max-height: 58vh; overflow-y: auto; color:#eadfbe; line-height:1.7;"></div>
+      <div class="modal-btns" style="margin-top:16px;">
+        <button id="historyDetailCloseBtn" class="confirm-btn" style="width:100%;">关闭</button>
+      </div>
     </div>
   </div>
 

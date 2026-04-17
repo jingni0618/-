@@ -16,11 +16,13 @@ const spreadsOptions = {
   cross: { cssClass: 'cross', cards: [{ label: "核心问题" }, { label: "面临的阻碍" }, { label: "潜在的目标" }, { label: "深层的潜意识" }, { label: "最终的可能结局" }] }
 };
 
-let currentSpreadConfig = {}; let requiredCardsCount = 0; let cardsDrawn = 0; let cardsFlipped = 0; let drawnCardsData = []; let shuffledDeck = []; let userSoulCard = null; let isMobile = false; let paymentPending = false; let paymentConfirmed = false; let isMusicPlaying = false; let isNightMode = false;
+let currentSpreadConfig = {}; let requiredCardsCount = 0; let cardsDrawn = 0; let cardsFlipped = 0; let drawnCardsData = []; let shuffledDeck = []; let isMobile = false; let paymentPending = false; let isMusicPlaying = false; let isNightMode = false;
+const DAILY_CACHE_KEY = "tarotDailyReading";
+const VIP_TOKEN_KEY = "tarotVipToken";
 
 window.onload = function() {
   isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  checkNightMode(); initStarfield(); renderSpread(); loadHistory(); updateStatus("请选择占卜方式：直觉速取或深度问卜");
+  checkNightMode(); initStarfield(); renderSpread(); loadHistory(); initEventBindings(); updateStatus("请选择占卜方式：直觉速取或深度问卜");
   
   const introStr = isNightMode ? "亲爱的旅人，夜深了。\n闭上眼，告诉我你心中的困惑..." : "亲爱的旅人，欢迎来到命运星盘。\n深呼吸，告诉我你最想问的是什么...";
   let i = 0;
@@ -36,6 +38,24 @@ window.onload = function() {
   }
   typeIntro();
 };
+
+function initEventBindings() {
+  const byId = id => document.getElementById(id);
+  byId("musicToggle")?.addEventListener("click", toggleMusic);
+  byId("dailyBtn")?.addEventListener("click", startDailyDraw);
+  byId("quickDrawBtn")?.addEventListener("click", quickDrawSingleCard);
+  byId("startBtn")?.addEventListener("click", () => checkVipAndStart());
+  byId("spreadSelect")?.addEventListener("change", renderSpread);
+  byId("mobilePayBtn")?.addEventListener("click", mobilePayFlow);
+  byId("pcPayBtn")?.addEventListener("click", pcPayFlow);
+  byId("closeVipBtn")?.addEventListener("click", closeVipModal);
+  byId("verifyVipBtn")?.addEventListener("click", verifyVipUnlock);
+  byId("clearHistoryBtn")?.addEventListener("click", clearHistory);
+  byId("saveBtn")?.addEventListener("click", saveAsImage);
+  byId("copyBtn")?.addEventListener("click", copyReadingText);
+  byId("restartBtn")?.addEventListener("click", () => window.location.reload());
+  byId("historyDetailCloseBtn")?.addEventListener("click", closeHistoryDetail);
+}
 
 function checkNightMode() {
   const hour = new Date().getHours();
@@ -102,22 +122,53 @@ const HistoryService = {
     this.records.forEach(r => {
       const item = document.createElement("div");
       item.className = "history-item";
+      item.style.cursor = "pointer";
       const title = document.createElement("div");
       title.textContent = `${r.mode} · ${r.spread} · ${r.date}`;
       const detail = document.createElement("span");
       detail.textContent = `问题：${r.question || '未输入'} · 风格：${r.style}`;
       item.appendChild(title);
       item.appendChild(detail);
+      item.addEventListener("click", () => openHistoryDetail(r));
       list.appendChild(item);
     });
   }
 };
 
-function saveHistory() { HistoryService.save(); }
 function loadHistory() { HistoryService.load(); }
 function addHistoryRecord(record) { HistoryService.add(record); }
-function renderHistory() { HistoryService.render(); }
 function clearHistory() { HistoryService.clear(); updateStatus("记录已清空，重新开始你的占卜旅程。"); }
+
+function openHistoryDetail(record) {
+  const modal = document.getElementById("historyDetailModal");
+  const body = document.getElementById("historyDetailBody");
+  if (!modal || !body) return;
+
+  const cardsText = Array.isArray(record.cards) && record.cards.length
+    ? `<ul>${record.cards.map(c => `<li>${c.position || "位置"}：${c.cardName || c.name || "未知牌"}</li>`).join("")}</ul>`
+    : "<p>本次未保存牌面详情。</p>";
+
+  body.innerHTML = `
+    <p><strong>时间：</strong>${record.date || "未知"}</p>
+    <p><strong>模式：</strong>${record.mode || "占卜"}</p>
+    <p><strong>问题：</strong>${record.question || "未输入"}</p>
+    <p><strong>风格：</strong>${record.style || "classic"}</p>
+    <p><strong>牌阵：</strong>${record.spread || "未知"}</p>
+    <hr style="border-color: rgba(255,255,255,0.16); margin: 12px 0;">
+    <p><strong>牌面详情</strong></p>
+    ${cardsText}
+    <hr style="border-color: rgba(255,255,255,0.16); margin: 12px 0;">
+    <p><strong>解读节选</strong></p>
+    <div>${record.reading || "暂无解读正文。"}</div>
+  `;
+
+  modal.style.display = "flex";
+}
+
+function closeHistoryDetail() {
+  const modal = document.getElementById("historyDetailModal");
+  if (modal) modal.style.display = "none";
+}
 
 function copyReadingText() {
   const content = document.getElementById("streamContent"); if (!content) return;
@@ -131,17 +182,6 @@ function copyReadingText() {
 function shuffle(array) { let cur = array.length, rnd; while (cur !== 0) { rnd = Math.floor(Math.random() * cur); cur--; [array[cur], array[rnd]] = [array[rnd], array[cur]]; } return array; }
 function forcePlayMusic() { if (!isMusicPlaying) { const bgMusic = document.getElementById("bgMusic"); bgMusic.volume = 0.4; let p = bgMusic.play(); if (p !== undefined) { p.then(_ => { isMusicPlaying = true; document.getElementById("musicToggle").innerText = "🔇 静音"; }).catch(e => {}); } } }
 function playSound(id) { const audio = document.getElementById(id); audio.currentTime = 0; audio.volume = 0.4; audio.play().catch(e => {}); }
-
-function calculateSoulCard() {
-  const input = document.getElementById("birthInput").value.trim();
-  if(!/^\d{8}$/.test(input)) { alert("请输入连续8位数字，如 19950821"); return; }
-  let sum = 0; for(let char of input) sum += parseInt(char);
-  while(sum > 22) { let temp = 0; for(let char of sum.toString()) temp += parseInt(char); sum = temp; }
-  if(sum === 22) sum = 0; userSoulCard = deck[sum];
-  const resBox = document.getElementById("soulCardResult");
-  resBox.innerHTML = `🔮 灵魂本命牌：<strong>${userSoulCard.name}</strong><br><span style="font-size:12px; color:#8e8579;">大师将在解盘时融入你的灵魂底色。</span>`;
-  resBox.style.display = "block";
-}
 
 /* 核心修复：渲染空卡牌，默认先隐藏（display:none），冥想结束后才出现 */
 function renderSpread() {
@@ -160,13 +200,13 @@ function checkVipAndStart(requireQuestion = true) {
   const q = document.getElementById("questionInput").value.trim();
   if (requireQuestion && !q) { alert("请先输入你的问题，星空才能回应。" ); return; }
   updateStatus("准备进入深度问卜...");
-  if (requiredCardsCount > 3 && !paymentConfirmed) {
+  if (requiredCardsCount > 3 && !hasValidVipToken()) {
     document.getElementById("vipModal").style.display = "flex";
-    updateStatus("高级牌阵需要解锁，赞赏后即可继续测算。");
+    updateStatus("高级牌阵需要后端验证解锁，赞赏后输入口令继续。");
     if (isMobile) { document.getElementById("mobilePayBtn").style.display = "block"; document.getElementById("pcPayBtn").style.display = "none"; } else { document.getElementById("mobilePayBtn").style.display = "none"; document.getElementById("pcPayBtn").style.display = "block"; }
     return;
   }
-  showEnergyEffect(requiredCardsCount > 3 && paymentConfirmed);
+  showEnergyEffect(requiredCardsCount > 3 && hasValidVipToken());
 }
 
 function quickDrawSingleCard() {
@@ -177,7 +217,7 @@ function quickDrawSingleCard() {
 }
 
 function closeVipModal() { document.getElementById("vipModal").style.display = "none"; paymentPending = false; }
-function pcPayFlow() { const btn = document.getElementById("pcPayBtn"); btn.innerText = "🔄 核实中..."; btn.disabled = true; setTimeout(() => { paymentConfirmed = true; closeVipModal(); showEnergyEffect(true); }, 3500); }
+function pcPayFlow() { const btn = document.getElementById("pcPayBtn"); btn.innerText = "✅ 已赞赏，请输入口令"; btn.disabled = true; setTimeout(() => { btn.disabled = false; }, 1200); document.getElementById("vipCodeInput")?.focus(); }
 function mobilePayFlow() {
   const btn = document.getElementById("mobilePayBtn"); const imgUrl = document.getElementById("qrImage").src; btn.innerText = "🔄 正在跳转微信..."; paymentPending = true;
   fetch(imgUrl).then(res => res.blob()).then(blob => {
@@ -187,10 +227,63 @@ function mobilePayFlow() {
 }
 document.addEventListener("visibilitychange", function() {
   if (document.visibilityState === 'visible' && paymentPending) {
-    paymentPending = false; paymentConfirmed = true; document.getElementById("mobilePayBtn").innerText = "✅ 能量已接收...";
-    setTimeout(() => { closeVipModal(); showEnergyEffect(true); }, 2000);
+    paymentPending = false; document.getElementById("mobilePayBtn").innerText = "✅ 已赞赏，请输入口令";
+    setTimeout(() => { document.getElementById("vipCodeInput")?.focus(); }, 1200);
   }
 });
+
+function readVipToken() {
+  try {
+    const raw = localStorage.getItem(VIP_TOKEN_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed?.token || !parsed?.expiresAt) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function hasValidVipToken() {
+  const vip = readVipToken();
+  if (!vip) return false;
+  return Date.now() < vip.expiresAt;
+}
+
+async function verifyVipUnlock() {
+  const input = document.getElementById("vipCodeInput");
+  const btn = document.getElementById("verifyVipBtn");
+  const unlockCode = input?.value?.trim() || "";
+  if (!unlockCode) {
+    alert("请输入解锁口令");
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerText = "验证中...";
+
+  try {
+    const response = await fetch("/api/vip-verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ unlockCode })
+    });
+
+    if (!response.ok) {
+      throw new Error("口令无效或服务暂不可用");
+    }
+
+    const data = await response.json();
+    localStorage.setItem(VIP_TOKEN_KEY, JSON.stringify({ token: data.token, expiresAt: data.expiresAt }));
+    closeVipModal();
+    showEnergyEffect(true);
+  } catch (err) {
+    alert(`解锁失败：${err.message}`);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "验证";
+  }
+}
 
 function showEnergyEffect(isVip = false) {
   forcePlayMusic();
@@ -270,9 +363,8 @@ function userFlipsCard(i) {
     updateStatus("牌已揭晓，正在生成个人化占卜解读...");
     const question = document.getElementById("questionInput").value.trim();
     const style = document.getElementById("styleSelect").value;
-    const userName = document.getElementById("nameInput") ? document.getElementById("nameInput").value.trim() : "";
     document.getElementById("readingWrapper").style.display = "block"; document.getElementById("readingBox").classList.add("visible");
-    fetchStream(question, style, userName, drawnCardsData);
+    fetchStream(question, style, drawnCardsData);
   }
 }
 
@@ -307,18 +399,33 @@ const TarotApiService = {
     }
 
     return response.json();
+  },
+
+  async requestFallbackReading(payload) {
+    const response = await fetch("/api/tarot", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...payload, fallbackShort: true })
+    });
+
+    if (!response.ok) {
+      throw new Error("兜底解读失败");
+    }
+
+    return response.json();
   }
 };
 
 /* 流式输出解码 */
-async function fetchStream(question, style, userName, cards) {
+async function fetchStream(question, style, cards) {
   const streamContent = document.getElementById("streamContent"); const cursor = document.getElementById("cursor");
   streamContent.innerHTML = ""; let htmlBuffer = "";
   const aiStatus = document.getElementById("aiStatus"); if(aiStatus) aiStatus.style.display = "flex";
   let historyRecord = null;
+  const vipToken = readVipToken()?.token || null;
 
   try {
-    const streamBody = await TarotApiService.requestReadingStream({ question: question, cards: cards, readingStyle: style, userName: userName, soulCard: userSoulCard, isNight: isNightMode });
+    const streamBody = await TarotApiService.requestReadingStream({ question: question, cards: cards, readingStyle: style, userName: "", isNight: isNightMode, vipToken });
     const reader = streamBody.getReader(); const decoder = new TextDecoder("utf-8");
 
     while (true) {
@@ -345,10 +452,21 @@ async function fetchStream(question, style, userName, cards) {
     const spreadLabel = document.getElementById("spreadSelect") ? document.getElementById("spreadSelect").selectedOptions[0].innerText : "未知牌阵";
     const displayQuestion = question || "直觉速取";
     const mode = requiredCardsCount === 1 && question === "" ? "直觉速取" : "深度问卜";
-    historyRecord = { mode, question: displayQuestion, style, spread: spreadLabel, date: new Date().toLocaleString() };
+    historyRecord = { mode, question: displayQuestion, style, spread: spreadLabel, date: new Date().toLocaleString(), cards, reading: htmlBuffer || streamContent.innerHTML };
   } catch (error) {
-    streamContent.innerHTML = `<span style="color:#ff6b6b">🔮 宇宙连接中断: ${error.message}</span>`;
-    updateStatus("连接异常，请稍后重试。");
+    try {
+      const fallback = await TarotApiService.requestFallbackReading({ question, cards, readingStyle: style, userName: "", isNight: isNightMode, vipToken });
+      const fallbackText = fallback.reading || "连接星界暂时不稳，已为你生成简版解读。";
+      streamContent.innerHTML = fallbackText.replace(/\n/g, "<br>");
+      const spreadLabel = document.getElementById("spreadSelect") ? document.getElementById("spreadSelect").selectedOptions[0].innerText : "未知牌阵";
+      const displayQuestion = question || "直觉速取";
+      const mode = requiredCardsCount === 1 && question === "" ? "直觉速取" : "深度问卜";
+      historyRecord = { mode, question: displayQuestion, style, spread: spreadLabel, date: new Date().toLocaleString(), cards, reading: fallbackText };
+      updateStatus("流式连接异常，已自动切换为稳定解读模式。");
+    } catch {
+      streamContent.innerHTML = `<span style="color:#ff6b6b">🔮 宇宙连接中断: ${error.message}</span>`;
+      updateStatus("连接异常，请稍后重试。");
+    }
   } finally {
     if(cursor) cursor.style.display = "none";
     if(aiStatus) aiStatus.style.display = "none";
@@ -364,14 +482,47 @@ async function fetchStream(question, style, userName, cards) {
 async function startDailyDraw() {
   forcePlayMusic();
   document.getElementById("uiElements").style.display = "none"; document.getElementById("dailyCardArea").style.display = "block";
-  const today = new Date(); const dateCN = `${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日`; document.getElementById("dailyDate").innerText = dateCN;
-  const randomMajor = deck[Math.floor(Math.random() * 22)];
-  document.getElementById("dailyEmoji").innerText = randomMajor.emoji; document.getElementById("dailyName").innerText = randomMajor.name;
+  const today = new Date();
+  const dayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const dateCN = `${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日`;
+  document.getElementById("dailyDate").innerText = dateCN;
 
+  let dailyData = null;
   try {
-    const data = await TarotApiService.requestDailyReading(randomMajor);
-    document.getElementById("dailyQuote").innerText = `“${data.reading}”`;
-  } catch(e) { document.getElementById("dailyQuote").innerText = "“跟随内心的指引，今天也是充满奇迹的一天。”"; }
+    const raw = localStorage.getItem(DAILY_CACHE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed?.dayKey === dayKey) {
+        dailyData = parsed;
+      }
+    }
+  } catch {}
+
+  if (!dailyData) {
+    const randomMajor = deck[Math.floor(Math.random() * 22)];
+    try {
+      const data = await TarotApiService.requestDailyReading(randomMajor);
+      dailyData = {
+        dayKey,
+        cardName: randomMajor.name,
+        cardEmoji: randomMajor.emoji,
+        reading: data.reading || "跟随内心的指引，今天也是充满奇迹的一天。"
+      };
+      localStorage.setItem(DAILY_CACHE_KEY, JSON.stringify(dailyData));
+    } catch {
+      dailyData = {
+        dayKey,
+        cardName: randomMajor.name,
+        cardEmoji: randomMajor.emoji,
+        reading: "跟随内心的指引，今天也是充满奇迹的一天。"
+      };
+      localStorage.setItem(DAILY_CACHE_KEY, JSON.stringify(dailyData));
+    }
+  }
+
+  document.getElementById("dailyEmoji").innerText = dailyData.cardEmoji;
+  document.getElementById("dailyName").innerText = dailyData.cardName;
+  document.getElementById("dailyQuote").innerText = `“${dailyData.reading}”`;
   
   const backBtn = document.createElement("button"); backBtn.className = "save-btn restart"; backBtn.innerText = "返回星盘"; backBtn.style.display = "block"; backBtn.style.margin = "30px auto";
   backBtn.onclick = () => window.location.reload();
@@ -405,6 +556,33 @@ function initStarfield() {
 }
 
 function saveAsImage() {
-  const captureArea = document.getElementById("readingWrapper"); document.getElementById("shareHeader").style.display = "block"; const btn = document.getElementById("saveBtn"); btn.innerText = "正在生成图片..."; btn.disabled = true;
-  html2canvas(captureArea, { scale: 2, useCORS: true, backgroundColor: "#0a0a0c" }).then(canvas => { document.getElementById("shareHeader").style.display = "none"; btn.innerText = "📸 保存羊皮卷轴"; btn.disabled = false; const link = document.createElement("a"); link.download = "命运星盘占卜报告.png"; link.href = canvas.toDataURL("image/png"); link.click(); }); 
+  const captureArea = document.getElementById("readingWrapper");
+  const readingBox = document.getElementById("readingBox");
+  const theme = document.getElementById("shareThemeSelect")?.value || "parchment";
+  document.getElementById("shareHeader").style.display = "block";
+  const btn = document.getElementById("saveBtn");
+  btn.innerText = "正在生成图片...";
+  btn.disabled = true;
+
+  if (readingBox) {
+    readingBox.classList.remove("theme-night", "theme-nebula");
+    if (theme === "night") readingBox.classList.add("theme-night");
+    if (theme === "nebula") readingBox.classList.add("theme-nebula");
+  }
+
+  html2canvas(captureArea, { scale: 2, useCORS: true, backgroundColor: "#0a0a0c" }).then(canvas => {
+    document.getElementById("shareHeader").style.display = "none";
+    btn.innerText = "📸 保存羊皮卷轴";
+    btn.disabled = false;
+    if (readingBox) readingBox.classList.remove("theme-night", "theme-nebula");
+    const link = document.createElement("a");
+    link.download = "命运星盘占卜报告.png";
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  }).catch(() => {
+    document.getElementById("shareHeader").style.display = "none";
+    btn.innerText = "📸 保存羊皮卷轴";
+    btn.disabled = false;
+    if (readingBox) readingBox.classList.remove("theme-night", "theme-nebula");
+  });
 }
