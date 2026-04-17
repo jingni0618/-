@@ -2,7 +2,7 @@ import { initStarfield } from './animations.js';
 import { loadDeck } from './tarot.js';
 import { checkNightMode, toggleMusic, showHistoryPanel } from './ui.js';
 import { loadHistory } from './history.js';
-import { setState, appState } from './state.js';
+import { setState, appState, APP_STATES } from './state.js';
 
 // 初始化永久性事件监听器
 function initPermanentListeners() {
@@ -37,10 +37,10 @@ async function initApp() {
     loadHistory();
 
     // 初始化完成，将状态设置为 IDLE，触发第一次渲染
-    setState(appState.currentState); 
+    setState(APP_STATES.IDLE);
 
     console.log("App initialized. Current state:", appState.currentState);
 }
 
-// 当DOM加载完毕后启动应用
-document.addEventListener('DOMContentLoaded', initApp);
+// 启动应用
+initApp();
