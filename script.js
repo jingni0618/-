@@ -17,13 +17,13 @@ const spreadsOptions = {
 };
 
 const spreadGuideMeta = {
-  single: { title: "单牌神谕", icon: "🃏", count: 1, mood: "免费", desc: "当下直觉快照，适合想要一句提醒的时候。" },
-  yesno: { title: "是非决断阵", icon: "⚖️", count: 3, mood: "免费", desc: "看见支持与阻力，帮你做清晰判断。" },
-  time: { title: "时间之流", icon: "⏳", count: 3, mood: "免费", desc: "过去、现在、未来三段式梳理问题脉络。" },
-  relationship: { title: "情感透视阵", icon: "💞", count: 4, mood: "付费", desc: "拆解你与对方的状态、阻碍和关系走向。" },
-  career: { title: "财富事业阵", icon: "💼", count: 4, mood: "付费", desc: "聚焦现状、机遇、风险与下一步方向。" },
-  choice: { title: "二选一岔路阵", icon: "🧭", count: 5, mood: "付费", desc: "并排比较两条路径的趋势与结果。" },
-  cross: { title: "灵感十字阵", icon: "✚", count: 5, mood: "付费", desc: "从核心、阻碍、潜意识到结局做完整推演。" }
+  single: { title: "单牌神谕", icon: "🃏", count: 1, mood: "免费", paid: false, desc: "当下直觉快照，适合想要一句提醒的时候。" },
+  yesno: { title: "是非决断阵", icon: "⚖️", count: 3, mood: "免费", paid: false, desc: "看见支持与阻力，帮你做清晰判断。" },
+  time: { title: "时间之流", icon: "⏳", count: 3, mood: "免费", paid: false, desc: "过去、现在、未来三段式梳理问题脉络。" },
+  relationship: { title: "情感透视阵", icon: "💞", count: 4, mood: "需解锁", paid: true, desc: "拆解你与对方的状态、阻碍和关系走向。" },
+  career: { title: "财富事业阵", icon: "💼", count: 4, mood: "需解锁", paid: true, desc: "聚焦现状、机遇、风险与下一步方向。" },
+  choice: { title: "二选一岔路阵", icon: "🧭", count: 5, mood: "需解锁", paid: true, desc: "并排比较两条路径的趋势与结果。" },
+  cross: { title: "灵感十字阵", icon: "✚", count: 5, mood: "需解锁", paid: true, desc: "从核心、阻碍、潜意识到结局做完整推演。" }
 };
 
 let currentSpreadConfig = {}; let requiredCardsCount = 0; let cardsDrawn = 0; let cardsFlipped = 0; let drawnCardsData = []; let shuffledDeck = []; let isMobile = false; let paymentPending = false; let isNightMode = false;
@@ -50,7 +50,7 @@ window.onload = function() {
   let i = 0;
   function typeIntro() {
     if(i < introStr.length) {
-      document.getElementById('introText').innerText += introStr.charAt(i); i++; setTimeout(typeIntro, 80);
+      document.getElementById('introText').innerText += introStr.charAt(i); i++; setTimeout(typeIntro, 34);
     } else {
       setTimeout(() => {
         document.getElementById('introScreen').style.opacity = 0;
@@ -58,8 +58,8 @@ window.onload = function() {
           document.getElementById('introScreen').style.display = 'none';
           document.getElementById('uiElements').style.opacity = 1;
           document.body.classList.add("home-ready");
-        }, 1500);
-      }, 1500);
+        }, 550);
+      }, 500);
     }
   }
   typeIntro();
@@ -70,7 +70,10 @@ function initEventBindings() {
   byId("dailyBtn")?.addEventListener("click", startDailyDraw);
   byId("growthHubBtn")?.addEventListener("click", openGrowthHub);
   byId("feedbackBtn")?.addEventListener("click", openFeedbackModal);
-  byId("contactBtn")?.addEventListener("click", openContactModal);
+  byId("openContactFromFeedbackBtn")?.addEventListener("click", () => {
+    closeFeedbackModal();
+    openContactModal();
+  });
   byId("quickDrawBtn")?.addEventListener("click", quickDrawSingleCard);
   byId("startBtn")?.addEventListener("click", () => checkVipAndStart({ requireQuestion: true, mode: "standard" }));
   byId("startCoupleBtn")?.addEventListener("click", startCompatibilityReading);
@@ -97,6 +100,18 @@ function initEventBindings() {
   byId("copyBtn")?.addEventListener("click", copyReadingText);
   byId("restartBtn")?.addEventListener("click", returnToHomePage);
   byId("historyDetailCloseBtn")?.addEventListener("click", closeHistoryDetail);
+  byId("questionInput")?.addEventListener("input", () => updateQuestionHint());
+  byId("coupleQuestionInput")?.addEventListener("input", () => updateCoupleHint());
+  document.querySelectorAll("#emotionQuickTags .emotion-preset").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const value = Number(btn.getAttribute("data-value") || "3");
+      const range = byId("emotionRange");
+      if (range) {
+        range.value = String(value);
+        updateEmotionLabel();
+      }
+    });
+  });
 
   byId("growthHubModal")?.addEventListener("click", e => {
     if (e.target?.id === "growthHubModal") closeGrowthHub();
@@ -108,11 +123,55 @@ function initEventBindings() {
     if (e.target?.id === "feedbackModal") closeFeedbackModal();
   });
   updateEmotionLabel();
+  updateQuestionHint();
+  updateCoupleHint();
   setInterval(() => {
     applyTimePhaseTheme();
     renderWarmBoard();
     renderHomeDate();
   }, 60 * 1000);
+}
+
+function setFlowStep(step) {
+  const wrap = document.getElementById("flowSteps");
+  if (!wrap) return;
+  wrap.style.display = "grid";
+  wrap.querySelectorAll(".flow-step").forEach(el => {
+    const n = Number(el.getAttribute("data-step") || "0");
+    el.classList.toggle("active", n === step);
+    el.classList.toggle("done", n < step);
+  });
+}
+
+function hideFlowSteps() {
+  const wrap = document.getElementById("flowSteps");
+  if (wrap) wrap.style.display = "none";
+}
+
+function updateQuestionHint(isError = false) {
+  const hint = document.getElementById("questionHint");
+  const input = document.getElementById("questionInput");
+  if (!hint || !input) return;
+  if (isError && !input.value.trim()) {
+    hint.textContent = "请先写下你的问题，再开始占卜。";
+    hint.classList.add("error");
+    return;
+  }
+  hint.textContent = "你的问题仅用于本次占卜，不会公开展示。";
+  hint.classList.remove("error");
+}
+
+function updateCoupleHint(isError = false) {
+  const hint = document.getElementById("coupleQuestionHint");
+  const input = document.getElementById("coupleQuestionInput");
+  if (!hint || !input) return;
+  if (isError && !input.value.trim()) {
+    hint.textContent = "建议补充你想问的关系问题，解读会更准确。";
+    hint.classList.add("error");
+    return;
+  }
+  hint.textContent = "双人信息仅用于本次解读，不会被公开。";
+  hint.classList.remove("error");
 }
 
 function renderHomeDate() {
@@ -314,16 +373,30 @@ function renderSpreadGuide() {
   const cards = keys.map(key => {
     const info = spreadGuideMeta[key];
     const activeClass = key === selected ? "active" : "";
+    const paidClass = info.paid ? "is-paid" : "";
     return `
-      <button class="spread-pill ${activeClass}" data-spread="${key}" type="button">
+      <button class="spread-pill ${activeClass} ${paidClass}" data-spread="${key}" type="button">
         <span class="spread-pill__icon">${info.icon}</span>
         <span class="spread-pill__name">${info.title}</span>
-        <span class="spread-pill__meta">${info.count}张 · ${info.mood}</span>
+        <span class="spread-pill__meta">${info.count}张 · ${info.paid ? "🔒 " : ""}${info.mood}</span>
       </button>
     `;
   }).join("");
 
   const info = spreadGuideMeta[selected] || spreadGuideMeta.cross;
+  const payHint = document.getElementById("payHintText");
+  const startBtn = document.getElementById("startBtn");
+  const isPaid = Boolean(info.paid);
+  if (payHint) {
+    payHint.textContent = isPaid
+      ? "当前是深度牌阵，点击开始后将进入解锁流程。"
+      : "当前牌阵可免费使用。";
+    payHint.classList.toggle("locked", isPaid);
+  }
+  if (startBtn) {
+    startBtn.textContent = isPaid ? "开始占卜（需解锁）" : "开始占卜";
+  }
+
   wrap.innerHTML = `
     <div class="spread-pills">${cards}</div>
     <div class="spread-guide-text">${info.desc}</div>
@@ -438,7 +511,10 @@ function checkNightMode() {
 }
 
 function updateStatus(text) {
-  const banner = document.getElementById("statusBanner"); if (banner) banner.innerText = text;
+  const banner = document.getElementById("statusBanner");
+  if (!banner) return;
+  if (/已抽取|请点击牌面抽取|已进入深度模式|已进入双人模式|直觉速取准备中|灵感正在凝聚/.test(text)) return;
+  banner.innerText = text;
 }
 
 const HistoryService = {
@@ -723,11 +799,23 @@ function returnToHomePage() {
   if (readingBox) readingBox.classList.remove("visible", "theme-night", "theme-nebula");
   const stream = document.getElementById("streamContent");
   if (stream) stream.innerHTML = "";
+  const summary = document.getElementById("readingSummary");
+  if (summary) {
+    summary.style.display = "none";
+    summary.innerHTML = "";
+  }
 
   const backBtn = document.getElementById("backBtnId");
   if (backBtn) backBtn.remove();
 
   activeReadingMode = "standard";
+  hideFlowSteps();
+
+  const deep = document.getElementById("deepSettings");
+  const couple = document.getElementById("couplePanel");
+  if (deep) deep.style.display = "none";
+  if (couple) couple.style.display = "none";
+
   const spreadSelect = document.getElementById("spreadSelect");
   if (spreadSelect) {
     Array.from(spreadSelect.options).forEach(opt => {
@@ -741,11 +829,13 @@ function returnToHomePage() {
 
 function startCompatibilityReading() {
   activeReadingMode = "compatibility";
+  setFlowStep(1);
   const partnerName = document.getElementById("couplePartnerInput")?.value?.trim();
   if (!partnerName) {
     alert("请先填写 TA 的昵称，再开启双人占卜。");
     return;
   }
+  updateCoupleHint(true);
   const spreadSelect = document.getElementById("spreadSelect");
   if (spreadSelect) {
     Array.from(spreadSelect.options).forEach(opt => {
@@ -822,6 +912,7 @@ function renderSpread() {
 
 function checkVipAndStart({ requireQuestion = true, mode = "standard" } = {}) {
   activeReadingMode = mode;
+  setFlowStep(1);
   if (mode !== "compatibility") {
     const spreadSelect = document.getElementById("spreadSelect");
     if (spreadSelect) {
@@ -833,8 +924,13 @@ function checkVipAndStart({ requireQuestion = true, mode = "standard" } = {}) {
   }
   const ctx = getReadingContext("", mode);
   const q = ctx.question;
-  if (requireQuestion && !q) { alert("请先输入你的问题，星空才能回应。" ); return; }
-  updateStatus(mode === "compatibility" ? "准备进入双人占卜..." : "准备进入深度问卜...");
+  if (requireQuestion && !q) {
+    if (mode === "compatibility") updateCoupleHint(true);
+    else updateQuestionHint(true);
+    updateStatus("先写下问题，再开始占卜。");
+    return;
+  }
+  updateStatus(mode === "compatibility" ? "准备进入双人占卜..." : "准备进入深度占卜...");
   if (requiredCardsCount > 3 && !hasValidVipToken()) {
     document.getElementById("vipModal").style.display = "flex";
     updateStatus("4~5张深度牌阵（含双人占卜）需要解锁，赞赏后输入口令继续。");
@@ -846,10 +942,12 @@ function checkVipAndStart({ requireQuestion = true, mode = "standard" } = {}) {
 
 function quickDrawSingleCard() {
   activeReadingMode = "quick";
+  setFlowStep(1);
   document.getElementById("spreadSelect").value = "single";
   renderSpread();
   document.getElementById("questionInput").value = "";
   updateStatus("直觉速取准备中，抽取你的灵感之牌...");
+  updateQuestionHint();
   showEnergyEffect();
 }
 
@@ -924,8 +1022,8 @@ async function verifyVipUnlock() {
 
 function showEnergyEffect(isVip = false) {
   forcePlayMusic();
+  setFlowStep(2);
   document.getElementById("uiElements").classList.add("fade-out");
-  updateStatus("灵感正在凝聚，片刻后进入占卜仪式...");
   const energyText = document.getElementById("energyText");
   energyText.innerText = isVip ? "能量已接收...深层的因果锁链已被解开" : "灵感已汇聚...星盘开始转动";
   energyText.style.display = "block";
@@ -940,16 +1038,15 @@ function showEnergyEffect(isVip = false) {
     energyText.style.display = "none";
     playSound("drawSound"); if (navigator.vibrate) navigator.vibrate([100, 50, 100]); 
     const shuffleArea = document.getElementById("shuffleArea"); shuffleArea.style.display = "flex";
-    setTimeout(() => { shuffleArea.style.display = "none"; document.getElementById("deckArea").style.display = "flex"; initFanDeck(); }, 2500);
-  }, 3500);
+    setTimeout(() => { shuffleArea.style.display = "none"; document.getElementById("deckArea").style.display = "flex"; initFanDeck(); }, 700);
+  }, 800);
 }
 
 function initFanDeck() {
   cardsDrawn = 0; cardsFlipped = 0; drawnCardsData = []; shuffledDeck = shuffle([...deck]);
   const fanDeck = document.getElementById("fanDeck"); fanDeck.innerHTML = "";
-  const totalCards = 38; const angleStep = 120 / totalCards;
+  const totalCards = 22; const angleStep = 120 / totalCards;
   document.getElementById("cardsLeft").innerText = requiredCardsCount;
-  updateStatus(`请点击牌面抽取 ${requiredCardsCount} 张牌`);
   for (let i = 0; i < totalCards; i++) {
     const angle = -60 + (i * angleStep);
     const cardEl = document.createElement("div"); cardEl.className = "deck-card"; cardEl.style.transform = `rotate(${angle}deg) translateY(-20px)`; cardEl.style.zIndex = i;
@@ -973,7 +1070,6 @@ function userDrawsOneCard(clickedCardElement) {
   const targetSlotCard = document.getElementById(`card-${cardsDrawn}`);
   targetSlotCard.classList.add("dealt"); document.getElementById(`label-${cardsDrawn}`).classList.add("visible");
   cardsDrawn++; document.getElementById("cardsLeft").innerText = (requiredCardsCount - cardsDrawn);
-  updateStatus(`已抽取 ${cardsDrawn} 张，还需抽取 ${requiredCardsCount - cardsDrawn} 张`);
 
   if (cardsDrawn === requiredCardsCount) { 
     setTimeout(() => {
@@ -997,6 +1093,7 @@ function userFlipsCard(i) {
   cardsFlipped++;
   if (cardsFlipped === requiredCardsCount) {
     document.getElementById("revealInstruction").style.display = "none";
+    setFlowStep(3);
     updateStatus("牌已揭晓，正在生成个人化占卜解读...");
     const context = getReadingContext("", activeReadingMode);
     const question = context.question;
@@ -1042,6 +1139,24 @@ function renderActionPlan(context, cards, style) {
     partnerName: context.partnerName
   });
   list.innerHTML = plans.map(item => `<li>${item}</li>`).join("");
+  box.style.display = "block";
+  setFlowStep(4);
+}
+
+function renderReadingSummary(rawHtml) {
+  const box = document.getElementById("readingSummary");
+  if (!box) return;
+  const plain = String(rawHtml || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  if (!plain) {
+    box.style.display = "none";
+    return;
+  }
+  const parts = plain.split(/(?<=[。！？!?])/).map(s => s.trim()).filter(Boolean).slice(0, 3);
+  if (!parts.length) {
+    box.style.display = "none";
+    return;
+  }
+  box.innerHTML = `<strong>三行结论</strong><ol>${parts.map(p => `<li>${p}</li>`).join("")}</ol>`;
   box.style.display = "block";
 }
 
@@ -1143,7 +1258,7 @@ async function fetchStream(question, style, cards, context = getReadingContext(q
 
     const spreadLabel = document.getElementById("spreadSelect") ? document.getElementById("spreadSelect").selectedOptions[0].innerText : "未知牌阵";
     const displayQuestion = compositeQuestion || "直觉速取";
-    const mode = detailContext.mode === "compatibility" ? "双人合盘" : (detailContext.mode === "quick" ? "直觉速取" : "深度问卜");
+    const mode = detailContext.mode === "compatibility" ? "双人合盘" : (detailContext.mode === "quick" ? "直觉速取" : "深度占卜");
     historyRecord = {
       mode,
       question: displayQuestion,
@@ -1158,6 +1273,7 @@ async function fetchStream(question, style, cards, context = getReadingContext(q
       emotionLabel: detailContext.emotion.label,
       emotionLevel: detailContext.emotion.value
     };
+    renderReadingSummary(historyRecord.reading);
     renderActionPlan(detailContext, cards, style);
   } catch (error) {
     try {
@@ -1177,7 +1293,7 @@ async function fetchStream(question, style, cards, context = getReadingContext(q
       streamContent.innerHTML = fallbackText.replace(/\n/g, "<br>");
       const spreadLabel = document.getElementById("spreadSelect") ? document.getElementById("spreadSelect").selectedOptions[0].innerText : "未知牌阵";
       const displayQuestion = compositeQuestion || "直觉速取";
-      const mode = detailContext.mode === "compatibility" ? "双人合盘" : (detailContext.mode === "quick" ? "直觉速取" : "深度问卜");
+      const mode = detailContext.mode === "compatibility" ? "双人合盘" : (detailContext.mode === "quick" ? "直觉速取" : "深度占卜");
       historyRecord = {
         mode,
         question: displayQuestion,
@@ -1192,6 +1308,7 @@ async function fetchStream(question, style, cards, context = getReadingContext(q
         emotionLabel: detailContext.emotion.label,
         emotionLevel: detailContext.emotion.value
       };
+      renderReadingSummary(historyRecord.reading);
       renderActionPlan(detailContext, cards, style);
       updateStatus("流式连接异常，已自动切换为稳定解读模式。");
     } catch {
@@ -1204,7 +1321,7 @@ async function fetchStream(question, style, cards, context = getReadingContext(q
     const actionBtns = document.getElementById("actionBtns"); if(actionBtns) actionBtns.style.display = "flex";
     if (historyRecord) {
       addHistoryRecord(historyRecord);
-      updateStatus("解读已生成，查看你的命运报告。你也可以复制或保存结果。");
+      updateStatus("解读已生成并自动存入成长档案，可直接复制或保存图片。");
     }
   }
 }
