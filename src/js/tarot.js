@@ -66,7 +66,6 @@ function userDrawsOneCard(clickedCardElement) {
     state.addDrawnCard({ 
         position: state.currentSpreadConfig.cards[state.cardsDrawn].label, 
         cardName: cardData.name + reversedText, 
-        meaning: cardData.meaning, 
         isReversed: isReversed, 
         emoji: cardData.emoji,
         isFlipped: false
