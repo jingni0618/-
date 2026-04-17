@@ -1,6 +1,7 @@
 import { appState, setState, APP_STATES, updateStateSilently } from './state.js';
 import { fetchReading } from './api.js';
 import { playSound, updateReading } from './ui.js';
+import { addHistoryRecord } from './history.js';
 
 const SPREAD_OPTIONS = {
   single: { cssClass: 'linear', cards: [{ label: "核心指引" }] },
@@ -36,7 +37,7 @@ function shuffle(array) {
 
 export function getSpreadConfig(spreadType, question = '', style = 'classic') {
     const config = SPREAD_OPTIONS[spreadType];
-    return { ...config, question, style };
+    return { ...config, spreadType, question, style };
 }
 
 export function shuffleAndDeal() {
@@ -57,6 +58,8 @@ export function handleDrawCard(cardIndex, cardElement) {
     const newDrawnCards = [...appState.drawnCardsData, {
         position: appState.currentSpreadConfig.cards[appState.cardsDrawn].label,
         cardName: cardData.name + reversedText,
+        name: cardData.name,
+        meaning: cardData.meaning,
         isReversed: isReversed,
         emoji: cardData.emoji,
         isFlipped: false
@@ -101,10 +104,12 @@ export function handleFlipCard(cardData, cardElement, index) {
 }
 
 export async function startReading() {
-    const { question, style, drawnCardsData, isNightMode } = appState.currentSpreadConfig;
+    const { question = '', style = 'classic', spreadType = 'single' } = appState.currentSpreadConfig || {};
+    const cards = appState.drawnCardsData;
+    const isNight = appState.isNightMode;
     
     try {
-        const stream = await fetchReading(question, style, "用户", drawnCardsData, null, isNightMode);
+        const stream = await fetchReading(question, style, "用户", cards, null, isNight);
         const reader = stream.getReader();
         const decoder = new TextDecoder();
         let readingText = '';
@@ -118,6 +123,18 @@ export async function startReading() {
         
         updateReading(readingText.replace(/\n/g, '<br>'), true); // 标记为最终版本
         updateStateSilently('reading', readingText);
+
+        addHistoryRecord({
+            mode: question ? '深度问卜' : '直觉速取',
+            spread: spreadType,
+            question: question || '快速抽牌',
+            style,
+            date: new Date().toLocaleString('zh-CN', { hour12: false }),
+            cards: cards.map(card => ({
+                name: card.cardName,
+                position: card.position
+            }))
+        });
 
     } catch (error) {
         console.error("解读失败:", error);

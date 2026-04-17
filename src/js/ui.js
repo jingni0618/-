@@ -271,7 +271,15 @@ export function showHistoryPanel() {
         <div class="history-card">
           <div class="history-title">占卜记录</div>
           <div id="historyList" class="history-list">
-            ${appState.historyRecords.map(r => `<div class="history-item"><b>${r.question || '快速抽牌'}</b><br>${r.cards.map(c => c.name).join(', ')}<br><i>${r.date}</i></div>`).join('') || '<p>暂无记录</p>'}
+            ${appState.historyRecords.map(r => {
+                const question = r.question || '快速抽牌';
+                const cards = (r.cards || [])
+                    .map(c => c?.name || c?.cardName || '')
+                    .filter(Boolean)
+                    .join(', ');
+                const date = r.date || '';
+                return `<div class="history-item"><b>${question}</b><br>${cards || '无牌面记录'}<br><i>${date}</i></div>`;
+            }).join('') || '<p>暂无记录</p>'}
           </div>
           <button id="clearHistoryBtn" class="history-clear-btn">清空记录</button>
           <button id="closeHistoryBtn" class="save-btn restart" style="margin-top: 16px; width: 100%;">返回星盘</button>
