@@ -16,7 +16,7 @@ const spreadsOptions = {
   cross: { cssClass: 'cross', cards: [{ label: "核心问题" }, { label: "面临的阻碍" }, { label: "潜在的目标" }, { label: "深层的潜意识" }, { label: "最终的可能结局" }] }
 };
 
-let currentSpreadConfig = {}; let requiredCardsCount = 0; let cardsDrawn = 0; let cardsFlipped = 0; let drawnCardsData = []; let shuffledDeck = []; let userSoulCard = null; let isMobile = false; let paymentPending = false; let paymentConfirmed = false; let isMusicPlaying = false; let isNightMode = false; let historyRecords = [];
+let currentSpreadConfig = {}; let requiredCardsCount = 0; let cardsDrawn = 0; let cardsFlipped = 0; let drawnCardsData = []; let shuffledDeck = []; let userSoulCard = null; let isMobile = false; let paymentPending = false; let paymentConfirmed = false; let isMusicPlaying = false; let isNightMode = false;
 
 window.onload = function() {
   isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -50,38 +50,74 @@ function updateStatus(text) {
   const banner = document.getElementById("statusBanner"); if (banner) banner.innerText = text;
 }
 
-function saveHistory() { localStorage.setItem("tarotHistory", JSON.stringify(historyRecords)); }
-function loadHistory() {
-  const raw = localStorage.getItem("tarotHistory");
-  if (raw) {
-    try { historyRecords = JSON.parse(raw).slice(0, 6); } catch (e) { historyRecords = []; }
+const HistoryService = {
+  storageKey: "tarotHistory",
+  records: [],
+  save() {
+    localStorage.setItem(this.storageKey, JSON.stringify(this.records));
+  },
+  load() {
+    const raw = localStorage.getItem(this.storageKey);
+    if (!raw) {
+      this.records = [];
+      this.render();
+      return;
+    }
+
+    try {
+      const parsed = JSON.parse(raw);
+      this.records = Array.isArray(parsed) ? parsed.slice(0, 6) : [];
+    } catch (e) {
+      this.records = [];
+    }
+
+    this.render();
+  },
+  add(record) {
+    this.records.unshift(record);
+    this.records = this.records.slice(0, 6);
+    this.save();
+    this.render();
+  },
+  clear() {
+    this.records = [];
+    this.save();
+    this.render();
+  },
+  render() {
+    const card = document.getElementById("historyCardArea");
+    const list = document.getElementById("historyList");
+    if (!card || !list) return;
+
+    card.style.display = "block";
+    list.innerHTML = "";
+    if (this.records.length === 0) {
+      const item = document.createElement("div");
+      item.className = "history-item";
+      item.textContent = "暂无记录，开始你的第一场命运占卜。";
+      list.appendChild(item);
+      return;
+    }
+
+    this.records.forEach(r => {
+      const item = document.createElement("div");
+      item.className = "history-item";
+      const title = document.createElement("div");
+      title.textContent = `${r.mode} · ${r.spread} · ${r.date}`;
+      const detail = document.createElement("span");
+      detail.textContent = `问题：${r.question || '未输入'} · 风格：${r.style}`;
+      item.appendChild(title);
+      item.appendChild(detail);
+      list.appendChild(item);
+    });
   }
-  renderHistory();
-}
-function addHistoryRecord(record) {
-  historyRecords.unshift(record); historyRecords = historyRecords.slice(0, 6); saveHistory(); renderHistory();
-}
-function renderHistory() {
-  const card = document.getElementById("historyCardArea"); const list = document.getElementById("historyList");
-  if (!card || !list) return;
-  card.style.display = "block";
-  list.innerHTML = "";
-  if (historyRecords.length === 0) {
-    const item = document.createElement("div"); item.className = "history-item";
-    item.textContent = "暂无记录，开始你的第一场命运占卜。";
-    list.appendChild(item);
-    return;
-  }
-  historyRecords.forEach(r => {
-    const item = document.createElement("div"); item.className = "history-item";
-    const title = document.createElement("div"); title.textContent = `${r.mode} · ${r.spread} · ${r.date}`;
-    const detail = document.createElement("span"); detail.textContent = `问题：${r.question || '未输入'} · 风格：${r.style}`;
-    item.appendChild(title);
-    item.appendChild(detail);
-    list.appendChild(item);
-  });
-}
-function clearHistory() { historyRecords = []; saveHistory(); renderHistory(); updateStatus("记录已清空，重新开始你的占卜旅程。"); }
+};
+
+function saveHistory() { HistoryService.save(); }
+function loadHistory() { HistoryService.load(); }
+function addHistoryRecord(record) { HistoryService.add(record); }
+function renderHistory() { HistoryService.render(); }
+function clearHistory() { HistoryService.clear(); updateStatus("记录已清空，重新开始你的占卜旅程。"); }
 
 function copyReadingText() {
   const content = document.getElementById("streamContent"); if (!content) return;
@@ -240,6 +276,40 @@ function userFlipsCard(i) {
   }
 }
 
+const TarotApiService = {
+  async requestReadingStream(payload) {
+    const response = await fetch("/api/tarot", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      throw new Error("宇宙网关拥堵，请稍后重试");
+    }
+
+    if (!response.body) {
+      throw new Error("响应流为空");
+    }
+
+    return response.body;
+  },
+
+  async requestDailyReading(card) {
+    const response = await fetch("/api/tarot", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isDaily: true, cards: [card] })
+    });
+
+    if (!response.ok) {
+      throw new Error("日签请求失败");
+    }
+
+    return response.json();
+  }
+};
+
 /* 流式输出解码 */
 async function fetchStream(question, style, userName, cards) {
   const streamContent = document.getElementById("streamContent"); const cursor = document.getElementById("cursor");
@@ -248,12 +318,8 @@ async function fetchStream(question, style, userName, cards) {
   let historyRecord = null;
 
   try {
-    const response = await fetch("/api/tarot", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question: question, cards: cards, readingStyle: style, userName: userName, soulCard: userSoulCard, isNight: isNightMode })
-    });
-    if (!response.ok) throw new Error("宇宙网关拥堵，请稍后重试");
-    const reader = response.body.getReader(); const decoder = new TextDecoder("utf-8");
+    const streamBody = await TarotApiService.requestReadingStream({ question: question, cards: cards, readingStyle: style, userName: userName, soulCard: userSoulCard, isNight: isNightMode });
+    const reader = streamBody.getReader(); const decoder = new TextDecoder("utf-8");
 
     while (true) {
       const { done, value } = await reader.read(); if (done) break;
@@ -303,9 +369,8 @@ async function startDailyDraw() {
   document.getElementById("dailyEmoji").innerText = randomMajor.emoji; document.getElementById("dailyName").innerText = randomMajor.name;
 
   try {
-    const response = await fetch("/api/tarot", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ isDaily: true, cards: [randomMajor] }) });
-    if (response.ok) { const data = await response.json(); document.getElementById("dailyQuote").innerText = `“${data.reading}”`; } 
-    else { document.getElementById("dailyQuote").innerText = "“跟随内心的指引，今天也是充满奇迹的一天。”"; }
+    const data = await TarotApiService.requestDailyReading(randomMajor);
+    document.getElementById("dailyQuote").innerText = `“${data.reading}”`;
   } catch(e) { document.getElementById("dailyQuote").innerText = "“跟随内心的指引，今天也是充满奇迹的一天。”"; }
   
   const backBtn = document.createElement("button"); backBtn.className = "save-btn restart"; backBtn.innerText = "返回星盘"; backBtn.style.display = "block"; backBtn.style.margin = "30px auto";
