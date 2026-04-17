@@ -1,6 +1,6 @@
 import * as state from './state.js';
 
-function saveHistory() {
+export function saveHistory() {
   localStorage.setItem("tarotHistory", JSON.stringify(state.historyRecords));
 }
 

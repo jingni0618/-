@@ -1,5 +1,4 @@
 import { addHistoryRecord } from './history.js';
-import { updateStatus } from './ui.js';
 
 export async function fetchReading(question, style, userName, cards, soulCard, isNight) {
   const streamContent = document.getElementById("streamContent");
@@ -59,12 +58,10 @@ export async function fetchReading(question, style, userName, cards, soulCard, i
 
   } catch (error) {
     streamContent.innerHTML = `<span style="color:#ff6b6b">🔮 宇宙连接中断: ${error.message}</span>`;
-    updateStatus("连接异常，请稍后重试。");
   } finally {
     if(cursor) cursor.style.display = "none";
     if(aiStatus) aiStatus.style.display = "none";
     const actionBtns = document.getElementById("actionBtns");
     if(actionBtns) actionBtns.style.display = "flex";
-    updateStatus("解读已生成，查看你的命运报告。你也可以复制或保存结果。");
   }
 }

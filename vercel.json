@@ -1,3 +1,9 @@
 {
-  "version": 2
+  "version": 2,
+  "routes": [
+    {
+      "src": "/src/assets/sounds/(.*)",
+      "dest": "/src/assets/sounds/$1"
+    }
+  ]
 }
