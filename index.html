@@ -3,34 +3,172 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="referrer" content="no-referrer">
   <title>👀仔的命运星盘</title>
-  <link rel="stylesheet" href="src/css/main.css">
+  <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
-  <!-- 永久性背景元素 -->
-  <div id="nightOverlay"></div>
+
+  <!-- 星空与深夜遮罩 -->
+  <div id="nightOverlay" class="night-overlay"></div>
   <canvas id="starfield"></canvas>
 
-  <!-- 音效 -->
+  <!-- 音效统管 -->
   <audio id="bgMusic" loop src="https://cdn.pixabay.com/download/audio/2022/11/06/audio_29fb63d596.mp3"></audio>
   <audio id="drawSound" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_3d19114cb3.mp3"></audio>
   <audio id="revealSound" src="https://cdn.pixabay.com/download/audio/2022/02/10/audio_4d99430db6.mp3"></audio>
 
-  <!-- 永久性UI元素 -->
-  <div class="top-nav">
-    <button id="musicToggle">🎵 灵性环境音</button>
-    <button id="historyBtn">📜 占卜记录</button>
+  <!-- UX-1：开场打字机欢迎语 -->
+  <div id="introScreen" class="intro-screen">
+    <p id="introText" class="intro-text"></p>
   </div>
 
-  <!-- 主视图容器：所有动态内容将在此渲染 -->
-  <main id="app-view"></main>
+  <!-- 主界面 (初始透明) -->
+  <div id="uiElements" class="ui-wrapper" style="opacity: 0;">
+    <div class="top-nav">
+      <button id="musicToggle" class="icon-btn" onclick="toggleMusic()">🎵 灵性环境音</button>
+      <button id="dailyBtn" class="icon-btn highlight" onclick="startDailyDraw()">✨ 今日神谕</button>
+    </div>
 
-  <!-- 侧边栏/模态框 (可独立于主视图管理) -->
-  <div id="historyPanel" class="aside-panel" style="display: none;"></div>
-  <div id="vipModal" class="modal-overlay" style="display: none;"></div>
+    <div class="container">
+      <div class="hero-header">
+        <h1 id="mainTitle" class="classic-title">👀仔的命运星盘</h1>
+        <p id="mainSubtitle" class="subtitle">倾听宇宙回响，洞察灵魂轨迹</p>
+      </div>
+      <div id="statusBanner" class="status-banner">请选择占卜方式：直觉速取或深度问卜</div>
 
-  <script type="module" src="src/js/main.js"></script>
+      <div class="hero-grid">
+        <div class="choice-card choice-card--secondary">
+          <div class="choice-card__eyebrow">直觉速取</div>
+          <h2 class="choice-card__title">一张灵感牌</h2>
+          <p class="choice-card__desc">无需提问，快速抽取一张塔罗牌，直达当下答案。</p>
+          <div class="choice-card__icon">✨</div>
+          <div class="choice-card__feature">单张解读 · 直觉优先 · 立即启示</div>
+          <div class="choice-card__footer">
+            <button id="quickDrawBtn" class="secondary-btn" onclick="quickDrawSingleCard()">直接抽一张</button>
+          </div>
+        </div>
+
+        <div class="choice-card choice-card--main">
+          <div class="choice-card__eyebrow">深度问卜</div>
+          <h2 class="choice-card__title">输入问题，开启占卜</h2>
+          <p class="choice-card__desc">让塔罗回应你的疑惑，生成专属的星盘解析。</p>
+          <div class="choice-card__body">
+            <div class="input-group">
+              <label>你最想问的是什么？</label>
+              <input type="text" id="questionInput" placeholder="越具体，启示越清晰...">
+            </div>
+            <div class="input-group">
+              <label>选择解牌风格</label>
+              <select id="styleSelect">
+                <option value="classic">🔮 经典韦特流（客观、睿智、中正）</option>
+                <option value="healing">🌸 星空疗愈流（极度温柔、情绪安抚）</option>
+                <option value="harsh">🗡️ 暗黑毒舌流（犀利一针见血、专治不醒悟）</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label>选择牌阵</label>
+              <select id="spreadSelect" onchange="renderSpread()">
+                <optgroup label="基础指引">
+                  <option value="single">单牌神谕（1张：直觉指引）</option>
+                  <option value="yesno">是非决断阵（3张：支持/反对/答案）</option>
+                  <option value="time">时间之流（3张：过去/现在/未来）</option>
+                </optgroup>
+                <optgroup label="深度专栏">
+                  <option value="relationship">情感透视阵（4张：你/对方/阻碍/未来）</option>
+                  <option value="career">财富事业阵（4张：现状/机遇/风险/走向）</option>
+                  <option value="choice">二选一岔路阵（5张：现状/选A/选B/A结局/B结局）</option>
+                  <option value="cross" selected>灵感十字阵（5张：核心/阻碍/目标/潜意识/结局）</option>
+                </optgroup>
+              </select>
+            </div>
+          </div>
+          <div class="choice-card__footer">
+            <button id="startBtn" class="main-btn" onclick="checkVipAndStart()">开始问卜</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div> 
+
+  <!-- VIP 赞赏弹窗 -->
+  <div id="vipModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <h3 class="classic-title" style="font-size: 1.5rem; margin-top:0;">👑 解锁深度命盘</h3>
+      <p style="font-size: 13px; margin-bottom: 10px; color: #8e8579;">高级牌阵将解锁更深的专业解析，宇宙也需要等价的能量交换。</p>
+      <p style="font-size: 14px; color: #c5a059; font-weight: bold; margin-bottom: 15px;">👉 扫码或长按赞赏 1 元</p>
+      <div class="qr-container"><img id="qrImage" src="https://i.postimg.cc/vBRq8rJn/IMG-9022.jpg" alt="微信赞赏码"></div>
+      <button id="mobilePayBtn" class="confirm-btn pulse-btn" style="margin-top: 15px; width: 100%; display:none;" onclick="mobilePayFlow()">📱 保存二维码并前往微信</button>
+      <div class="modal-btns" style="margin-top: 15px;">
+        <button onclick="closeVipModal()" class="cancel-btn">返回</button>
+        <button id="pcPayBtn" onclick="pcPayFlow()" class="confirm-btn">✅ 我已赞赏</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 沉浸式交互区 -->
+  <div class="aside-panel">
+    <div class="daily-card-area" id="dailyCardArea" style="display: none;">
+      <div class="daily-title">今日神谕</div>
+      <div class="daily-date" id="dailyDate"></div>
+      <div class="daily-emoji-card"><div id="dailyEmoji" class="daily-emoji">✨</div><div id="dailyName" class="daily-name">牌名</div></div>
+      <div class="daily-quote" id="dailyQuote">星辰正为你织就今日日签...</div>
+    </div>
+    <div class="history-card" id="historyCardArea" style="display: none;">
+      <div class="history-title">占卜记录</div>
+      <div id="historyList" class="history-list"></div>
+      <button class="history-clear-btn" onclick="clearHistory()">清空记录</button>
+    </div>
+    <div class="soul-calc-box" style="display: none;" id="asideSoulCalc">
+      <label>✨ 测算灵魂专属牌（选填）</label>
+      <div style="display: flex; gap: 10px; margin-top: 10px;">
+        <input type="text" id="birthInput" placeholder="出生年月（如 19950821）">
+        <button class="small-gold-btn" onclick="calculateSoulCard()">推演</button>
+      </div>
+      <div id="soulCardResult" class="soul-result" style="display: none;"></div>
+    </div>
+  </div>
+
+  <div class="immersive-container">
+    <!-- 能量交互文字 -->
+    <div id="energyText" class="energy-text" style="display: none;"></div>
+
+    <div id="shuffleArea" class="deck-area" style="display: none;">
+       <h3 class="ritual-text">洗牌中...潜意识正在注入星盘</h3>
+       <div class="shuffling-deck"></div>
+    </div>
+
+    <div id="meditationOverlay" class="meditation-overlay" style="display: none;">
+      <div class="breathe-circle"></div><p class="breathe-text">深呼吸，专注你的问题...</p>
+    </div>
+
+    <!-- 交互抽牌区 -->
+    <div id="deckArea" class="deck-area" style="display: none;">
+      <h3 id="instructionText" class="ritual-text">请点击抽取 <span id="cardsLeft">0</span> 张牌</h3>
+      <div class="fan-deck" id="fanDeck"></div>
+    </div>
+
+    <!-- 悬念揭秘与牌阵区 -->
+    <div id="revealInstruction" class="ritual-text" style="display: none; margin-top: 20px;">命运已就位，请依次点击牌背揭晓...</div>
+    <div class="spread-container" id="spreadContainer"></div>
+
+    <!-- 羊皮纸长文解析区 -->
+    <div class="reading-wrapper" id="readingWrapper" style="display: none;">
+      <div class="parchment-box" id="readingBox">
+        <div class="ai-status" id="aiStatus"><div class="crystal-ball">🔮</div><span>塔罗师正在为你推演星象...</span></div>
+        <div id="streamContent" class="stream-content parchment-text"></div>
+        <span id="cursor" class="typing-cursor"></span>
+      </div>
+      <div id="shareHeader" class="share-only" style="color: #2c241b; font-weight: bold; margin-bottom: 20px;">✨ 命运星盘 · 专属占卜报告 ✨</div>
+    </div>
+    
+    <div id="actionBtns" class="action-btns" style="margin-top: 30px; display: none; justify-content: center; gap: 15px; padding-bottom: 50px;">
+      <button id="saveBtn" class="save-btn" onclick="saveAsImage()">📸 保存羊皮卷轴</button>
+      <button id="copyBtn" class="save-btn" onclick="copyReadingText()">📋 复制解读</button>
+      <button id="restartBtn" class="save-btn restart" onclick="window.location.reload()">重新占卜</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>

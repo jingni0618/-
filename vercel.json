@@ -1,9 +1,9 @@
 {
   "version": 2,
-  "routes": [
+  "rewrites": [
     {
-      "src": "/src/assets/sounds/(.*)",
-      "dest": "/src/assets/sounds/$1"
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
     }
   ]
 }
