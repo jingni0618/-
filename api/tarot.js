@@ -43,7 +43,7 @@ export default async function handler(req, res) {
   const API_KEY = process.env.OPENAI_API_KEY;
   if (!API_KEY) return res.status(500).json({ error: '后端未配置 API Key' });
 
-  const { question, cards, readingStyle, soulCard, isDaily, isNight, vipToken, fallbackShort } = req.body || {};
+  const { question, cards, readingStyle, soulCard, isDaily, isNight, vipToken, fallbackShort, userName, partnerName, emotionLevel, emotionLabel, isCompatibility } = req.body || {};
   const safeCards = Array.isArray(cards) ? cards : [];
   const vipUnlockCode = process.env.VIP_UNLOCK_CODE;
   const vipSigningSecret = process.env.VIP_SIGNING_SECRET || API_KEY;
@@ -80,7 +80,16 @@ export default async function handler(req, res) {
     
     systemRole = styleDesc + (fallbackShort ? " 你需要输出 250 - 450 字的简版解析。" : " 你必须输出 1000 - 1500 字的深度解析。");
     
+    const identityLine = userName ? `提问者昵称：${userName}` : "提问者昵称：匿名旅人";
+    const compatibilityLine = isCompatibility && partnerName
+      ? `这是双人合盘问题，对方昵称：${partnerName}。请分析双方互动模式、误解来源与可执行沟通建议。`
+      : "这是单人问题，聚焦提问者自身成长与决策。";
+    const emotionLine = `当前情绪雷达：等级 ${Number(emotionLevel || 3)}（${emotionLabel || "平静观察"}）。请在语气与建议力度中体现这个状态。`;
+
     promptContext = `${soulCall}
+${identityLine}
+${compatibilityLine}
+${emotionLine}
 TA的疑惑：“${question}”
 抽到的阵法：
 ${safeCards.map(c => `- ${c.position}: 抽到 ${c.cardName}。含义：${c.meaning}`).join('\n')}
