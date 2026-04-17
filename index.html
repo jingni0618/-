@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>👀仔的命运星盘</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="src/css/main.css">
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
@@ -27,9 +27,9 @@
     <!-- 主界面 (初始透明) -->
     <div id="uiElements" class="ui-wrapper" style="opacity: 0;">
       <div class="top-nav">
-        <button id="musicToggle" class="icon-btn" onclick="toggleMusic()">🎵 灵性环境音</button>
-        <button id="dailyBtn" class="icon-btn highlight" onclick="startDailyDraw()">✨ 今日神谕</button>
-        <button id="historyBtn" class="icon-btn highlight" onclick="showHistoryPanel()">📜 占卜记录</button>
+        <button id="musicToggle" class="icon-btn">🎵 灵性环境音</button>
+        <button id="dailyBtn" class="icon-btn highlight">✨ 今日神谕</button>
+        <button id="historyBtn" class="icon-btn highlight">📜 占卜记录</button>
       </div>
 
     <div class="container">
@@ -47,7 +47,7 @@
           <div class="choice-card__icon">✨</div>
           <div class="choice-card__feature">单张解读 · 直觉优先 · 立即启示</div>
           <div class="choice-card__footer">
-            <button id="quickDrawBtn" class="secondary-btn" onclick="quickDrawSingleCard()">直接抽一张</button>
+            <button id="quickDrawBtn" class="secondary-btn">直接抽一张</button>
           </div>
         </div>
 
@@ -70,7 +70,7 @@
             </div>
             <div class="input-group">
               <label>选择牌阵</label>
-              <select id="spreadSelect" onchange="renderSpread()">
+              <select id="spreadSelect">
                 <optgroup label="基础指引">
                   <option value="single">单牌神谕（1张：直觉指引）</option>
                   <option value="yesno">是非决断阵（3张：支持/反对/答案）</option>
@@ -86,7 +86,7 @@
             </div>
           </div>
           <div class="choice-card__footer">
-            <button id="startBtn" class="main-btn" onclick="checkVipAndStart()">开始问卜</button>
+            <button id="startBtn" class="main-btn">开始问卜</button>
           </div>
         </div>
       </div>
@@ -104,8 +104,8 @@
     <div class="history-card" id="historyCardArea" style="display: none;">
       <div class="history-title">占卜记录</div>
       <div id="historyList" class="history-list"></div>
-      <button class="history-clear-btn" onclick="clearHistory()">清空记录</button>
-      <button class="save-btn restart" style="margin-top: 16px; width: 100%;" onclick="closeHistoryPanel()">返回星盘</button>
+      <button class="history-clear-btn">清空记录</button>
+      <button id="closeHistoryBtn" class="save-btn restart" style="margin-top: 16px; width: 100%;">返回星盘</button>
     </div>
   </div>
   </div>
@@ -117,10 +117,10 @@
       <p style="font-size: 13px; margin-bottom: 10px; color: #8e8579;">高级牌阵将解锁更深的专业解析，宇宙也需要等价的能量交换。</p>
       <p style="font-size: 14px; color: #c5a059; font-weight: bold; margin-bottom: 15px;">👉 扫码或长按赞赏 1 元</p>
       <div class="qr-container"><img id="qrImage" src="https://i.postimg.cc/vBRq8rJn/IMG-9022.jpg" alt="微信赞赏码"></div>
-      <button id="mobilePayBtn" class="confirm-btn pulse-btn" style="margin-top: 15px; width: 100%; display:none;" onclick="mobilePayFlow()">📱 保存二维码并前往微信</button>
+      <button id="mobilePayBtn" class="confirm-btn pulse-btn" style="margin-top: 15px; width: 100%; display:none;">📱 保存二维码并前往微信</button>
       <div class="modal-btns" style="margin-top: 15px;">
-        <button onclick="closeVipModal()" class="cancel-btn">返回</button>
-        <button id="pcPayBtn" onclick="pcPayFlow()" class="confirm-btn">✅ 我已赞赏</button>
+        <button id="closeVipModalBtn" class="cancel-btn">返回</button>
+        <button id="pcPayBtn" class="confirm-btn">✅ 我已赞赏</button>
       </div>
     </div>
   </div>
@@ -159,12 +159,12 @@
     </div>
     
     <div id="actionBtns" class="action-btns" style="margin-top: 30px; display: none; justify-content: center; gap: 15px; padding-bottom: 50px;">
-      <button id="saveBtn" class="save-btn" onclick="saveAsImage()">📸 保存羊皮卷轴</button>
-      <button id="copyBtn" class="save-btn" onclick="copyReadingText()">📋 复制解读</button>
-      <button id="restartBtn" class="save-btn restart" onclick="window.location.reload()">重新占卜</button>
+      <button id="saveBtn" class="save-btn">📸 保存羊皮卷轴</button>
+      <button id="copyBtn" class="save-btn">📋 复制解读</button>
+      <button id="restartBtn" class="save-btn restart">重新占卜</button>
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <script type="module" src="src/js/main.js"></script>
 </body>
 </html>
