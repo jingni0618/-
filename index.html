@@ -25,7 +25,7 @@
     <div class="intro-panel">
       <div class="intro-badge">命运星盘</div>
       <p id="introText" class="intro-text"></p>
-      <div class="intro-hint">让今天的答案，先从一口呼吸开始</div>
+      <div class="intro-hint">让答案在一呼一吸之间慢慢显现</div>
     </div>
   </div>
 
@@ -34,7 +34,7 @@
     <div class="top-nav">
       <div class="phase-chip-wrap">
         <div class="phase-chip" id="timePhaseChip">时辰流转中</div>
-        <div class="phase-chip climate-chip" id="climateChip">节气与天气意象加载中</div>
+        <div class="phase-chip date-chip" id="homeDate">日期载入中</div>
       </div>
       <div class="top-nav-actions">
         <button id="dailyBtn" class="icon-btn highlight">✨ 今日神谕</button>
@@ -46,9 +46,6 @@
     <div class="container">
       <div class="hero-header">
         <h1 id="mainTitle" class="classic-title">👀仔的命运星盘</h1>
-        <p id="mainSubtitle" class="subtitle">先把问题说清楚，再用塔罗把方向照亮</p>
-        <div class="global-privacy-note">隐私说明：你填写的信息仅用于本次解读与本地档案，不会公开展示。</div>
-        <div class="hero-date" id="homeDate">正在读取今天日期...</div>
       </div>
       <div id="statusBanner" class="status-banner" aria-live="polite"></div>
 
@@ -56,56 +53,50 @@
         <div class="home-main">
           <div class="hero-grid hero-grid--editorial">
         <div class="choice-card choice-card--secondary card-quick">
-          <div class="choice-card__eyebrow">单张入口</div>
-          <h2 class="choice-card__title">一张灵感牌</h2>
-          <p class="choice-card__desc">不想打字时，一步进入单牌占卜。</p>
+          <div class="choice-card__eyebrow">单张神谕</div>
+          <h2 class="choice-card__title">抽一张灵感牌</h2>
+          <p class="choice-card__desc">不输入问题，直接看见当下信号。</p>
           <div class="choice-card__icon">✨</div>
-          <div class="choice-card__feature">30秒内完成 · 轻量体验</div>
+          <div class="choice-card__feature">约30秒 · 轻量启示</div>
           <div class="choice-card__footer">
-            <button id="quickDrawBtn" class="secondary-btn">直接抽一张</button>
+            <button id="quickDrawBtn" class="secondary-btn">立刻抽牌</button>
           </div>
         </div>
 
         <div class="choice-card choice-card--main card-deep">
-          <div class="choice-card__eyebrow">提问入口</div>
-          <h2 class="choice-card__title">输入问题，开始占卜</h2>
-          <p class="choice-card__desc">适合你想认真推演时：选牌阵、抽牌、解读，再落到行动建议。</p>
+          <div class="choice-card__eyebrow">主题占问</div>
+          <h2 class="choice-card__title">写下问题，开启占问</h2>
+          <p class="choice-card__desc">适合深度推演：选阵、抽牌、解牌、落地。</p>
           <div class="choice-card__body" id="deepSettings">
             <div class="input-group">
-              <label>你最想问的是什么？</label>
-              <input type="text" id="questionInput" placeholder="越具体，启示越清晰...">
-              <div class="field-hint" id="questionHint">你的问题仅用于本次占卜，不会公开展示。</div>
+              <label>你此刻最想照见什么？</label>
+              <input type="text" id="questionInput" placeholder="越具体，牌意越清晰...">
+              <div class="field-hint" id="questionHint">你的问题仅用于本次解牌，不会公开展示。</div>
             </div>
-            <div class="spread-guide-head">先点选牌阵（推荐）</div>
+            <div class="spread-guide-head">先选择牌阵（推荐）</div>
             <div class="spread-visual-guide" id="spreadVisualGuide" aria-live="polite"></div>
-            <details class="advanced-spread-settings">
-              <summary>高级设置：显示下拉牌阵</summary>
-              <div class="input-group" style="margin-top: 10px;">
-                <label>牌阵列表</label>
-                <select id="spreadSelect">
-                  <optgroup label="基础指引">
-                    <option value="single">单牌神谕（1张：直觉指引）</option>
-                    <option value="yesno">是非决断阵（3张：支持/反对/答案）</option>
-                    <option value="time">时间之流（3张：过去/现在/未来）</option>
-                  </optgroup>
-                  <optgroup label="深度专栏">
-                    <option value="relationship">情感透视阵（4张：你/对方/阻碍/未来）</option>
-                    <option value="career">财富事业阵（4张：现状/机遇/风险/走向）</option>
-                    <option value="choice">二选一岔路阵（5张：现状/选A/选B/A结局/B结局）</option>
-                    <option value="cross" selected>灵感十字阵（5张：核心/阻碍/目标/潜意识/结局）</option>
-                  </optgroup>
-                </select>
-              </div>
-            </details>
-            <div class="pay-hint" id="payHintText">当前牌阵可免费使用。</div>
-            <button id="startBtn" class="main-btn">开始深度占卜</button>
+            <select id="spreadSelect" style="display:none;">
+              <optgroup label="基础指引">
+                <option value="single">单牌神谕（1张：直觉指引）</option>
+                <option value="yesno">是非决断阵（3张：支持/反对/答案）</option>
+                <option value="time">时间之流（3张：过去/现在/未来）</option>
+              </optgroup>
+              <optgroup label="深度专栏">
+                <option value="relationship">情感透视阵（4张：你/对方/阻碍/未来）</option>
+                <option value="career">财富事业阵（4张：现状/机遇/风险/走向）</option>
+                <option value="choice">二选一岔路阵（5张：现状/选A/选B/A结局/B结局）</option>
+                <option value="cross" selected>灵感十字阵（5张：核心/阻碍/目标/潜意识/结局）</option>
+              </optgroup>
+            </select>
+            <div class="pay-hint" id="payHintText">当前牌阵无需解锁。</div>
+            <button id="startBtn" class="main-btn">开启解牌</button>
           </div>
         </div>
 
         <div class="choice-card choice-card--love card-love">
-          <div class="choice-card__eyebrow">双人入口</div>
-          <h2 class="choice-card__title">双人关系占卜</h2>
-          <p class="choice-card__desc">适合关系议题，属于 4 张深度牌阵，需先解锁。</p>
+          <div class="choice-card__eyebrow">双人合盘</div>
+          <h2 class="choice-card__title">双人关系合盘</h2>
+          <p class="choice-card__desc">聚焦关系课题，查看彼此状态与走向。</p>
           <div class="choice-card__body" id="couplePanel">
             <div class="input-group dual-inputs">
               <div>
@@ -118,23 +109,15 @@
               </div>
             </div>
             <div class="input-group">
-              <label>你想问这段关系什么？</label>
-              <input type="text" id="coupleQuestionInput" placeholder="例如：我们接下来该怎么走下去？">
-              <div class="field-hint" id="coupleQuestionHint">双人信息仅用于本次解读，不会公开。</div>
+              <label>你想照见这段关系的什么课题？</label>
+              <input type="text" id="coupleQuestionInput" placeholder="例如：我们接下来该如何靠近彼此？">
+              <div class="field-hint" id="coupleQuestionHint">双人信息仅用于本次解牌，不会公开。</div>
             </div>
-            <button id="startCoupleBtn" class="secondary-btn">💞 开始双人占卜</button>
+            <button id="startCoupleBtn" class="secondary-btn">💞 开启双人合盘</button>
           </div>
         </div>
           </div>
         </div>
-
-        <aside class="home-side">
-          <div class="warm-board" id="warmBoard">
-            <div class="warm-board__title">今日引导</div>
-            <p class="warm-board__text" id="warmBoardText">宇宙正在为你准备一句温暖的话...</p>
-            <div class="warm-board__meta" id="warmBoardMeta"></div>
-          </div>
-        </aside>
       </div>
     </div>
   </div> 
@@ -142,23 +125,25 @@
   <!-- VIP 赞赏弹窗 -->
   <div id="vipModal" class="modal-overlay" style="display: none;">
     <div class="modal-content">
-      <h3 class="classic-title" style="font-size: 1.5rem; margin-top:0;">👑 解锁深度命盘</h3>
-      <p style="font-size: 13px; margin-bottom: 10px; color: #8e8579;">4~5张高级牌阵（含双人占卜）将解锁更深解析，宇宙也需要等价的能量交换。</p>
+      <h3 class="classic-title" style="font-size: 1.5rem; margin-top:0;">👑 解锁深度牌阵</h3>
+      <p style="font-size: 13px; margin-bottom: 10px; color: #8e8579;">4~5张深度牌阵（含双人合盘）可获得更完整的因果脉络与行动指引。</p>
+      <div class="vip-step-title">你将获得</div>
       <ul class="vip-value-list">
         <li>更完整的因果链路分析（现状/阻碍/走向）</li>
-        <li>可用双人关系占卜，专门处理关系议题</li>
-        <li>占卜结果可持续沉淀到成长档案做复盘</li>
+        <li>可开启双人关系合盘，专门处理关系课题</li>
+        <li>解牌结果可沉淀到成长档案，持续复盘</li>
       </ul>
-      <p style="font-size: 14px; color: #c5a059; font-weight: bold; margin-bottom: 15px;">👉 扫码或长按赞赏 1 元</p>
+      <div class="vip-step-title">如何解锁</div>
+      <p style="font-size: 14px; color: #c5a059; font-weight: bold; margin-bottom: 15px;">👉 扫码赞赏 1 元，解锁深度解牌</p>
       <div class="qr-container"><img id="qrImage" src="https://i.postimg.cc/vBRq8rJn/IMG-9022.jpg" alt="微信赞赏码"></div>
       <div style="display: flex; gap: 8px; margin: 12px 0 8px;">
-        <input id="vipCodeInput" type="password" placeholder="输入解锁口令" style="flex:1; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.25); background: rgba(10,10,14,0.35); color:#f8e6b5;">
-        <button id="verifyVipBtn" class="main-btn" style="white-space: nowrap; width:auto; min-width:92px;">验证</button>
+        <input id="vipCodeInput" type="password" placeholder="输入解锁密钥" style="flex:1; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.25); background: rgba(10,10,14,0.35); color:#f8e6b5;">
+        <button id="verifyVipBtn" class="main-btn" style="white-space: nowrap; width:auto; min-width:92px;">校验</button>
       </div>
-      <button id="mobilePayBtn" class="secondary-btn pulse-btn" style="margin-top: 15px; width: 100%; display:none;">📱 保存二维码并前往微信</button>
+      <button id="mobilePayBtn" class="secondary-btn pulse-btn" style="margin-top: 15px; width: 100%; display:none;">📱 保存二维码后前往微信</button>
       <div class="modal-btns" style="margin-top: 15px;">
-        <button id="closeVipBtn" class="cancel-btn">返回</button>
-        <button id="pcPayBtn" class="secondary-btn">✅ 我已赞赏</button>
+        <button id="closeVipBtn" class="cancel-btn">再想想</button>
+        <button id="pcPayBtn" class="secondary-btn">✅ 我已赞赏，继续解牌</button>
       </div>
     </div>
   </div>
@@ -169,7 +154,7 @@
       <div class="daily-title">今日神谕</div>
       <div class="daily-date" id="dailyDate"></div>
       <div class="daily-emoji-card"><div id="dailyEmoji" class="daily-emoji">✨</div><div id="dailyName" class="daily-name">牌名</div></div>
-      <div class="daily-quote" id="dailyQuote">星辰正为你织就今日日签...</div>
+      <div class="daily-quote" id="dailyQuote">今日牌面正在为你写下一句日签...</div>
     </div>
   </div>
 
@@ -177,59 +162,59 @@
     <div id="flowSteps" class="flow-steps" style="display:none;">
       <div class="flow-step" data-step="1">1 选阵</div>
       <div class="flow-step" data-step="2">2 抽牌</div>
-      <div class="flow-step" data-step="3">3 解读</div>
-      <div class="flow-step" data-step="4">4 行动</div>
+      <div class="flow-step" data-step="3">3 翻牌</div>
+      <div class="flow-step" data-step="4">4 落地</div>
     </div>
 
     <!-- 能量交互文字 -->
     <div id="energyText" class="energy-text" style="display: none;"></div>
 
     <div id="shuffleArea" class="deck-area" style="display: none;">
-       <h3 class="ritual-text">洗牌中...潜意识正在注入星盘</h3>
+      <h3 class="ritual-text">洗牌中...星盘正在与你校准</h3>
        <div class="shuffling-deck"></div>
     </div>
 
     <!-- 交互抽牌区 -->
     <div id="deckArea" class="deck-area" style="display: none;">
-      <h3 id="instructionText" class="ritual-text">请点击抽取 <span id="cardsLeft">0</span> 张牌</h3>
+      <h3 id="instructionText" class="ritual-text">请从牌扇中抽取 <span id="cardsLeft">0</span> 张牌</h3>
       <div class="fan-deck" id="fanDeck"></div>
     </div>
 
     <!-- 悬念揭秘与牌阵区 -->
-    <div id="revealInstruction" class="ritual-text" style="display: none; margin-top: 20px;">命运已就位，请依次点击牌背揭晓...</div>
+    <div id="revealInstruction" class="ritual-text" style="display: none; margin-top: 20px;">牌面已就位，请依次翻牌揭晓。</div>
     <div class="spread-container" id="spreadContainer"></div>
 
     <!-- 羊皮纸长文解析区 -->
     <div class="reading-wrapper" id="readingWrapper" style="display: none;">
       <div class="parchment-box" id="readingBox">
-        <div class="ai-status" id="aiStatus"><div class="crystal-ball">🔮</div><span>塔罗师正在为你推演星象...</span></div>
+        <div class="ai-status" id="aiStatus"><div class="crystal-ball">🔮</div><span>塔罗解读中，正在编织你的答案...</span></div>
         <div id="readingSummary" class="reading-summary" style="display:none;"></div>
         <div id="streamContent" class="stream-content parchment-text"></div>
         <span id="cursor" class="typing-cursor"></span>
       </div>
-      <div id="shareHeader" class="share-only" style="color: #2c241b; font-weight: bold; margin-bottom: 20px;">✨ 命运星盘 · 专属占卜报告 ✨</div>
+      <div id="shareHeader" class="share-only" style="color: #2c241b; font-weight: bold; margin-bottom: 20px;">✨ 命运星盘 · 你的专属解牌卷轴 ✨</div>
     </div>
 
     <div id="actionPlanBox" class="action-plan-box" style="display:none;">
-      <h3>现实行动清单（24小时）</h3>
+      <h3>行动锚点（24小时）</h3>
       <ul id="actionPlanList"></ul>
     </div>
     
     <div id="actionBtns" class="action-btns" style="margin-top: 30px; display: none; justify-content: center; gap: 15px; padding-bottom: 50px;">
       <select id="shareThemeSelect" class="share-theme-select">
-        <option value="parchment">羊皮卷主题</option>
-        <option value="night">夜空主题</option>
+        <option value="parchment">古卷主题</option>
+        <option value="night">夜幕主题</option>
         <option value="nebula">星云主题</option>
       </select>
-      <button id="saveBtn" class="save-btn">📸 保存羊皮卷轴</button>
-      <button id="copyBtn" class="save-btn">📋 复制解读</button>
-      <button id="restartBtn" class="save-btn restart">重新占卜</button>
+      <button id="saveBtn" class="save-btn">📸 保存解牌卷轴</button>
+      <button id="pushToArchiveBtn" class="save-btn">🗂 写入成长档案</button>
+      <button id="restartBtn" class="save-btn restart">再次占卜</button>
     </div>
   </div>
 
   <div id="historyDetailModal" class="modal-overlay" style="display:none;">
     <div class="modal-content" style="max-width: 620px; text-align: left;">
-      <h3 style="margin-top:0; color:#f6e6b5;">占卜详情</h3>
+      <h3 style="margin-top:0; color:#f6e6b5;">解牌详情</h3>
       <div id="historyDetailBody" style="max-height: 58vh; overflow-y: auto; color:#eadfbe; line-height:1.7;"></div>
       <div class="modal-btns" style="margin-top:16px;">
         <button id="historyDetailCloseBtn" class="confirm-btn" style="width:100%;">关闭</button>
@@ -241,7 +226,7 @@
     <div class="modal-content growth-hub-modal">
       <div id="vaultAuthPanel" class="vault-auth-panel">
         <h3 style="margin-top: 0; color:#f6e6b5;">成长档案 · 私密空间</h3>
-        <p class="contact-desc">设置昵称与4位数字口令后，只有你能查看这份成长档案。</p>
+        <p class="contact-desc">设置昵称与4位数字口令后，只有你能查看这份星盘档案。</p>
         <div class="input-group">
           <label>档案昵称</label>
           <input type="text" id="vaultNameInput" placeholder="例如：小宇" maxlength="20">
@@ -258,6 +243,7 @@
 
       <div id="growthHubPanel" style="display:none;">
         <h3 style="margin-top: 0; color:#f6e6b5;">成长档案</h3>
+        <p class="growth-intro">这是你的长期观察面板：看见重复课题、情绪波动和行动兑现率。</p>
         <div class="vault-meta" id="vaultMeta"></div>
         <div id="timelineSummary" class="timeline-summary"></div>
         <div class="timeline-toolbar">
@@ -280,14 +266,14 @@
             <div id="timelineList" class="timeline-list"></div>
           </div>
           <div class="journal-notebook">
-            <h4>心情日记本</h4>
+            <h4>心境札记</h4>
             <div class="input-group emotion-group">
-              <label>当前状态：<span id="emotionLabel">平静观察</span></label>
+              <label>当前心境：<span id="emotionLabel">平静观察</span></label>
               <input type="range" id="emotionRange" min="1" max="5" value="3" step="1">
               <div class="emotion-quick-tags" id="emotionQuickTags">
-                <button class="emotion-preset" data-value="1" type="button">我很冷静</button>
-                <button class="emotion-preset" data-value="3" type="button">我还OK</button>
-                <button class="emotion-preset" data-value="5" type="button">我很上头</button>
+                <button class="emotion-preset" data-value="1" type="button">我很平稳</button>
+                <button class="emotion-preset" data-value="3" type="button">我还可以</button>
+                <button class="emotion-preset" data-value="5" type="button">我有点上头</button>
               </div>
               <div class="emotion-ticks"><span>低压</span><span>平衡</span><span>高压</span></div>
             </div>
@@ -298,16 +284,16 @@
               </select>
             </div>
             <div class="input-group">
-              <label>写点什么</label>
-              <textarea id="journalNoteInput" rows="5" placeholder="写下你此刻的感受、领悟或下一步行动..."></textarea>
+              <label>写下此刻感受</label>
+              <textarea id="journalNoteInput" rows="5" placeholder="写下你此刻的感受、领悟，或下一步要落地的行动..."></textarea>
             </div>
-            <button id="saveJournalNoteBtn" class="main-btn">保存笔记</button>
+            <button id="saveJournalNoteBtn" class="main-btn">保存札记</button>
             <div id="journalNotesList" class="journal-notes-list"></div>
           </div>
         </div>
 
         <div class="modal-btns" style="margin-top:14px;">
-          <button id="clearHistoryBtn" class="cancel-btn">清空占卜记录</button>
+          <button id="clearHistoryBtn" class="cancel-btn">清空解牌记录</button>
           <button id="closeGrowthHubPanelBtn" class="confirm-btn">关闭档案</button>
         </div>
       </div>
@@ -316,7 +302,7 @@
 
   <div id="contactModal" class="modal-overlay" style="display:none;">
     <div class="modal-content contact-panel-content">
-      <h3 style="margin-top: 0; color:#f6e6b5; letter-spacing:1px;">联系作者</h3>
+      <h3 style="margin-top: 0; color:#f6e6b5; letter-spacing:1px;">联系占卜师</h3>
       <p class="contact-desc">如果你想定制专属占卜流程，欢迎联系我。</p>
       <div class="contact-item">
         <span class="contact-label">电话 / 微信号</span>
@@ -334,7 +320,7 @@
 
   <div id="feedbackModal" class="modal-overlay" style="display:none;">
     <div class="modal-content feedback-panel-content">
-      <h3 style="margin-top: 0; color:#f6e6b5; letter-spacing:1px;">来，偷偷给我提个醒</h3>
+      <h3 style="margin-top: 0; color:#f6e6b5; letter-spacing:1px;">给星盘留一句话</h3>
       <p class="contact-desc">你夸我、吐槽我、许愿我都收。每一条我都会认真看，也会继续把这片星盘打磨得更好（通常 48 小时内会阅读并整理）。</p>
       <div class="input-group">
         <label>你的称呼（可选）</label>
@@ -350,7 +336,7 @@
       </div>
       <div class="modal-btns" style="margin-top: 14px;">
         <button id="closeFeedbackBtn" class="cancel-btn">我再想想</button>
-        <button id="sendFeedbackBtn" class="confirm-btn">投递给👀仔</button>
+        <button id="sendFeedbackBtn" class="confirm-btn">投递星语</button>
       </div>
       <div class="feedback-contact-shortcut">
         <div class="contact-desc" style="margin-top:10px;">需要定制占卜流程？可直接联系作者。</div>
