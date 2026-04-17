@@ -1497,3 +1497,58 @@ body[data-phase="night"] { background: linear-gradient(140deg, #101a36, #1b2747 
     width: 100%;
   }
 }
+
+/* Readability tune-up */
+body {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.choice-card__desc,
+.field-hint,
+.pay-hint,
+.spread-guide-text,
+.timeline-item-snippet,
+.contact-desc,
+.growth-intro,
+.vault-meta,
+.energy-text,
+.daily-quote {
+  color: rgba(238, 229, 207, 0.96) !important;
+}
+
+.choice-card__title,
+.classic-title,
+.daily-title,
+.timeline-item-main,
+.journal-notebook h4 {
+  color: #fff2d6 !important;
+}
+
+.input-group label,
+.spread-guide-head,
+.choice-card__feature,
+.choice-card__eyebrow,
+.timeline-toolbar label,
+.timeline-summary-label {
+  color: rgba(245, 231, 201, 0.94) !important;
+}
+
+.phase-chip,
+.icon-btn,
+.top-nav .icon-btn {
+  color: #f8ecd3 !important;
+}
+
+.input-group input,
+.input-group select,
+.input-group textarea {
+  background: rgba(7, 11, 22, 0.84) !important;
+  border-color: rgba(224, 202, 164, 0.44) !important;
+  color: #fff1d2 !important;
+}
+
+.input-group input::placeholder,
+.input-group textarea::placeholder {
+  color: rgba(237, 223, 193, 0.68) !important;
+}
