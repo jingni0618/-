@@ -39,6 +39,10 @@ function userFlipsCard(index) {
         document.getElementById("revealInstruction").style.display = "none";
         const readingWrapper = document.getElementById("readingWrapper");
         readingWrapper.style.display = "block";
+        const readingBox = document.getElementById("readingBox");
+        if (readingBox) {
+            readingBox.style.display = "block";
+        }
         
         const question = document.getElementById("questionInput").value;
         const style = document.getElementById("styleSelect").value;
