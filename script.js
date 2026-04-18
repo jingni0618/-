@@ -152,8 +152,23 @@ function applyDensityMode(mode = "compact") {
 
 function initEventBindings() {
   const byId = id => document.getElementById(id);
+  const bindReturnHome = element => {
+    if (!element) return;
+    let lastTriggerAt = 0;
+    const trigger = () => {
+      const now = Date.now();
+      if (now - lastTriggerAt < 250) return;
+      lastTriggerAt = now;
+      returnToHomePage();
+    };
+    element.addEventListener("click", trigger);
+    element.addEventListener("pointerup", event => {
+      event.preventDefault();
+      trigger();
+    });
+  };
   byId("dailyBtn")?.addEventListener("click", startDailyDraw);
-  byId("dailyBackBtn")?.addEventListener("click", returnToHomePage);
+  bindReturnHome(byId("dailyBackBtn"));
   byId("growthHubBtn")?.addEventListener("click", openGrowthHub);
   byId("feedbackBtn")?.addEventListener("click", openFeedbackModal);
   byId("openContactFromFeedbackBtn")?.addEventListener("click", () => {
@@ -195,8 +210,8 @@ function initEventBindings() {
   byId("sendFeedbackBtn")?.addEventListener("click", sendFeedback);
   byId("saveBtn")?.addEventListener("click", saveAsImage);
   byId("pushToArchiveBtn")?.addEventListener("click", pushLatestReadingToArchive);
-  byId("restartBtn")?.addEventListener("click", returnToHomePage);
-  byId("immersiveBackBtn")?.addEventListener("click", returnToHomePage);
+  bindReturnHome(byId("restartBtn"));
+  bindReturnHome(byId("immersiveBackBtn"));
   byId("historyDetailCloseBtn")?.addEventListener("click", closeHistoryDetail);
   byId("questionInput")?.addEventListener("input", () => updateQuestionHint());
   byId("coupleQuestionInput")?.addEventListener("input", () => updateCoupleHint());
@@ -989,7 +1004,7 @@ function enterDailyMode() {
 
 function returnToHomePage() {
   stopVipOrderPolling();
-  resetStartHoldState();
+  resetRitualOrbState();
   resetDeckSpreadState();
   finalRevealTransitionRunning = false;
   document.body.classList.remove("screen-shake");

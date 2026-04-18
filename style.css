@@ -1031,6 +1031,15 @@ body[data-phase="dusk"] #starfield {
   flex-wrap: wrap;
   gap: 10px;
   justify-content: center;
+  position: relative;
+  z-index: 40;
+  pointer-events: auto;
+}
+
+.action-btns > button {
+  position: relative;
+  z-index: 41;
+  pointer-events: auto;
 }
 
 .aside-panel {
