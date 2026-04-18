@@ -127,37 +127,28 @@
   <div id="vipModal" class="modal-overlay" style="display: none;">
     <div class="modal-content">
       <h3 class="classic-title" style="font-size: 1.5rem; margin-top:0;">👑 解锁进阶牌阵</h3>
-      <p style="font-size: 13px; margin-bottom: 10px; color: #8e8579;">4~5张进阶牌阵：深度牌阵 ¥3/次，双人合盘 ¥5/次。</p>
-      <div class="vip-step-title">你将获得</div>
-      <ul class="vip-value-list">
-        <li>更完整的因果链路分析（现状/阻碍/走向）</li>
-        <li>可开启双人关系合盘，专门处理关系课题</li>
-        <li>解牌结果可沉淀到成长档案，持续复盘</li>
-      </ul>
+      <p style="font-size: 13px; margin-bottom: 8px; color: #8e8579;">深度牌阵 ¥3/次，双人合盘 ¥5/次。</p>
       <div class="vip-step-title">如何解锁</div>
-      <p style="font-size: 14px; color: #c5a059; font-weight: bold; margin-bottom: 15px;">👉 先创建订单并扫码支付，再等待人工确认。确认通过后点击“检查确认结果”即可继续。</p>
-      <div class="qr-container"><img id="qrImage" src="https://via.placeholder.com/320x320.png?text=Alipay+QR" alt="支付宝收款码"></div>
+      <p style="font-size: 14px; color: #c5a059; font-weight: 700; margin-bottom: 12px;">👉 扫码支付后，点击“我已完成支付，继续解牌”。</p>
+      <div class="qr-container"><img id="qrImage" src="https://i.postimg.cc/P525Vk7w/IMG-9071.png" alt="支付宝收款码"></div>
       <div id="vipOrderStatusBox" class="vip-order-status" style="display:none;">
-        <div id="vipOrderStatusText">支付状态：等待创建订单</div>
-        <div id="vipOrderMeta" class="vip-order-meta"></div>
+        <div id="vipOrderStatusText">状态：等待你扫码支付</div>
+        <div id="vipOrderMeta" class="vip-order-meta">这是前端静态收款页，支付后可直接继续。</div>
       </div>
-      <div style="display: flex; gap: 8px; margin: 12px 0 8px;">
-        <input id="vipCodeInput" type="password" placeholder="输入解锁密钥" style="flex:1; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.25); background: rgba(10,10,14,0.35); color:#f8e6b5;">
-        <button id="verifyVipBtn" class="main-btn" style="white-space: nowrap; width:auto; min-width:92px;">校验</button>
-      </div>
-      <button id="checkOrderBtn" class="secondary-btn" style="margin-top: 8px; width: 100%; display:none;">检查确认结果</button>
-      <div class="friend-test-box">
-        <div class="friend-test-title">朋友测试通道（免付费）</div>
-        <div class="friend-test-input-row">
-          <input id="friendTestCodeInput" type="text" placeholder="输入你给朋友的测试码" autocomplete="off">
-          <button id="verifyFriendTestBtn" class="secondary-btn" style="width:auto; min-width:98px;">测试码校验</button>
-        </div>
-        <div class="friend-test-tip">测试码由你线下发给朋友。</div>
-      </div>
-      <button id="mobilePayBtn" class="secondary-btn pulse-btn" style="margin-top: 15px; width: 100%; display:none;">📱 保存二维码后前往支付宝</button>
       <div class="modal-btns" style="margin-top: 15px;">
         <button id="closeVipBtn" class="cancel-btn">再想想</button>
-        <button id="pcPayBtn" class="secondary-btn">✅ 创建订单并提交人工确认</button>
+        <button id="confirmVipPaidBtn" class="secondary-btn">✅ 我已完成支付，继续解牌</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="vipConfirmModal" class="modal-overlay" style="display:none;">
+    <div class="modal-content vip-confirm-content">
+      <h3 style="margin-top:0; color:#f6e6b5;">确认继续解牌</h3>
+      <p class="vip-confirm-text">请确认你已完成支付。为防止误触，按钮将在 2 秒后可点击。</p>
+      <div class="modal-btns" style="margin-top:14px;">
+        <button id="cancelVipConfirmBtn" class="cancel-btn">取消</button>
+        <button id="confirmVipContinueBtn" class="confirm-btn" disabled>确认并继续（2）</button>
       </div>
     </div>
   </div>
@@ -231,6 +222,10 @@
         <option value="parchment">古卷主题</option>
         <option value="night">夜幕主题</option>
         <option value="nebula">星云主题</option>
+      </select>
+      <select id="densityModeSelect" class="share-theme-select">
+        <option value="compact">紧凑排版</option>
+        <option value="relaxed">舒展排版</option>
       </select>
       <button id="saveBtn" class="save-btn">📸 保存解牌卷轴</button>
       <button id="pushToArchiveBtn" class="save-btn">🗂 写入成长档案</button>

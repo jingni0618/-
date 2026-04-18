@@ -88,7 +88,9 @@ let screenModeHideTimer = null;
 const DAILY_CACHE_KEY = "tarotDailyReading";
 const VIP_TOKEN_KEY = "tarotVipToken";
 const VIP_ORDER_ID_KEY = "tarotVipOrderId";
+const VIP_STATIC_QR_URL = "https://i.postimg.cc/P525Vk7w/IMG-9071.png";
 const VAULT_META_KEY = "tarotVaultMeta";
+const DENSITY_MODE_KEY = "tarotReadingDensityMode";
 const HISTORY_LIMIT = 20;
 const NOTES_LIMIT = 40;
 let currentVipOrderId = localStorage.getItem(VIP_ORDER_ID_KEY) || "";
@@ -103,6 +105,7 @@ const emotionLabels = {
 
 window.onload = function() {
   isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  applyDensityMode(localStorage.getItem(DENSITY_MODE_KEY) || "compact");
   applyTimePhaseTheme(); initStarfield(); renderSpread(); renderSpreadGuide(); loadHistory(); initEventBindings(); renderHomeDate(); updateStatus("");
   
   const introStr = isNightMode ? "夜色已深，愿你在这里照见真实的自己。\n把困惑放在掌心，我们慢慢翻开答案。" : "欢迎回来，今天也值得被温柔对待。\n从一个问题开始，把方向交给牌面。";
@@ -124,6 +127,14 @@ window.onload = function() {
   typeIntro();
 };
 
+function applyDensityMode(mode = "compact") {
+  const normalized = mode === "relaxed" ? "relaxed" : "compact";
+  document.body.classList.remove("reading-density-compact", "reading-density-relaxed");
+  document.body.classList.add(`reading-density-${normalized}`);
+  const select = document.getElementById("densityModeSelect");
+  if (select && select.value !== normalized) select.value = normalized;
+}
+
 function initEventBindings() {
   const byId = id => document.getElementById(id);
   byId("dailyBtn")?.addEventListener("click", startDailyDraw);
@@ -141,19 +152,18 @@ function initEventBindings() {
     renderSpread();
     renderSpreadGuide();
   });
+  byId("densityModeSelect")?.addEventListener("change", e => {
+    const mode = String(e?.target?.value || "compact");
+    applyDensityMode(mode);
+    localStorage.setItem(DENSITY_MODE_KEY, mode);
+  });
   byId("emotionRange")?.addEventListener("input", updateEmotionLabel);
   byId("timelineFilter")?.addEventListener("change", () => renderTimeline());
   byId("timelineSort")?.addEventListener("change", () => renderTimeline());
   byId("saveJournalNoteBtn")?.addEventListener("click", saveJournalNote);
   byId("vaultUnlockBtn")?.addEventListener("click", unlockVault);
-  byId("mobilePayBtn")?.addEventListener("click", mobilePayFlow);
-  byId("pcPayBtn")?.addEventListener("click", pcPayFlow);
+  byId("confirmVipPaidBtn")?.addEventListener("click", confirmVipPaidAndContinue);
   byId("closeVipBtn")?.addEventListener("click", closeVipModal);
-  byId("verifyVipBtn")?.addEventListener("click", verifyVipUnlock);
-  byId("verifyFriendTestBtn")?.addEventListener("click", verifyFriendTestCode);
-  byId("checkOrderBtn")?.addEventListener("click", async () => {
-    await queryVipOrderStatus({ exchangeOnPaid: true, silent: false });
-  });
   byId("clearHistoryBtn")?.addEventListener("click", clearHistory);
   byId("closeGrowthHubBtn")?.addEventListener("click", closeGrowthHub);
   byId("closeGrowthHubPanelBtn")?.addEventListener("click", closeGrowthHub);
@@ -1105,9 +1115,8 @@ function checkVipAndStart({ requireQuestion = true, mode = "standard" } = {}) {
   if (requiredCardsCount > 3 && !hasValidVipToken()) {
     document.getElementById("vipModal").style.display = "flex";
     const priceFen = getUnlockPriceForMode(mode, document.getElementById("spreadSelect")?.value || "");
-    updateStatus(`该牌阵需解锁，当前价格 ${formatFenPrice(priceFen)}/次。支付后等待人工确认，再点击“检查确认结果”。`);
+    updateStatus(`该牌阵需解锁，当前价格 ${formatFenPrice(priceFen)}/次。扫码支付后点击“我已完成支付”继续。`);
     prepareVipPaymentFlow();
-    if (isMobile) { document.getElementById("mobilePayBtn").style.display = "block"; document.getElementById("pcPayBtn").style.display = "none"; } else { document.getElementById("mobilePayBtn").style.display = "none"; document.getElementById("pcPayBtn").style.display = "block"; }
     return;
   }
   showEnergyEffect(requiredCardsCount > 3 && hasValidVipToken());
@@ -1128,11 +1137,9 @@ function setVipOrderStatus(text, meta = "") {
   const box = document.getElementById("vipOrderStatusBox");
   const textEl = document.getElementById("vipOrderStatusText");
   const metaEl = document.getElementById("vipOrderMeta");
-  const checkBtn = document.getElementById("checkOrderBtn");
   if (box) box.style.display = "block";
   if (textEl) textEl.textContent = text;
   if (metaEl) metaEl.textContent = meta;
-  if (checkBtn) checkBtn.style.display = "block";
 }
 
 function stopVipOrderPolling() {
@@ -1142,83 +1149,11 @@ function stopVipOrderPolling() {
   }
 }
 
-function getCurrentVipProductType() {
-  return activeReadingMode === "compatibility" ? "compatibility" : "deep";
-}
-
-async function createVipPaymentOrder() {
-  const productType = getCurrentVipProductType();
-  const response = await fetch("/api/vip-payment-order", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ scene: "deep-reading", productType })
-  });
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}));
-    throw new Error(data.error || "创建订单失败");
-  }
-  return response.json();
-}
-
-async function exchangeVipOrderToToken(orderId) {
-  const response = await fetch("/api/vip-payment-unlock", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ orderId })
-  });
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}));
-    throw new Error(data.error || "支付已完成但解锁失败");
-  }
-
-  const data = await response.json();
-  localStorage.setItem(VIP_TOKEN_KEY, JSON.stringify({ token: data.token, expiresAt: data.expiresAt }));
-  currentVipOrderId = "";
-  localStorage.removeItem(VIP_ORDER_ID_KEY);
-  closeVipModal();
-  showEnergyEffect(true);
-}
-
-async function queryVipOrderStatus({ exchangeOnPaid = false, silent = true } = {}) {
-  if (!currentVipOrderId) {
-    if (!silent) setVipOrderStatus("支付状态：尚未创建订单", "请先点击“创建订单并提交人工确认”。");
-    return null;
-  }
-
-  const response = await fetch(`/api/vip-payment-status?orderId=${encodeURIComponent(currentVipOrderId)}`);
-  if (!response.ok) {
-    if (!silent) setVipOrderStatus("支付状态：订单不可用", "请重新创建订单。");
-    return null;
-  }
-
-  const statusData = await response.json();
-  if (statusData.status === "paid" || statusData.status === "unlocked") {
-    setVipOrderStatus("支付状态：已确认", `订单 ${statusData.orderId} 已通过人工确认，正在解锁...`);
-    if (exchangeOnPaid) {
-      await exchangeVipOrderToToken(statusData.orderId);
-    }
-    return statusData;
-  }
-
-  if (statusData.status === "expired") {
-    setVipOrderStatus("支付状态：订单已过期", "请重新点击创建支付订单。");
-    stopVipOrderPolling();
-    return statusData;
-  }
-
-  setVipOrderStatus("支付状态：人工确认中", `订单 ${statusData.orderId} 已提交，人工确认通过后请点击“检查确认结果”。`);
-  return statusData;
-}
-
 function prepareVipPaymentFlow() {
   const priceFen = getUnlockPriceForMode(activeReadingMode, document.getElementById("spreadSelect")?.value || "");
-  const checkBtn = document.getElementById("checkOrderBtn");
-  if (checkBtn) checkBtn.style.display = "block";
-  if (currentVipOrderId) {
-    setVipOrderStatus("支付状态：待人工确认", `订单 ${currentVipOrderId} 已创建，金额 ${formatFenPrice(priceFen)}/次。支付后请点击“检查确认结果”。`);
-    return;
-  }
-  setVipOrderStatus("支付状态：尚未创建订单", `点击“创建订单并提交人工确认”后将按 ${formatFenPrice(priceFen)}/次 创建订单。`);
+  const qrImg = document.getElementById("qrImage");
+  if (qrImg) qrImg.src = VIP_STATIC_QR_URL;
+  setVipOrderStatus("状态：请扫码支付", `当前价格 ${formatFenPrice(priceFen)}/次，完成后点击“我已完成支付”。`);
 }
 
 function closeVipModal() {
@@ -1227,64 +1162,15 @@ function closeVipModal() {
   stopVipOrderPolling();
 }
 
-async function pcPayFlow() {
-  const btn = document.getElementById("pcPayBtn");
-  if (btn) {
-    btn.innerText = "订单创建中...";
-    btn.disabled = true;
-  }
-  try {
-    const order = await createVipPaymentOrder();
-    currentVipOrderId = order.orderId;
-    localStorage.setItem(VIP_ORDER_ID_KEY, currentVipOrderId);
-    if (order.qrUrl) {
-      const qrImg = document.getElementById("qrImage");
-      if (qrImg) qrImg.src = order.qrUrl;
-    }
-    setVipOrderStatus("支付状态：待人工确认", `订单 ${order.orderId} 已创建（${formatFenPrice(order.amountFen)}/次）。扫码后请手动点击“检查确认结果”。`);
-    document.getElementById("vipCodeInput")?.focus();
-  } catch (err) {
-    setVipOrderStatus("支付状态：创建失败", err.message || "请稍后重试");
-  } finally {
-    if (btn) {
-      btn.innerText = "✅ 创建订单并提交人工确认";
-      btn.disabled = false;
-    }
-  }
+function confirmVipPaidAndContinue() {
+  const now = Date.now();
+  const expiresAt = now + 24 * 60 * 60 * 1000;
+  const token = `vip_static_${now.toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+  localStorage.setItem(VIP_TOKEN_KEY, JSON.stringify({ token, expiresAt }));
+  setVipOrderStatus("状态：已放行", "本次设备已解锁，24 小时内可继续使用进阶牌阵。");
+  closeVipModal();
+  showEnergyEffect(true);
 }
-
-async function mobilePayFlow() {
-  const btn = document.getElementById("mobilePayBtn");
-  if (!currentVipOrderId) {
-    try {
-      const order = await createVipPaymentOrder();
-      currentVipOrderId = order.orderId;
-      localStorage.setItem(VIP_ORDER_ID_KEY, currentVipOrderId);
-      if (order.qrUrl) {
-        const qrImg = document.getElementById("qrImage");
-        if (qrImg) qrImg.src = order.qrUrl;
-      }
-    } catch (err) {
-      setVipOrderStatus("支付状态：创建失败", err.message || "请稍后重试");
-      return;
-    }
-  }
-
-  const imgUrl = document.getElementById("qrImage").src;
-  btn.innerText = "🔄 正在保存收款码...";
-  paymentPending = true;
-  setVipOrderStatus("支付状态：待人工确认", `订单 ${currentVipOrderId} 已创建，请在支付宝完成支付后点击“检查确认结果”。`);
-  fetch(imgUrl).then(res => res.blob()).then(blob => {
-    const url = window.URL.createObjectURL(blob); const a = document.createElement('a'); a.style.display = 'none'; a.href = url; a.download = '命运星盘解锁二维码.jpg'; document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
-    setTimeout(() => { btn.innerText = "已保存二维码，请打开支付宝扫码"; }, 1000);
-  }).catch(() => { btn.innerText = "请先截图二维码后前往支付宝"; });
-}
-document.addEventListener("visibilitychange", function() {
-  if (document.visibilityState === 'visible' && paymentPending) {
-    paymentPending = false; document.getElementById("mobilePayBtn").innerText = "✅ 已返回，可点击检查确认结果";
-    setTimeout(() => { document.getElementById("vipCodeInput")?.focus(); }, 1200);
-  }
-});
 
 function readVipToken() {
   try {
@@ -1302,83 +1188,6 @@ function hasValidVipToken() {
   const vip = readVipToken();
   if (!vip) return false;
   return Date.now() < vip.expiresAt;
-}
-
-async function verifyVipUnlock() {
-  const input = document.getElementById("vipCodeInput");
-  const btn = document.getElementById("verifyVipBtn");
-  const unlockCode = input?.value?.trim() || "";
-  if (!unlockCode) {
-    alert("请输入解锁密钥");
-    return;
-  }
-
-  btn.disabled = true;
-  btn.innerText = "校验中...";
-
-  try {
-    const response = await fetch("/api/vip-verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ unlockCode })
-    });
-
-    if (!response.ok) {
-      throw new Error("密钥无效或服务暂不可用");
-    }
-
-    const data = await response.json();
-    localStorage.setItem(VIP_TOKEN_KEY, JSON.stringify({ token: data.token, expiresAt: data.expiresAt }));
-    closeVipModal();
-    showEnergyEffect(true);
-  } catch (err) {
-    alert(`解锁失败：${err.message}`);
-  } finally {
-    btn.disabled = false;
-    btn.innerText = "校验";
-  }
-}
-
-async function verifyFriendTestCode() {
-  const input = document.getElementById("friendTestCodeInput");
-  const btn = document.getElementById("verifyFriendTestBtn");
-  const code = input?.value?.trim() || "";
-  if (!code) {
-    alert("请输入测试码");
-    return;
-  }
-
-  if (btn) {
-    btn.disabled = true;
-    btn.innerText = "校验中...";
-  }
-
-  try {
-    const response = await fetch("/api/vip-test-code-verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code })
-    });
-
-    if (!response.ok) {
-      const errData = await response.json().catch(() => ({}));
-      throw new Error(errData.error || "测试码无效");
-    }
-
-    const data = await response.json();
-    localStorage.setItem(VIP_TOKEN_KEY, JSON.stringify({ token: data.token, expiresAt: data.expiresAt }));
-    currentVipOrderId = "";
-    localStorage.removeItem(VIP_ORDER_ID_KEY);
-    closeVipModal();
-    showEnergyEffect(true);
-  } catch (err) {
-    alert(`测试码校验失败：${err.message}`);
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.innerText = "测试码校验";
-    }
-  }
 }
 
 function showEnergyEffect(isVip = false) {
@@ -1625,10 +1434,84 @@ const TarotApiService = {
 async function fetchStream(question, style, cards, context = getReadingContext(question, activeReadingMode)) {
   const streamContent = document.getElementById("streamContent"); const cursor = document.getElementById("cursor");
   streamContent.innerHTML = ""; let htmlBuffer = "";
+  const escapeRegExp = (value = "") => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const getCardBaseNames = () => {
+    return [...new Set((Array.isArray(cards) ? cards : [])
+      .map(item => String(item?.cardName || "").replace(/\s*\((逆位|正位)\)\s*/g, "").trim())
+      .filter(Boolean))];
+  };
+  const injectCoreQuoteBlock = (source = "") => {
+    const markdown = String(source || "").trim();
+    if (!markdown) return markdown;
+    if (/^\s*>/m.test(markdown)) return markdown;
+    const quote = extractCoreQuote(markdown);
+    if (!quote) return markdown;
+    return `> ${quote}\n\n${markdown}`;
+  };
+  const injectQuickTakeaways = (source = "") => {
+    const markdown = String(source || "").trim();
+    if (!markdown) return markdown;
+    if (/###\s*三点速览/.test(markdown)) return markdown;
+
+    const plain = stripRichText(markdown);
+    if (!plain || plain.length < 48) return markdown;
+    const points = plain.split(/(?<=[。！？!?])/).map(s => s.trim()).filter(Boolean).slice(0, 3);
+    if (points.length < 2) return markdown;
+    const block = `### 三点速览\n${points.map(p => `- ${p}`).join("\n")}\n\n---\n\n`;
+    return `${block}${markdown}`;
+  };
+  const applyTarotTagHighlight = () => {
+    const root = streamContent;
+    if (!root) return;
+    const names = getCardBaseNames();
+    if (!names.length) return;
+    const sorted = names.slice().sort((a, b) => b.length - a.length);
+    const nameSet = new Set(sorted);
+    const regex = new RegExp(`(${sorted.map(escapeRegExp).join("|")})`, "g");
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        const value = String(node?.nodeValue || "");
+        if (!value.trim()) return NodeFilter.FILTER_REJECT;
+        const parent = node.parentElement;
+        if (!parent) return NodeFilter.FILTER_REJECT;
+        if (parent.closest("code, pre, .tarot-tag")) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+
+    const nodes = [];
+    let current = walker.nextNode();
+    while (current) {
+      nodes.push(current);
+      current = walker.nextNode();
+    }
+
+    nodes.forEach(node => {
+      const text = String(node.nodeValue || "");
+      const parts = text.split(regex);
+      if (parts.length <= 1) return;
+
+      const frag = document.createDocumentFragment();
+      parts.forEach(part => {
+        if (!part) return;
+        if (nameSet.has(part)) {
+          const tag = document.createElement("span");
+          tag.className = "tarot-tag";
+          tag.textContent = part;
+          frag.appendChild(tag);
+        } else {
+          frag.appendChild(document.createTextNode(part));
+        }
+      });
+      node.parentNode?.replaceChild(frag, node);
+    });
+  };
+
   const renderMarkdown = (markdownText = "") => {
-    const source = String(markdownText || "").replace(/```html/gi, '').replace(/```/g, '');
+    const source = injectQuickTakeaways(injectCoreQuoteBlock(String(markdownText || "").replace(/```html/gi, '').replace(/```/g, '')));
     if (typeof marked !== "undefined" && typeof marked.parse === "function") {
       streamContent.innerHTML = marked.parse(source);
+      applyTarotTagHighlight();
       return;
     }
     streamContent.textContent = source;
@@ -1681,6 +1564,7 @@ async function fetchStream(question, style, cards, context = getReadingContext(q
             if (cursor) cursor.style.display = "inline-block";
           } catch (e) {
             console.error("流数据解析失败", e);
+            updateStatus("内容加载有轻微抖动，系统正在自动修复中...");
           }
         }
       }
@@ -1740,10 +1624,10 @@ async function fetchStream(question, style, cards, context = getReadingContext(q
       };
       renderReadingSummary(historyRecord.reading);
       renderActionPlan(detailContext, cards, style);
-      updateStatus("流式连接异常，已自动切换到稳定解牌模式。");
+      updateStatus("网络波动，已自动切换到稳定模式。你可以继续阅读，不影响结果。");
     } catch {
       renderMarkdown(`> 🔮 宇宙连接中断: ${error.message}`);
-      updateStatus("连接异常，请稍后重试。");
+      updateStatus("连接失败：请检查网络后重试，或返回主页重新抽牌。");
     }
   } finally {
     if(cursor) cursor.style.display = "none";
@@ -1837,6 +1721,31 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
   ctx.closePath();
 }
 
+function drawStardust(ctx, width, height, count = 140) {
+  for (let i = 0; i < count; i++) {
+    const x = Math.random() * width;
+    const y = Math.random() * height;
+    const r = Math.random() * 2.2 + 0.4;
+    const alpha = Math.random() * 0.55 + 0.12;
+    ctx.beginPath();
+    ctx.fillStyle = `rgba(244, 222, 183, ${alpha.toFixed(3)})`;
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawSpacedText(ctx, text, centerX, y, spacing = 2) {
+  const chars = [...String(text || "")];
+  if (!chars.length) return;
+  const widths = chars.map(ch => ctx.measureText(ch).width);
+  const totalWidth = widths.reduce((sum, w) => sum + w, 0) + spacing * (chars.length - 1);
+  let x = centerX - totalWidth / 2;
+  chars.forEach((ch, idx) => {
+    ctx.fillText(ch, x, y);
+    x += widths[idx] + spacing;
+  });
+}
+
 function stripRichText(input = "") {
   return String(input || "")
     .replace(/<[^>]+>/g, " ")
@@ -1916,17 +1825,19 @@ async function saveAsImage() {
     bg.addColorStop(1, "#0a0f1f");
     ctx.fillStyle = bg;
     ctx.fillRect(0, 0, width, height);
+    drawStardust(ctx, width, height, 160);
 
     const orb = ctx.createRadialGradient(width * 0.5, 290, 40, width * 0.5, 290, 420);
     orb.addColorStop(0, "rgba(223, 186, 126, 0.22)");
     orb.addColorStop(1, "rgba(223, 186, 126, 0)");
     ctx.fillStyle = orb;
     ctx.fillRect(0, 0, width, 720);
+    drawStardust(ctx, width, 620, 90);
 
     ctx.fillStyle = "rgba(246, 231, 197, 0.92)";
     ctx.font = "600 34px 'Noto Serif SC', serif";
-    ctx.textAlign = "center";
-    ctx.fillText("命运星盘 Tarot Poster", width / 2, 96);
+    ctx.textAlign = "left";
+    drawSpacedText(ctx, "命运星盘 Tarot Poster", width / 2, 96, 2.6);
 
     const cards = latestReadingRecord.cards.slice(0, 5);
     const cardWidth = 170;
@@ -2016,6 +1927,11 @@ async function saveAsImage() {
     ctx.font = "500 24px 'Noto Serif SC', serif";
     ctx.textAlign = "center";
     ctx.fillText("扫码进入命运星盘", width / 2, 1815);
+
+    ctx.fillStyle = "rgba(219, 190, 136, 0.9)";
+    ctx.font = "500 20px 'Manrope', sans-serif";
+    ctx.textAlign = "left";
+    drawSpacedText(ctx, "BY  👀仔 · 命运星盘", width / 2, 1860, 1.6);
 
     const link = document.createElement("a");
     link.download = "命运星盘海报-9x16.png";
