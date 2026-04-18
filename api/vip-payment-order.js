@@ -21,7 +21,10 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: '只接受 POST 请求' });
 
-  const qrUrl = process.env.VIP_ALIPAY_QR_IMAGE_URL || process.env.VIP_QR_IMAGE_URL || 'https://i.postimg.cc/vBRq8rJn/IMG-9022.jpg';
+  const qrUrl = String(process.env.VIP_ALIPAY_QR_IMAGE_URL || '').trim();
+  if (!qrUrl) {
+    return res.status(503).json({ error: 'VIP_ALIPAY_QR_IMAGE_URL 未配置' });
+  }
   const productType = String(req.body?.productType || 'deep').trim();
   const amountFen = productType === 'compatibility' ? 500 : 300;
 

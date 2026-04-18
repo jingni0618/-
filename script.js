@@ -1826,34 +1826,205 @@ function initStarfield() {
   window.addEventListener('resize', resize); resize(); draw();
 }
 
-function saveAsImage() {
-  const captureArea = document.getElementById("readingWrapper");
-  const readingBox = document.getElementById("readingBox");
-  const theme = document.getElementById("shareThemeSelect")?.value || "parchment";
-  document.getElementById("shareHeader").style.display = "block";
-  const btn = document.getElementById("saveBtn");
-  btn.innerText = "正在生成卷轴...";
-  btn.disabled = true;
+function drawRoundedRect(ctx, x, y, width, height, radius) {
+  const r = Math.min(radius, width / 2, height / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + width, y, x + width, y + height, r);
+  ctx.arcTo(x + width, y + height, x, y + height, r);
+  ctx.arcTo(x, y + height, x, y, r);
+  ctx.arcTo(x, y, x + width, y, r);
+  ctx.closePath();
+}
 
-  if (readingBox) {
-    readingBox.classList.remove("theme-night", "theme-nebula");
-    if (theme === "night") readingBox.classList.add("theme-night");
-    if (theme === "nebula") readingBox.classList.add("theme-nebula");
+function stripRichText(input = "") {
+  return String(input || "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/`{1,3}/g, "")
+    .replace(/^#{1,6}\s+/gm, "")
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/\*(.*?)\*/g, "$1")
+    .replace(/\[(.*?)\]\((.*?)\)/g, "$1")
+    .replace(/[>-]\s+/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function extractCoreQuote(reading = "") {
+  const plain = stripRichText(reading);
+  if (!plain) return "此刻的答案，藏在你已经看见却还没行动的那一步里。";
+  const parts = plain.split(/(?<=[。！？!?])/).map(s => s.trim()).filter(Boolean);
+  const first = parts[0] || plain;
+  return first.length > 72 ? `${first.slice(0, 72)}...` : first;
+}
+
+function wrapTextByWidth(ctx, text, maxWidth) {
+  const lines = [];
+  let current = "";
+  for (const ch of String(text || "")) {
+    const test = current + ch;
+    if (ctx.measureText(test).width > maxWidth && current) {
+      lines.push(current);
+      current = ch;
+    } else {
+      current = test;
+    }
+  }
+  if (current) lines.push(current);
+  return lines;
+}
+
+function loadCanvasImage(src) {
+  return new Promise(resolve => {
+    const url = String(src || "").trim();
+    if (!url) {
+      resolve(null);
+      return;
+    }
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
+
+async function saveAsImage() {
+  const btn = document.getElementById("saveBtn");
+  if (!btn) return;
+
+  if (!latestReadingRecord || !Array.isArray(latestReadingRecord.cards) || !latestReadingRecord.cards.length) {
+    alert("请先完成一次解牌后再保存海报");
+    return;
   }
 
-  html2canvas(captureArea, { scale: 2, useCORS: true, backgroundColor: "#0a0a0c" }).then(canvas => {
-    document.getElementById("shareHeader").style.display = "none";
-    btn.innerText = "📸 保存解牌卷轴";
-    btn.disabled = false;
-    if (readingBox) readingBox.classList.remove("theme-night", "theme-nebula");
+  btn.innerText = "正在生成海报...";
+  btn.disabled = true;
+
+  try {
+    const width = 1080;
+    const height = 1920;
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas 初始化失败");
+
+    const bg = ctx.createLinearGradient(0, 0, 0, height);
+    bg.addColorStop(0, "#0f1327");
+    bg.addColorStop(0.45, "#111a32");
+    bg.addColorStop(1, "#0a0f1f");
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, width, height);
+
+    const orb = ctx.createRadialGradient(width * 0.5, 290, 40, width * 0.5, 290, 420);
+    orb.addColorStop(0, "rgba(223, 186, 126, 0.22)");
+    orb.addColorStop(1, "rgba(223, 186, 126, 0)");
+    ctx.fillStyle = orb;
+    ctx.fillRect(0, 0, width, 720);
+
+    ctx.fillStyle = "rgba(246, 231, 197, 0.92)";
+    ctx.font = "600 34px 'Noto Serif SC', serif";
+    ctx.textAlign = "center";
+    ctx.fillText("命运星盘 Tarot Poster", width / 2, 96);
+
+    const cards = latestReadingRecord.cards.slice(0, 5);
+    const cardWidth = 170;
+    const cardHeight = 270;
+    const gap = 18;
+    const totalWidth = cards.length * cardWidth + (cards.length - 1) * gap;
+    const startX = (width - totalWidth) / 2;
+    const baseY = 150;
+    const offsets = [20, 6, 0, 6, 20];
+
+    const cardImages = await Promise.all(cards.map(card => loadCanvasImage(card?.imageUrl || "")));
+
+    cards.forEach((card, idx) => {
+      const x = startX + idx * (cardWidth + gap);
+      const y = baseY + (offsets[idx] || 0);
+
+      ctx.save();
+      ctx.shadowColor = "rgba(0, 0, 0, 0.45)";
+      ctx.shadowBlur = 18;
+      drawRoundedRect(ctx, x, y, cardWidth, cardHeight, 20);
+      ctx.fillStyle = "rgba(14, 18, 33, 0.92)";
+      ctx.fill();
+      ctx.restore();
+
+      const image = cardImages[idx];
+      if (image) {
+        ctx.save();
+        drawRoundedRect(ctx, x + 10, y + 10, cardWidth - 20, cardHeight - 68, 14);
+        ctx.clip();
+        ctx.drawImage(image, x + 10, y + 10, cardWidth - 20, cardHeight - 68);
+        ctx.restore();
+      } else {
+        ctx.fillStyle = "rgba(248, 233, 201, 0.95)";
+        ctx.font = "600 56px 'Noto Serif SC', serif";
+        ctx.textAlign = "center";
+        ctx.fillText(String(card?.emoji || "🔮"), x + cardWidth / 2, y + 122);
+      }
+
+      ctx.fillStyle = "rgba(246, 229, 193, 0.92)";
+      ctx.font = "600 20px 'Noto Serif SC', serif";
+      ctx.textAlign = "center";
+      ctx.fillText(String(card?.position || `位置${idx + 1}`), x + cardWidth / 2, y + cardHeight - 30);
+    });
+
+    const quote = extractCoreQuote(latestReadingRecord.reading || "");
+    const quoteY = 690;
+
+    drawRoundedRect(ctx, 92, quoteY - 28, width - 184, 430, 26);
+    ctx.fillStyle = "rgba(255, 250, 238, 0.06)";
+    ctx.fill();
+    ctx.strokeStyle = "rgba(230, 198, 140, 0.45)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = "rgba(218, 182, 117, 0.95)";
+    ctx.font = "600 26px 'Noto Serif SC', serif";
+    ctx.textAlign = "center";
+    ctx.fillText("核心金句", width / 2, quoteY + 30);
+
+    ctx.fillStyle = "rgba(245, 233, 206, 0.98)";
+    ctx.font = "500 42px 'Noto Serif SC', serif";
+    const quoteLines = wrapTextByWidth(ctx, `“${quote}”`, width - 270).slice(0, 4);
+    quoteLines.forEach((line, idx) => {
+      ctx.fillText(line, width / 2, quoteY + 118 + idx * 62);
+    });
+
+    const qrSrc = document.getElementById("qrImage")?.src || "";
+    const qrImg = await loadCanvasImage(qrSrc);
+    const qrSize = 290;
+    const qrX = (width - qrSize) / 2;
+    const qrY = 1460;
+
+    drawRoundedRect(ctx, qrX - 24, qrY - 24, qrSize + 48, qrSize + 48, 28);
+    ctx.fillStyle = "rgba(255, 252, 245, 0.92)";
+    ctx.fill();
+
+    if (qrImg) {
+      ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+    } else {
+      ctx.fillStyle = "#1a223f";
+      ctx.font = "600 30px 'Manrope', sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("QR", width / 2, qrY + qrSize / 2 + 10);
+    }
+
+    ctx.fillStyle = "rgba(244, 231, 202, 0.95)";
+    ctx.font = "500 24px 'Noto Serif SC', serif";
+    ctx.textAlign = "center";
+    ctx.fillText("扫码进入命运星盘", width / 2, 1815);
+
     const link = document.createElement("a");
-    link.download = "命运星盘解牌卷轴.png";
+    link.download = "命运星盘海报-9x16.png";
     link.href = canvas.toDataURL("image/png");
     link.click();
-  }).catch(() => {
-    document.getElementById("shareHeader").style.display = "none";
+  } catch (error) {
+    alert(`生成海报失败：${error.message || "未知错误"}`);
+  } finally {
     btn.innerText = "📸 保存解牌卷轴";
     btn.disabled = false;
-    if (readingBox) readingBox.classList.remove("theme-night", "theme-nebula");
-  });
+  }
 }
