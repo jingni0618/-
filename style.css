@@ -122,6 +122,8 @@ body[data-phase="dusk"] #starfield {
   align-items: center;
   justify-content: center;
   transition: opacity 1.3s ease;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .intro-panel {
@@ -161,6 +163,24 @@ body[data-phase="dusk"] #starfield {
   margin-top: 12px;
   color: rgba(238, 223, 192, 0.78);
   font-size: 13px;
+}
+
+.intro-tap-hint {
+  margin-top: 20px;
+  color: rgba(238, 220, 178, 0.0);
+  font-size: 13px;
+  letter-spacing: 1px;
+  transition: color 0.6s ease;
+}
+
+.intro-tap-hint.visible {
+  color: rgba(238, 220, 178, 0.72);
+  animation: tapHintPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes tapHintPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
 }
 
 #uiElements {
@@ -1913,7 +1933,7 @@ body[data-phase="dusk"] #starfield {
 .flow-steps {
   width: min(760px, calc(100% - 14px));
   margin: 6px 0 8px;
-  display: grid;
+  display: none !important;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
@@ -1948,9 +1968,6 @@ body[data-phase="dusk"] #starfield {
   .home-orbit { grid-template-columns: 1fr; }
   .home-side { order: 2; }
   .hero-grid { grid-template-columns: 1fr; }
-  .flow-steps {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
   .timeline-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .journal-grid { grid-template-columns: 1fr; }
 }
@@ -2780,6 +2797,10 @@ body.reading-density-relaxed.reading-mode .action-btns {
       "quick"
       "deep"
       "love";
+  }
+
+  .card-deep {
+    grid-row: auto;
   }
 
   #restartBtn {

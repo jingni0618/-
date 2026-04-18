@@ -122,18 +122,37 @@ window.onload = function() {
     localStorage.setItem("tarotHasVisited", "1");
     const introStr = isNightMode ? "夜色已深，愿你在这里照见真实的自己。\n把困惑放在掌心，我们慢慢翻开答案。" : "欢迎回来，今天也值得被温柔对待。\n从一个问题开始，把方向交给牌面。";
     let i = 0;
+    let introDone = false;
+
+    function dismissIntro() {
+      if (introDone) return;
+      introDone = true;
+      i = introStr.length; // 停止打字机
+      const introEl = document.getElementById('introScreen');
+      if (introEl) introEl.style.opacity = 0;
+      setTimeout(() => {
+        if (introEl) introEl.style.display = 'none';
+        document.getElementById('uiElements').style.opacity = 1;
+        document.body.classList.add("home-ready");
+      }, 450);
+    }
+
+    // 点击/触摸任意位置跳过
+    const introEl = document.getElementById('introScreen');
+    if (introEl) {
+      introEl.addEventListener('click', dismissIntro, { once: true });
+      introEl.addEventListener('touchend', dismissIntro, { once: true });
+    }
+
     function typeIntro() {
+      if (introDone) return;
       if(i < introStr.length) {
         document.getElementById('introText').innerText += introStr.charAt(i); i++; setTimeout(typeIntro, 34);
       } else {
-        setTimeout(() => {
-          document.getElementById('introScreen').style.opacity = 0;
-          setTimeout(()=> {
-            document.getElementById('introScreen').style.display = 'none';
-            document.getElementById('uiElements').style.opacity = 1;
-            document.body.classList.add("home-ready");
-          }, 550);
-        }, 500);
+        // 打字完成后显示 tap hint
+        const tapHint = document.getElementById('introTapHint');
+        if (tapHint) tapHint.classList.add('visible');
+        setTimeout(dismissIntro, 2200);
       }
     }
     typeIntro();
@@ -433,11 +452,8 @@ function getDailyWeatherMood(date) {
 }
 
 async function sendFeedback() {
-  const emailEl = document.getElementById("feedbackEmail");
   const msgEl = document.getElementById("feedbackMessage");
   const btn = document.getElementById("sendFeedbackBtn");
-  const name = "匿名用户";
-  const email = emailEl?.value?.trim() || "未填写";
   const message = msgEl?.value?.trim() || "";
 
   if (!message) {
@@ -446,8 +462,8 @@ async function sendFeedback() {
   }
 
   const payload = {
-    name,
-    email,
+    name: "匿名用户",
+    email: "未填写",
     message,
     page: window.location.href,
     createdAt: new Date().toISOString()
@@ -472,7 +488,6 @@ async function sendFeedback() {
     }
 
     if (msgEl) msgEl.value = "";
-    if (emailEl) emailEl.value = "";
     const statusEl = document.getElementById("feedbackSendStatus");
     if (statusEl) statusEl.style.display = "none";
     document.getElementById("feedbackMailtoFallback")?.style.setProperty("display", "none", "important");
@@ -487,7 +502,7 @@ async function sendFeedback() {
     }
     if (fallback) {
       const subject = encodeURIComponent("塔罗之眼用户意见反馈");
-      const body = encodeURIComponent(`邮箱：${email}\n\n意见：\n${message}`);
+      const body = encodeURIComponent(`意见：\n${message}`);
       fallback.href = `mailto:jingni18@hotmail.com?subject=${subject}&body=${body}`;
       fallback.style.display = "inline-block";
     }
@@ -1496,27 +1511,26 @@ function initFanDeck() {
     fanDeck.appendChild(cardEl);
   }
   attachDeckSpreadGesture(fanDeck);
-  updateStatus("滑动或点击牌堆展开牌阵，然后抽牌。");
+  updateStatus("牌阵准备中，稍候自动展开…");
   const hint = document.getElementById("deckSpreadHint");
   if (hint) {
     hint.classList.remove("show", "unlocked", "near-unlock");
-    hint.textContent = "← 滑动或点击展开牌阵 →";
+    hint.textContent = "正在感应你的能量…";
     window.setTimeout(() => hint.classList.add("show"), 420);
   }
-  
-  const spreadContainer = document.getElementById("spreadContainer");
-  if(spreadContainer) {
-      spreadContainer.style.opacity = "1";
-  }
 
-  // Auto-demo: briefly nudge the fan open to hint at the swipe gesture
-  setTimeout(() => {
-    if (deckSpreadUnlocked) return;
-    const nudgeSteps = [0.08, 0.15, 0.20, 0.15, 0.08, 0];
-    nudgeSteps.forEach((p, i) => {
-      setTimeout(() => { if (!deckSpreadUnlocked) setDeckSpreadProgress(p); }, i * 100);
-    });
-  }, 800);
+  const spreadContainer = document.getElementById("spreadContainer");
+  if (spreadContainer) spreadContainer.style.opacity = "1";
+
+  // 自动展开牌扇，让用户直接点牌
+  const autoSpreadSteps = [0, 0.12, 0.28, 0.45, 0.62, 0.78, 0.9, 1.0];
+  autoSpreadSteps.forEach((p, i) => {
+    setTimeout(() => {
+      if (deckSpreadUnlocked) return;
+      setDeckSpreadProgress(p);
+      if (p >= 1) unlockDeckSpread();
+    }, 1000 + i * 100);
+  });
 }
 
 function setDeckSpreadProgress(nextProgress = 0) {
@@ -1532,19 +1546,25 @@ function unlockDeckSpread() {
   if (deckSpreadUnlocked) return;
   deckSpreadUnlocked = true;
   setDeckSpreadProgress(1);
-  updateStatus("牌堆已展开，请点击你想抽取的牌。");
+  updateStatus("牌已展开，点击你感应到的那张牌。");
   if (navigator.vibrate) navigator.vibrate(35);
   const hint = document.getElementById("deckSpreadHint");
   if (hint) {
     hint.classList.remove("show");
     hint.classList.add("unlocked");
-    hint.textContent = "✨ 牌阵已展开，请点击抽牌";
+    hint.textContent = "✨ 点击你感应到的那张牌";
     hint.classList.add("show");
-    window.setTimeout(() => hint.classList.remove("show"), 2400);
+    window.setTimeout(() => hint.classList.remove("show"), 3000);
   }
-  // 标题加光晕提示
+  // 更新标题文字和光晕提示
   const instrEl = document.getElementById("instructionText");
-  if (instrEl) instrEl.classList.add("draw-hint");
+  if (instrEl) {
+    instrEl.textContent = "✨ 用心感受，点击你感应到的牌";
+    instrEl.classList.add("draw-hint");
+  }
+
+  const spreadContainer = document.getElementById("spreadContainer");
+  if (spreadContainer) spreadContainer.style.opacity = "1";
 }
 
 function updateDeckSpreadHint(progress = 0) {
@@ -1869,6 +1889,8 @@ async function fetchStream(question, style, cards, context = getReadingContext(q
     const markdown = String(source || "").trim();
     if (!markdown) return markdown;
     if (/^\s*>/m.test(markdown)) return markdown;
+    // 若 AI 已输出 reading-keywords 块，不再重复注入引用
+    if (/class="reading-keywords"/.test(markdown)) return markdown;
     const quote = extractCoreQuote(markdown);
     if (!quote) return markdown;
     return `> ${quote}\n\n${markdown}`;
