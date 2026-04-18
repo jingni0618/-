@@ -41,27 +41,6 @@
         <button id="feedbackBtn" class="icon-btn subtle" data-icon="💌"><span class="btn-label">给👀仔留言</span></button>
       </div>
     </div>
-    <script>
-    // Immediate inline binding — no dependency on script.js load timing
-    (function(){
-      function tryBind(id, fn) {
-        var btn = document.getElementById(id);
-        if (!btn) return;
-        btn.addEventListener('click', function(e) {
-          e.stopPropagation();
-          if (typeof window[fn] === 'function') { window[fn](); }
-          else { console.warn(fn + ' not yet available'); }
-        });
-        btn.addEventListener('touchend', function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          if (typeof window[fn] === 'function') { window[fn](); }
-        });
-      }
-      tryBind('growthHubBtn', 'openGrowthHub');
-      tryBind('feedbackBtn', 'openFeedbackModal');
-    })();
-    </script>
 
     <div class="container">
       <div class="hero-header">

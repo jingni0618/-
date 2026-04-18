@@ -112,7 +112,6 @@ let introDone = false;
 let initDone = false;
 function dismissIntro() {
   if (introDone) return;
-  // Don't dismiss until initEventBindings has run, unless failsafe kicks in
   if (!initDone) return;
   introDone = true;
   const introEl = document.getElementById('introScreen');
@@ -124,32 +123,22 @@ function dismissIntro() {
     document.body.classList.add("home-ready");
   }, 380);
 }
-// Absolute failsafe: force dismiss after 6s even if window.onload never fires
-let eventsBound = false;
-setTimeout(() => {
-  if (!eventsBound) { try { initEventBindings(); eventsBound = true; } catch(e) { console.error(e); } }
-  if (!introDone) {
-    initDone = true;
-    dismissIntro();
-  }
-}, 6000);
+
+// script.js is at the end of <body>, so DOM is fully parsed here.
+// Bind events IMMEDIATELY — do NOT wait for window.onload.
+try { initEventBindings(); } catch(e) { console.error("initEventBindings:", e); }
 
 window.onload = function() {
   isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-  // ── Event bindings first — must not be blocked by other init failures ───
-  if (!eventsBound) { try { initEventBindings(); eventsBound = true; } catch(e) { console.error("initEventBindings failed:", e); } }
-
-  // ── Rest of init ─────────────────────────────────────────────────────────
   try {
     applyDensityMode(localStorage.getItem(DENSITY_MODE_KEY) || "compact");
     applyTimePhaseTheme(); initStarfield(); renderSpread(); renderSpreadGuide(); loadHistory(); renderHomeDate(); updateStatus("");
   } catch(e) { console.error("init failed:", e); }
-
-  // Mark init complete, then auto-dismiss intro after a brief pause
   initDone = true;
   setTimeout(dismissIntro, 800);
 };
+// Failsafe: if window.onload never fires, force dismiss after 6s
+setTimeout(() => { if (!introDone) { initDone = true; dismissIntro(); } }, 6000);
 
 function applyDensityMode(mode = "compact") {
   const normalized = mode === "relaxed" ? "relaxed" : "compact";
