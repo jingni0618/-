@@ -6,6 +6,48 @@ const deck = [
   { name: "星币一", emoji: "🪙", meaning: "新的财务机会" }, { name: "星币二", emoji: "🤹", meaning: "平衡、资金管理" }, { name: "星币三", emoji: "🤝", meaning: "团队合作、技能" }, { name: "星币十", emoji: "🏡", meaning: "财富传承、长期成功" }
 ];
 
+const TAROT_IMAGE_BASE_URL = "https://www.sacred-texts.com/tarot/pkt/img/";
+const tarotCardCodeMap = {
+  "愚者": "ar00",
+  "魔术师": "ar01",
+  "女祭司": "ar02",
+  "女皇": "ar03",
+  "皇帝": "ar04",
+  "教皇": "ar05",
+  "恋人": "ar06",
+  "战车": "ar07",
+  "力量": "ar08",
+  "隐士": "ar09",
+  "命运之轮": "ar10",
+  "正义": "ar11",
+  "倒吊人": "ar12",
+  "死神": "ar13",
+  "节制": "ar14",
+  "恶魔": "ar15",
+  "高塔": "ar16",
+  "星星": "ar17",
+  "月亮": "ar18",
+  "太阳": "ar19",
+  "审判": "ar20",
+  "世界": "ar21",
+  "权杖一": "waac",
+  "权杖二": "wa02",
+  "权杖三": "wa03",
+  "权杖十": "wa10",
+  "圣杯一": "cuac",
+  "圣杯二": "cu02",
+  "圣杯三": "cu03",
+  "圣杯十": "cu10",
+  "宝剑一": "swac",
+  "宝剑二": "sw02",
+  "宝剑三": "sw03",
+  "宝剑十": "sw10",
+  "星币一": "peac",
+  "星币二": "pe02",
+  "星币三": "pe03",
+  "星币十": "pe10"
+};
+
 const spreadsOptions = {
   single: { cssClass: 'linear', cards: [{ label: "核心指引" }] },
   yesno: { cssClass: 'linear', cards: [{ label: "支持的力量" }, { label: "反对的力量" }, { label: "最终答案" }] },
@@ -29,6 +71,7 @@ const spreadGuideMeta = {
 let currentSpreadConfig = {}; let requiredCardsCount = 0; let cardsDrawn = 0; let cardsFlipped = 0; let drawnCardsData = []; let shuffledDeck = []; let isMobile = false; let paymentPending = false; let isNightMode = false;
 let activeReadingMode = "standard";
 let latestReadingRecord = null;
+let screenModeHideTimer = null;
 const DAILY_CACHE_KEY = "tarotDailyReading";
 const VIP_TOKEN_KEY = "tarotVipToken";
 const VAULT_META_KEY = "tarotVaultMeta";
@@ -68,6 +111,7 @@ window.onload = function() {
 function initEventBindings() {
   const byId = id => document.getElementById(id);
   byId("dailyBtn")?.addEventListener("click", startDailyDraw);
+  byId("dailyBackBtn")?.addEventListener("click", returnToHomePage);
   byId("growthHubBtn")?.addEventListener("click", openGrowthHub);
   byId("feedbackBtn")?.addEventListener("click", openFeedbackModal);
   byId("openContactFromFeedbackBtn")?.addEventListener("click", () => {
@@ -95,6 +139,7 @@ function initEventBindings() {
   byId("closeGrowthHubPanelBtn")?.addEventListener("click", closeGrowthHub);
   byId("closeFeedbackBtn")?.addEventListener("click", closeFeedbackModal);
   byId("closeContactBtn")?.addEventListener("click", closeContactModal);
+  byId("closeCardPreviewBtn")?.addEventListener("click", closeCardPreview);
   byId("sendFeedbackBtn")?.addEventListener("click", sendFeedback);
   byId("saveBtn")?.addEventListener("click", saveAsImage);
   byId("pushToArchiveBtn")?.addEventListener("click", pushLatestReadingToArchive);
@@ -121,6 +166,9 @@ function initEventBindings() {
   });
   byId("feedbackModal")?.addEventListener("click", e => {
     if (e.target?.id === "feedbackModal") closeFeedbackModal();
+  });
+  byId("cardPreviewModal")?.addEventListener("click", e => {
+    if (e.target?.id === "cardPreviewModal") closeCardPreview();
   });
   updateEmotionLabel();
   updateQuestionHint();
@@ -231,12 +279,11 @@ function getDailyWeatherMood(date) {
 }
 
 async function sendFeedback() {
-  const nameEl = document.getElementById("feedbackName");
-  const emailEl = document.getElementById("feedbackEmail");
+  const contactEl = document.getElementById("feedbackContact");
   const msgEl = document.getElementById("feedbackMessage");
   const btn = document.getElementById("sendFeedbackBtn");
-  const name = nameEl?.value?.trim() || "匿名用户";
-  const email = emailEl?.value?.trim() || "未填写";
+  const name = "匿名用户";
+  const contact = contactEl?.value?.trim() || "未填写";
   const message = msgEl?.value?.trim() || "";
 
   if (!message) {
@@ -246,7 +293,7 @@ async function sendFeedback() {
 
   const payload = {
     name,
-    email,
+    contact,
     message,
     page: window.location.href,
     createdAt: new Date().toISOString()
@@ -269,13 +316,12 @@ async function sendFeedback() {
     }
 
     if (msgEl) msgEl.value = "";
-    if (nameEl) nameEl.value = "";
-    if (emailEl) emailEl.value = "";
+    if (contactEl) contactEl.value = "";
     closeFeedbackModal();
     updateStatus("感谢你的星语，已送达👀仔邮箱。");
   } catch {
     const subject = encodeURIComponent("命运星盘用户意见反馈");
-    const body = encodeURIComponent(`称呼：${name}\n邮箱：${email}\n时间：${new Date().toLocaleString()}\n页面：${window.location.href}\n\n意见内容：\n${message}`);
+    const body = encodeURIComponent(`称呼：${name}\n联系方式：${contact}\n时间：${new Date().toLocaleString()}\n页面：${window.location.href}\n\n意见内容：\n${message}`);
     window.location.href = `mailto:jingni18@hotmail.com?subject=${subject}&body=${body}`;
     updateStatus("已为你打开邮箱草稿，发送后即可完成反馈。");
   } finally {
@@ -682,6 +728,133 @@ function closeContactModal() {
   modal.style.display = "none";
 }
 
+function openCardPreview(cardData) {
+  const modal = document.getElementById("cardPreviewModal");
+  const imageEl = document.getElementById("cardPreviewImage");
+  const emojiEl = document.getElementById("cardPreviewEmoji");
+  const positionEl = document.getElementById("cardPreviewPosition");
+  const nameEl = document.getElementById("cardPreviewName");
+  const meaningEl = document.getElementById("cardPreviewMeaning");
+  if (!modal || !imageEl || !emojiEl || !positionEl || !nameEl || !meaningEl || !cardData) return;
+
+  positionEl.textContent = cardData.position || "已翻开的牌";
+  nameEl.textContent = cardData.cardName || normalizeCardName(cardData.cardName);
+  meaningEl.textContent = cardData.meaning || "这张牌正在给你一个更清楚的提示。";
+
+  if (cardData.imageUrl) {
+    imageEl.src = cardData.imageUrl;
+    imageEl.alt = `${normalizeCardName(cardData.cardName)}牌面大图`;
+    imageEl.style.display = "block";
+    emojiEl.style.display = "none";
+    imageEl.onerror = () => {
+      imageEl.style.display = "none";
+      emojiEl.style.display = "flex";
+      emojiEl.textContent = cardData.emoji || "✧";
+    };
+  } else {
+    imageEl.style.display = "none";
+    emojiEl.style.display = "flex";
+    emojiEl.textContent = cardData.emoji || "✧";
+  }
+
+  modal.style.display = "flex";
+}
+
+function closeCardPreview() {
+  const modal = document.getElementById("cardPreviewModal");
+  if (modal) modal.style.display = "none";
+}
+
+function normalizeCardName(cardName = "") {
+  return String(cardName).replace(/\s*\((?:逆位|正位)\)\s*/g, "").trim();
+}
+
+function getTarotCardCode(cardName = "") {
+  return tarotCardCodeMap[normalizeCardName(cardName)] || "";
+}
+
+function getTarotImageUrl(cardName = "") {
+  const code = getTarotCardCode(cardName);
+  return code ? `${TAROT_IMAGE_BASE_URL}${code}.jpg` : "";
+}
+
+function applyFaceArtwork(slotIndex, cardData) {
+  const artWrap = document.getElementById(`art-${slotIndex}`);
+  const imageEl = document.getElementById(`image-${slotIndex}`);
+  const emojiEl = document.getElementById(`emoji-${slotIndex}`);
+  if (!artWrap || !imageEl || !emojiEl) return;
+
+  if (cardData?.imageUrl) {
+    artWrap.style.display = "block";
+    imageEl.style.display = "block";
+    imageEl.src = cardData.imageUrl;
+    imageEl.alt = `${normalizeCardName(cardData.cardName)}牌面`;
+    emojiEl.style.display = "none";
+    imageEl.onerror = () => {
+      artWrap.style.display = "none";
+      imageEl.style.display = "none";
+      emojiEl.style.display = "block";
+    };
+    return;
+  }
+
+  artWrap.style.display = "none";
+  imageEl.style.display = "none";
+  emojiEl.style.display = "block";
+}
+
+function applyDailyCardArtwork(cardName = "", fallbackEmoji = "✨") {
+  const imageEl = document.getElementById("dailyImage");
+  const emojiEl = document.getElementById("dailyEmoji");
+  if (!imageEl || !emojiEl) return;
+
+  const imageUrl = getTarotImageUrl(cardName);
+  if (imageUrl) {
+    imageEl.src = imageUrl;
+    imageEl.alt = `${normalizeCardName(cardName)}牌面`;
+    imageEl.style.display = "block";
+    emojiEl.style.display = "none";
+    imageEl.onerror = () => {
+      imageEl.style.display = "none";
+      emojiEl.style.display = "block";
+      emojiEl.innerText = fallbackEmoji;
+    };
+    return;
+  }
+
+  imageEl.style.display = "none";
+  emojiEl.style.display = "block";
+  emojiEl.innerText = fallbackEmoji;
+}
+
+function hideHomeShell(modeClass) {
+  const ui = document.getElementById("uiElements");
+  if (screenModeHideTimer) {
+    clearTimeout(screenModeHideTimer);
+    screenModeHideTimer = null;
+  }
+
+  document.body.classList.remove("reading-mode", "daily-mode");
+  document.body.classList.add(modeClass);
+  window.scrollTo({ top: 0, behavior: "smooth" });
+
+  if (!ui) return;
+  ui.classList.add("fade-out");
+  screenModeHideTimer = window.setTimeout(() => {
+    if (document.body.classList.contains(modeClass)) {
+      ui.style.display = "none";
+    }
+  }, 420);
+}
+
+function enterReadingMode() {
+  hideHomeShell("reading-mode");
+}
+
+function enterDailyMode() {
+  hideHomeShell("daily-mode");
+}
+
 function returnToHomePage() {
   const hideIds = [
     "vipModal",
@@ -689,6 +862,7 @@ function returnToHomePage() {
     "growthHubModal",
     "feedbackModal",
     "contactModal",
+    "cardPreviewModal",
     "dailyCardArea",
     "shuffleArea",
     "deckArea",
@@ -702,6 +876,13 @@ function returnToHomePage() {
     const el = document.getElementById(id);
     if (el) el.style.display = "none";
   });
+
+  if (screenModeHideTimer) {
+    clearTimeout(screenModeHideTimer);
+    screenModeHideTimer = null;
+  }
+  document.body.classList.remove("daily-mode");
+  document.body.classList.remove("reading-mode");
 
   const intro = document.getElementById("introScreen");
   if (intro) {
@@ -731,9 +912,6 @@ function returnToHomePage() {
     summary.style.display = "none";
     summary.innerHTML = "";
   }
-
-  const backBtn = document.getElementById("backBtnId");
-  if (backBtn) backBtn.remove();
 
   activeReadingMode = "standard";
   hideFlowSteps();
@@ -851,7 +1029,7 @@ function renderSpread() {
   container.className = `spread-container layout-${currentSpreadConfig.cssClass}`;
   
   currentSpreadConfig.cards.forEach((pos, index) => {
-    container.innerHTML += `<div class="card-slot" id="slot-${index}"><div class="slot-label" id="label-${index}">${pos.label}</div><div class="card" id="card-${index}"><div class="card-face card-back">✧</div><div class="card-face card-front"><div class="emoji" id="emoji-${index}">❓</div><div class="name" id="name-${index}">等待抽取</div></div></div></div>`;
+    container.innerHTML += `<div class="card-slot" id="slot-${index}"><div class="slot-label" id="label-${index}">${pos.label}</div><div class="card" id="card-${index}"><div class="card-face card-back">✧</div><div class="card-face card-front"><div class="card-art" id="art-${index}"><img class="card-image" id="image-${index}" alt="塔罗牌面"></div><div class="emoji" id="emoji-${index}">❓</div><div class="name" id="name-${index}">等待抽取</div></div></div></div>`;
   });
   renderSpreadGuide();
 }
@@ -969,7 +1147,7 @@ async function verifyVipUnlock() {
 function showEnergyEffect(isVip = false) {
   forcePlayMusic();
   setFlowStep(2);
-  document.getElementById("uiElements").classList.add("fade-out");
+  enterReadingMode();
   const energyText = document.getElementById("energyText");
   energyText.innerText = isVip ? "能量已接收...更深层的因果线正在展开" : "灵感已汇聚...星盘正在缓缓转动";
   energyText.style.display = "block";
@@ -991,11 +1169,20 @@ function showEnergyEffect(isVip = false) {
 function initFanDeck() {
   cardsDrawn = 0; cardsFlipped = 0; drawnCardsData = []; shuffledDeck = shuffle([...deck]);
   const fanDeck = document.getElementById("fanDeck"); fanDeck.innerHTML = "";
-  const totalCards = 22; const angleStep = 120 / totalCards;
+  const totalCards = isMobile ? 28 : 36;
+  const centerIndex = (totalCards - 1) / 2;
   document.getElementById("cardsLeft").innerText = requiredCardsCount;
   for (let i = 0; i < totalCards; i++) {
-    const angle = -60 + (i * angleStep);
-    const cardEl = document.createElement("div"); cardEl.className = "deck-card"; cardEl.style.transform = `rotate(${angle}deg) translateY(-20px)`; cardEl.style.zIndex = i;
+    const distanceFromCenter = i - centerIndex;
+    const angle = distanceFromCenter * (isMobile ? 2.2 : 1.8);
+    const offsetX = distanceFromCenter * (isMobile ? 18 : 28);
+    const offsetY = Math.abs(distanceFromCenter) * (isMobile ? 1.6 : 1.2);
+    const cardEl = document.createElement("div");
+    cardEl.className = "deck-card";
+    cardEl.style.setProperty("--deck-x", `${offsetX}px`);
+    cardEl.style.setProperty("--deck-y", `${offsetY}px`);
+    cardEl.style.setProperty("--deck-rotate", `${angle}deg`);
+    cardEl.style.zIndex = String(totalCards - Math.abs(Math.round(distanceFromCenter)));
     cardEl.onclick = function() { if (cardsDrawn < requiredCardsCount && !this.classList.contains("drawn")) { userDrawsOneCard(this); } };
     fanDeck.appendChild(cardEl);
   }
@@ -1012,7 +1199,7 @@ function userDrawsOneCard(clickedCardElement) {
   const cardData = shuffledDeck.pop();
   const isReversed = Math.random() < 0.2; const reversedText = isReversed ? " (逆位)" : " (正位)";
 
-  drawnCardsData.push({ position: currentSpreadConfig.cards[cardsDrawn].label, cardName: cardData.name + reversedText, meaning: cardData.meaning, isReversed: isReversed, emoji: cardData.emoji });
+  drawnCardsData.push({ position: currentSpreadConfig.cards[cardsDrawn].label, cardName: cardData.name + reversedText, meaning: cardData.meaning, isReversed: isReversed, emoji: cardData.emoji, imageUrl: getTarotImageUrl(cardData.name) });
   const targetSlotCard = document.getElementById(`card-${cardsDrawn}`);
   targetSlotCard.classList.add("dealt"); document.getElementById(`label-${cardsDrawn}`).classList.add("visible");
   cardsDrawn++; document.getElementById("cardsLeft").innerText = (requiredCardsCount - cardsDrawn);
@@ -1029,12 +1216,17 @@ function userDrawsOneCard(clickedCardElement) {
 
 function userFlipsCard(i) {
   const cardElement = document.getElementById(`card-${i}`);
-  if(cardElement.classList.contains("flipped")) return; 
+  if(cardElement.classList.contains("flipped")) {
+    openCardPreview(drawnCardsData[i]);
+    return;
+  }
 
   playSound("revealSound"); if (navigator.vibrate) navigator.vibrate(80); 
   const data = drawnCardsData[i];
+  applyFaceArtwork(i, data);
   document.getElementById(`emoji-${i}`).innerText = data.emoji; document.getElementById(`name-${i}`).innerText = data.cardName;
   cardElement.classList.add("flipped"); if(data.isReversed) cardElement.classList.add("reversed");
+  cardElement.classList.add("previewable");
   
   cardsFlipped++;
   if (cardsFlipped === requiredCardsCount) {
@@ -1277,7 +1469,8 @@ async function fetchStream(question, style, cards, context = getReadingContext(q
 
 /* 日签逻辑 */
 async function startDailyDraw() {
-  document.getElementById("uiElements").style.display = "none"; document.getElementById("dailyCardArea").style.display = "block";
+  enterDailyMode();
+  document.getElementById("dailyCardArea").style.display = "grid";
   const today = new Date();
   const dayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   const dateCN = `${today.getFullYear()}年${today.getMonth()+1}月${today.getDate()}日`;
@@ -1302,6 +1495,7 @@ async function startDailyDraw() {
         dayKey,
         cardName: randomMajor.name,
         cardEmoji: randomMajor.emoji,
+        cardImage: getTarotImageUrl(randomMajor.name),
         reading: data.reading || "跟随内在指引，今天也是会被命运眷顾的一天。"
       };
       localStorage.setItem(DAILY_CACHE_KEY, JSON.stringify(dailyData));
@@ -1310,19 +1504,16 @@ async function startDailyDraw() {
         dayKey,
         cardName: randomMajor.name,
         cardEmoji: randomMajor.emoji,
+        cardImage: getTarotImageUrl(randomMajor.name),
         reading: "跟随内在指引，今天也是会被命运眷顾的一天。"
       };
       localStorage.setItem(DAILY_CACHE_KEY, JSON.stringify(dailyData));
     }
   }
 
-  document.getElementById("dailyEmoji").innerText = dailyData.cardEmoji;
+  applyDailyCardArtwork(dailyData.cardName, dailyData.cardEmoji);
   document.getElementById("dailyName").innerText = dailyData.cardName;
   document.getElementById("dailyQuote").innerText = `“${dailyData.reading}”`;
-  
-  const backBtn = document.createElement("button"); backBtn.className = "save-btn restart"; backBtn.innerText = "回到星盘"; backBtn.style.display = "block"; backBtn.style.margin = "30px auto";
-  backBtn.onclick = () => returnToHomePage();
-  if(!document.getElementById("backBtnId")) { backBtn.id = "backBtnId"; document.getElementById("dailyCardArea").appendChild(backBtn); }
 }
 
 function initStarfield() {

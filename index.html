@@ -151,10 +151,21 @@
   <!-- 沉浸式交互区 -->
   <div class="aside-panel">
     <div class="daily-card-area" id="dailyCardArea" style="display: none;">
-      <div class="daily-title">今日神谕</div>
-      <div class="daily-date" id="dailyDate"></div>
-      <div class="daily-emoji-card"><div id="dailyEmoji" class="daily-emoji">✨</div><div id="dailyName" class="daily-name">牌名</div></div>
-      <div class="daily-quote" id="dailyQuote">今日牌面正在为你写下一句日签...</div>
+      <div class="daily-card-visual">
+        <div class="daily-title">今日神谕</div>
+        <div class="daily-date" id="dailyDate"></div>
+        <div class="daily-emoji-card">
+          <img id="dailyImage" class="daily-image" alt="今日神谕牌面">
+          <div id="dailyEmoji" class="daily-emoji">✨</div>
+          <div id="dailyName" class="daily-name">牌名</div>
+        </div>
+      </div>
+      <div class="daily-copy">
+        <div class="daily-copy__eyebrow">今天这张牌，想先轻轻提醒你</div>
+        <div class="daily-quote" id="dailyQuote">今日牌面正在为你写下一句日签...</div>
+        <div class="daily-copy__hint">如果这句话刚好击中你，今天就把它当成一个温柔但明确的行动提示。</div>
+        <button id="dailyBackBtn" class="save-btn restart">回到主页</button>
+      </div>
     </div>
   </div>
 
@@ -208,7 +219,7 @@
       </select>
       <button id="saveBtn" class="save-btn">📸 保存解牌卷轴</button>
       <button id="pushToArchiveBtn" class="save-btn">🗂 写入成长档案</button>
-      <button id="restartBtn" class="save-btn restart">再次占卜</button>
+      <button id="restartBtn" class="save-btn restart">回到主页</button>
     </div>
   </div>
 
@@ -302,15 +313,15 @@
 
   <div id="contactModal" class="modal-overlay" style="display:none;">
     <div class="modal-content contact-panel-content">
-      <h3 style="margin-top: 0; color:#f6e6b5; letter-spacing:1px;">联系占卜师</h3>
-      <p class="contact-desc">如果你想定制专属占卜流程，欢迎联系我。</p>
+      <h3 style="margin-top: 0; color:#f6e6b5; letter-spacing:1px;">联系作者</h3>
+      <p class="contact-desc">如果你想定制专属占卜流程，优先直接微信联系会更快。</p>
       <div class="contact-item">
-        <span class="contact-label">电话 / 微信号</span>
+        <span class="contact-label">微信 / 手机</span>
         <a href="tel:18501738312" class="contact-value">18501738312</a>
       </div>
-      <div class="contact-item">
-        <span class="contact-label">邮箱</span>
-        <a href="mailto:jingni18@hotmail.com" class="contact-value">jingni18@hotmail.com</a>
+      <div class="contact-item contact-item--stack">
+        <span class="contact-label">其他联系方式</span>
+        <span class="contact-value contact-value--plain">如果你更习惯微信号、小红书或邮箱，也可以直接在留言里留下，我会按你写的方式联系你。</span>
       </div>
       <div class="modal-btns" style="margin-top: 14px;">
         <button id="closeContactBtn" class="confirm-btn" style="width:100%;">返回主页</button>
@@ -323,12 +334,8 @@
       <h3 style="margin-top: 0; color:#f6e6b5; letter-spacing:1px;">给星盘留一句话</h3>
       <p class="contact-desc">你夸我、吐槽我、许愿我都收。每一条我都会认真看，也会继续把这片星盘打磨得更好（通常 48 小时内会阅读并整理）。</p>
       <div class="input-group">
-        <label>你的称呼（可选）</label>
-        <input id="feedbackName" type="text" placeholder="例如：小宇 / 路过的神秘朋友">
-      </div>
-      <div class="input-group">
-        <label>邮箱（可选，方便我认真回你）</label>
-        <input id="feedbackEmail" type="email" placeholder="例如：you@example.com">
+        <label>联系方式（可选，微信 / 小红书 / 邮箱都可以）</label>
+        <input id="feedbackContact" type="text" placeholder="例如：微信号、小红书名、邮箱">
       </div>
       <div class="input-group">
         <label>想告诉我的话</label>
@@ -341,6 +348,23 @@
       <div class="feedback-contact-shortcut">
         <div class="contact-desc" style="margin-top:10px;">需要定制占卜流程？可直接联系作者。</div>
         <button id="openContactFromFeedbackBtn" class="secondary-btn">查看联系方式</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="cardPreviewModal" class="modal-overlay card-preview-modal" style="display:none;">
+    <div class="modal-content card-preview-content">
+      <button id="closeCardPreviewBtn" class="card-preview-close" type="button" aria-label="关闭看牌预览">×</button>
+      <div class="card-preview-shell">
+        <div class="card-preview-visual">
+          <img id="cardPreviewImage" class="card-preview-image" alt="塔罗牌放大预览">
+          <div id="cardPreviewEmoji" class="card-preview-emoji">✧</div>
+        </div>
+        <div class="card-preview-copy">
+          <div id="cardPreviewPosition" class="card-preview-position">牌位</div>
+          <h3 id="cardPreviewName" class="card-preview-name">牌名</h3>
+          <p id="cardPreviewMeaning" class="card-preview-meaning">牌意说明</p>
+        </div>
       </div>
     </div>
   </div>

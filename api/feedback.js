@@ -22,7 +22,8 @@ export default async function handler(req, res) {
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ error: "只接受 POST 请求" });
 
-  const { name, email, message, page, createdAt } = req.body || {};
+  const { name, email, contact, message, page, createdAt } = req.body || {};
+  const mergedContact = contact || email || "未填写";
   if (!message || !String(message).trim()) {
     return res.status(400).json({ error: "意见内容不能为空" });
   }
@@ -38,7 +39,7 @@ export default async function handler(req, res) {
   const html = `
     <h2>新的用户意见反馈</h2>
     <p><strong>称呼：</strong>${String(name || "匿名用户")}</p>
-    <p><strong>邮箱：</strong>${String(email || "未填写")}</p>
+    <p><strong>联系方式：</strong>${String(mergedContact)}</p>
     <p><strong>提交时间：</strong>${String(createdAt || new Date().toISOString())}</p>
     <p><strong>来源页面：</strong>${String(page || "未知")}</p>
     <hr />
