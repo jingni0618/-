@@ -125,7 +125,9 @@ function dismissIntro() {
   }, 380);
 }
 // Absolute failsafe: force dismiss after 6s even if window.onload never fires
+let eventsBound = false;
 setTimeout(() => {
+  if (!eventsBound) { try { initEventBindings(); eventsBound = true; } catch(e) { console.error(e); } }
   if (!introDone) {
     initDone = true;
     dismissIntro();
@@ -135,9 +137,14 @@ setTimeout(() => {
 window.onload = function() {
   isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
+  // ── Event bindings first — must not be blocked by other init failures ───
+  if (!eventsBound) { try { initEventBindings(); eventsBound = true; } catch(e) { console.error("initEventBindings failed:", e); } }
+
   // ── Rest of init ─────────────────────────────────────────────────────────
-  applyDensityMode(localStorage.getItem(DENSITY_MODE_KEY) || "compact");
-  applyTimePhaseTheme(); initStarfield(); renderSpread(); renderSpreadGuide(); loadHistory(); initEventBindings(); renderHomeDate(); updateStatus("");
+  try {
+    applyDensityMode(localStorage.getItem(DENSITY_MODE_KEY) || "compact");
+    applyTimePhaseTheme(); initStarfield(); renderSpread(); renderSpreadGuide(); loadHistory(); renderHomeDate(); updateStatus("");
+  } catch(e) { console.error("init failed:", e); }
 
   // Mark init complete, then auto-dismiss intro after a brief pause
   initDone = true;
@@ -1361,7 +1368,7 @@ function prepareVipPaymentFlow() {
   const codeInput = document.getElementById("vipCodeInput");
   if (qrImg) qrImg.src = VIP_STATIC_QR_URL;
   if (codeInput) codeInput.value = "";
-  setVipCodeHint("输入后会优先走 VIP 口令，其次尝试朋友测试码。", false);
+  setVipCodeHint("", false);
   setVipOrderStatus("状态：请扫码支付", `当前价格 ${formatFenPrice(priceFen)}/次，支付后点击“我已完成支付，继续解牌”。`);
 }
 
@@ -1415,8 +1422,8 @@ function closeVipConfirmModal() {
 function confirmVipPaidAndContinue() {
   if (vipConfirmRemainingSeconds > 0) return;
   closeVipConfirmModal();
-  setVipOrderStatus("状态：等待验证", "如已完成支付，请输入 VIP 口令，或等待支付回调接通后自动放行。当前不会再使用前端假解锁。");
-  setVipCodeHint("支付后如已拿到 VIP 口令，请直接输入校验。", false);
+  closeVipModal();
+  showEnergyEffect(true);
 }
 
 function readVipToken() {
@@ -1494,7 +1501,7 @@ async function submitVipCode() {
   } finally {
     if (button) {
       button.disabled = false;
-      button.textContent = "输入口令解锁";
+      button.textContent = "口令解锁";
     }
   }
 }
@@ -2058,8 +2065,16 @@ async function fetchStream(question, style, cards, context = getReadingContext(q
     });
   };
 
-  const renderMarkdown = (markdownText = "") => {
-    const source = injectQuickTakeaways(injectCoreQuoteBlock(String(markdownText || "").replace(/```html/gi, '').replace(/```/g, '')));
+  const renderMarkdown = (markdownText = "", isFinal = false) => {
+    let cleaned = String(markdownText || "")
+      .replace(/```html/gi, '').replace(/```/g, '')
+      .replace(/<\/?(?:div|span|style)[^>]*>/gi, '')
+      .replace(/<h4>(.*?)<\/h4>/gi, '#### $1')
+      .replace(/<\/?p>/gi, '\n')
+      .replace(/<strong>(.*?)<\/strong>/gi, '**$1**')
+      .replace(/<\/?(?:ul|ol)>/gi, '')
+      .replace(/<li>(.*?)<\/li>/gi, '- $1');
+    const source = isFinal ? injectQuickTakeaways(cleaned) : cleaned;
     if (typeof marked !== "undefined" && typeof marked.parse === "function") {
       streamContent.innerHTML = marked.parse(source);
       applyTarotTagHighlight();
@@ -2067,6 +2082,7 @@ async function fetchStream(question, style, cards, context = getReadingContext(q
     }
     streamContent.textContent = source;
   };
+  let rafPending = false;
 
   if (typeof marked !== "undefined" && typeof marked.setOptions === "function") {
     marked.setOptions({ gfm: true, breaks: true });
@@ -2111,7 +2127,10 @@ async function fetchStream(question, style, cards, context = getReadingContext(q
             const data = JSON.parse(dataStr);
             const content = data.choices?.[0]?.delta?.content || "";
             htmlBuffer += content;
-            renderMarkdown(htmlBuffer);
+            if (!rafPending) {
+              rafPending = true;
+              requestAnimationFrame(() => { renderMarkdown(htmlBuffer); rafPending = false; });
+            }
             if (cursor) cursor.style.display = "inline-block";
           } catch (e) {
             console.error("流数据解析失败", e);
@@ -2138,6 +2157,7 @@ async function fetchStream(question, style, cards, context = getReadingContext(q
       emotionLabel: detailContext.emotion.label,
       emotionLevel: detailContext.emotion.value
     };
+    renderMarkdown(htmlBuffer, true);
     renderReadingSummary(historyRecord.reading);
     setFlowStep(3);
   } catch (error) {

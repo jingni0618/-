@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" async></script>
 </head>
 <body>
 
@@ -41,6 +41,27 @@
         <button id="feedbackBtn" class="icon-btn subtle" data-icon="💌"><span class="btn-label">给👀仔留言</span></button>
       </div>
     </div>
+    <script>
+    // Immediate inline binding — no dependency on script.js load timing
+    (function(){
+      function tryBind(id, fn) {
+        var btn = document.getElementById(id);
+        if (!btn) return;
+        btn.addEventListener('click', function(e) {
+          e.stopPropagation();
+          if (typeof window[fn] === 'function') { window[fn](); }
+          else { console.warn(fn + ' not yet available'); }
+        });
+        btn.addEventListener('touchend', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          if (typeof window[fn] === 'function') { window[fn](); }
+        });
+      }
+      tryBind('growthHubBtn', 'openGrowthHub');
+      tryBind('feedbackBtn', 'openFeedbackModal');
+    })();
+    </script>
 
     <div class="container">
       <div class="hero-header">
@@ -153,24 +174,20 @@
   <div id="vipModal" class="modal-overlay" style="display: none;">
     <div class="modal-content vip-modal-content">
       <h3 class="classic-title" style="font-size: 1.5rem; margin-top:0;">👑 解锁进阶牌阵</h3>
-      <p style="font-size: 13px; margin-bottom: 8px; color: rgba(245,236,219,0.8);">深度牌阵 ¥3/次，双人合盘 ¥5/次。你可以扫码支付，也可以输入 VIP 口令 / 测试码直接解锁。</p>
-      <div class="vip-step-title">如何解锁</div>
-      <p style="font-size: 14px; color: #c5a059; font-weight: 700; margin-bottom: 12px;">👉 方式一：扫码完成后点击继续。方式二：直接输入 VIP 口令 / 测试码验证。</p>
       <div class="qr-container"><img id="qrImage" src="https://i.postimg.cc/P525Vk7w/IMG-9071.png" alt="支付宝收款码"></div>
       <div id="vipOrderStatusBox" class="vip-order-status" style="display:none;">
-        <div id="vipOrderStatusText">状态：等待你扫码支付</div>
-        <div id="vipOrderMeta" class="vip-order-meta">这是前端静态收款页，支付后可直接继续。</div>
+        <div id="vipOrderStatusText">状态：等待扫码支付</div>
+        <div id="vipOrderMeta" class="vip-order-meta"></div>
       </div>
-      <div class="vip-code-divider"><span>或使用口令解锁</span></div>
+      <div class="vip-code-divider"><span>或输入口令</span></div>
       <div class="input-group vip-code-group">
-        <label for="vipCodeInput">VIP 口令 / 朋友测试码</label>
-        <input id="vipCodeInput" type="text" placeholder="输入口令后立即校验">
-        <div class="field-hint" id="vipCodeHint">输入后会优先走 VIP 口令，其次尝试朋友测试码。</div>
+        <input id="vipCodeInput" type="text" placeholder="VIP 口令 / 测试码">
+        <div class="field-hint" id="vipCodeHint"></div>
       </div>
       <div class="modal-btns" style="margin-top: 15px;">
         <button id="closeVipBtn" class="cancel-btn">再想想</button>
-        <button id="submitVipCodeBtn" class="secondary-btn">输入口令解锁</button>
-        <button id="confirmVipPaidBtn" class="secondary-btn">✅ 我已完成支付，继续解牌</button>
+        <button id="submitVipCodeBtn" class="secondary-btn">口令解锁</button>
+        <button id="confirmVipPaidBtn" class="secondary-btn">已支付，继续</button>
       </div>
     </div>
   </div>
