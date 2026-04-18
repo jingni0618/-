@@ -62,11 +62,24 @@ const spreadGuideMeta = {
   single: { title: "单牌神谕", icon: "🃏", count: 1, mood: "免费", paid: false, desc: "当下直觉快照，适合想要一句提醒的时候。" },
   yesno: { title: "是非决断阵", icon: "⚖️", count: 3, mood: "免费", paid: false, desc: "看见支持与阻力，帮你做清晰判断。" },
   time: { title: "时间之流", icon: "⏳", count: 3, mood: "免费", paid: false, desc: "过去、现在、未来三段式梳理问题脉络。" },
-  relationship: { title: "情感透视阵", icon: "💞", count: 4, mood: "需解锁", paid: true, desc: "拆解你与对方的状态、阻碍和关系走向。" },
-  career: { title: "财富事业阵", icon: "💼", count: 4, mood: "需解锁", paid: true, desc: "聚焦现状、机遇、风险与下一步方向。" },
-  choice: { title: "二选一岔路阵", icon: "🧭", count: 5, mood: "需解锁", paid: true, desc: "并排比较两条路径的趋势与结果。" },
-  cross: { title: "灵感十字阵", icon: "✚", count: 5, mood: "需解锁", paid: true, desc: "从核心、阻碍、潜意识到结局做完整推演。" }
+  relationship: { title: "情感透视阵", icon: "💞", count: 4, mood: "进阶", paid: true, priceFen: 300, desc: "拆解你与对方的状态、阻碍和关系走向。" },
+  career: { title: "财富事业阵", icon: "💼", count: 4, mood: "进阶", paid: true, priceFen: 300, desc: "聚焦现状、机遇、风险与下一步方向。" },
+  choice: { title: "二选一岔路阵", icon: "🧭", count: 5, mood: "进阶", paid: true, priceFen: 300, desc: "并排比较两条路径的趋势与结果。" },
+  cross: { title: "灵感十字阵", icon: "✚", count: 5, mood: "进阶", paid: true, priceFen: 300, desc: "从核心、阻碍、潜意识到结局做完整推演。" }
 };
+
+const VIP_PRICE_DEEP_FEN = 300;
+const VIP_PRICE_COMPAT_FEN = 500;
+
+function formatFenPrice(amountFen = 0) {
+  return `¥${(Number(amountFen || 0) / 100).toFixed(0)}`;
+}
+
+function getUnlockPriceForMode(mode = activeReadingMode, spread = document.getElementById("spreadSelect")?.value || "") {
+  if (mode === "compatibility") return VIP_PRICE_COMPAT_FEN;
+  if (spread && spreadGuideMeta[spread]?.paid) return VIP_PRICE_DEEP_FEN;
+  return 0;
+}
 
 let currentSpreadConfig = {}; let requiredCardsCount = 0; let cardsDrawn = 0; let cardsFlipped = 0; let drawnCardsData = []; let shuffledDeck = []; let isMobile = false; let paymentPending = false; let isNightMode = false;
 let activeReadingMode = "standard";
@@ -74,9 +87,12 @@ let latestReadingRecord = null;
 let screenModeHideTimer = null;
 const DAILY_CACHE_KEY = "tarotDailyReading";
 const VIP_TOKEN_KEY = "tarotVipToken";
+const VIP_ORDER_ID_KEY = "tarotVipOrderId";
 const VAULT_META_KEY = "tarotVaultMeta";
 const HISTORY_LIMIT = 20;
 const NOTES_LIMIT = 40;
+let currentVipOrderId = localStorage.getItem(VIP_ORDER_ID_KEY) || "";
+let vipOrderPollTimer = null;
 const emotionLabels = {
   1: "平稳如水",
   2: "微微起伏",
@@ -134,6 +150,10 @@ function initEventBindings() {
   byId("pcPayBtn")?.addEventListener("click", pcPayFlow);
   byId("closeVipBtn")?.addEventListener("click", closeVipModal);
   byId("verifyVipBtn")?.addEventListener("click", verifyVipUnlock);
+  byId("verifyFriendTestBtn")?.addEventListener("click", verifyFriendTestCode);
+  byId("checkOrderBtn")?.addEventListener("click", async () => {
+    await queryVipOrderStatus({ exchangeOnPaid: true, silent: false });
+  });
   byId("clearHistoryBtn")?.addEventListener("click", clearHistory);
   byId("closeGrowthHubBtn")?.addEventListener("click", closeGrowthHub);
   byId("closeGrowthHubPanelBtn")?.addEventListener("click", closeGrowthHub);
@@ -279,11 +299,11 @@ function getDailyWeatherMood(date) {
 }
 
 async function sendFeedback() {
-  const contactEl = document.getElementById("feedbackContact");
+  const emailEl = document.getElementById("feedbackEmail");
   const msgEl = document.getElementById("feedbackMessage");
   const btn = document.getElementById("sendFeedbackBtn");
   const name = "匿名用户";
-  const contact = contactEl?.value?.trim() || "未填写";
+  const email = emailEl?.value?.trim() || "未填写";
   const message = msgEl?.value?.trim() || "";
 
   if (!message) {
@@ -293,7 +313,7 @@ async function sendFeedback() {
 
   const payload = {
     name,
-    contact,
+    email,
     message,
     page: window.location.href,
     createdAt: new Date().toISOString()
@@ -316,12 +336,12 @@ async function sendFeedback() {
     }
 
     if (msgEl) msgEl.value = "";
-    if (contactEl) contactEl.value = "";
+    if (emailEl) emailEl.value = "";
     closeFeedbackModal();
     updateStatus("感谢你的星语，已送达👀仔邮箱。");
   } catch {
     const subject = encodeURIComponent("命运星盘用户意见反馈");
-    const body = encodeURIComponent(`称呼：${name}\n联系方式：${contact}\n时间：${new Date().toLocaleString()}\n页面：${window.location.href}\n\n意见内容：\n${message}`);
+    const body = encodeURIComponent(`称呼：${name}\n邮箱：${email}\n时间：${new Date().toLocaleString()}\n页面：${window.location.href}\n\n意见内容：\n${message}`);
     window.location.href = `mailto:jingni18@hotmail.com?subject=${subject}&body=${body}`;
     updateStatus("已为你打开邮箱草稿，发送后即可完成反馈。");
   } finally {
@@ -343,15 +363,27 @@ function renderSpreadGuide() {
     return option && !option.hidden && !option.disabled;
   });
 
-  const cards = keys.map(key => {
-    const info = spreadGuideMeta[key];
-    const activeClass = key === selected ? "active" : "";
-    const paidClass = info.paid ? "is-paid" : "";
+  const freeCards = keys.filter(k => !spreadGuideMeta[k].paid).map(k => {
+    const info = spreadGuideMeta[k];
+    const activeClass = k === selected ? "active" : "";
     return `
-      <button class="spread-pill ${activeClass} ${paidClass}" data-spread="${key}" type="button">
+      <button class="spread-pill ${activeClass}" data-spread="${k}" type="button">
         <span class="spread-pill__icon">${info.icon}</span>
         <span class="spread-pill__name">${info.title}</span>
-        <span class="spread-pill__meta">${info.count}张 · ${info.paid ? "🔒 " : ""}${info.mood}</span>
+        <span class="spread-pill__meta">${info.count}张 · 免费</span>
+      </button>
+    `;
+  }).join("");
+
+  const paidCards = keys.filter(k => spreadGuideMeta[k].paid).map(k => {
+    const info = spreadGuideMeta[k];
+    const activeClass = k === selected ? "active" : "";
+    const priceFen = info.priceFen || VIP_PRICE_DEEP_FEN;
+    return `
+      <button class="spread-pill is-paid ${activeClass}" data-spread="${k}" type="button">
+        <span class="spread-pill__icon">${info.icon}</span>
+        <span class="spread-pill__name">${info.title}</span>
+        <span class="spread-pill__meta">${info.count}张 · 🔒 ${formatFenPrice(priceFen)}/次</span>
       </button>
     `;
   }).join("");
@@ -362,16 +394,25 @@ function renderSpreadGuide() {
   const isPaid = Boolean(info.paid);
   if (payHint) {
     payHint.textContent = isPaid
-      ? "当前为深度牌阵，开启后将进入解锁流程。"
+      ? `当前为进阶牌阵，价格 ${formatFenPrice(getUnlockPriceForMode(activeReadingMode, selected))}/次，开启后将进入支付校验流程。`
       : "当前牌阵无需解锁。";
     payHint.classList.toggle("locked", isPaid);
   }
   if (startBtn) {
-    startBtn.textContent = isPaid ? "开启解牌（需解锁）" : "开启解牌";
+    startBtn.textContent = isPaid ? `开启解牌（${formatFenPrice(getUnlockPriceForMode(activeReadingMode, selected))}/次）` : "开启解牌";
   }
 
   wrap.innerHTML = `
-    <div class="spread-pills">${cards}</div>
+    <div class="spread-pills-groups">
+      <div class="spread-pills-group">
+        <div class="spread-pills-group__title">免费牌阵</div>
+        <div class="spread-pills">${freeCards}</div>
+      </div>
+      <div class="spread-pills-group spread-pills-group--paid">
+        <div class="spread-pills-group__title">进阶牌阵</div>
+        <div class="spread-pills">${paidCards}</div>
+      </div>
+    </div>
     <div class="spread-guide-text">${info.desc}</div>
   `;
 
@@ -856,6 +897,7 @@ function enterDailyMode() {
 }
 
 function returnToHomePage() {
+  stopVipOrderPolling();
   const hideIds = [
     "vipModal",
     "historyDetailModal",
@@ -1057,7 +1099,9 @@ function checkVipAndStart({ requireQuestion = true, mode = "standard" } = {}) {
   updateStatus(mode === "compatibility" ? "正在准备双人合盘..." : "正在准备深度解牌...");
   if (requiredCardsCount > 3 && !hasValidVipToken()) {
     document.getElementById("vipModal").style.display = "flex";
-    updateStatus("4~5张深度牌阵（含双人合盘）需要解锁，赞赏后输入口令继续。");
+    const priceFen = getUnlockPriceForMode(mode, document.getElementById("spreadSelect")?.value || "");
+    updateStatus(`该牌阵需解锁，当前价格 ${formatFenPrice(priceFen)}/次。完成支付并校验后继续。`);
+    prepareVipPaymentFlow();
     if (isMobile) { document.getElementById("mobilePayBtn").style.display = "block"; document.getElementById("pcPayBtn").style.display = "none"; } else { document.getElementById("mobilePayBtn").style.display = "none"; document.getElementById("pcPayBtn").style.display = "block"; }
     return;
   }
@@ -1075,10 +1119,170 @@ function quickDrawSingleCard() {
   showEnergyEffect();
 }
 
-function closeVipModal() { document.getElementById("vipModal").style.display = "none"; paymentPending = false; }
-function pcPayFlow() { const btn = document.getElementById("pcPayBtn"); btn.innerText = "✅ 已赞赏，请输入密钥"; btn.disabled = true; setTimeout(() => { btn.disabled = false; }, 1200); document.getElementById("vipCodeInput")?.focus(); }
-function mobilePayFlow() {
-  const btn = document.getElementById("mobilePayBtn"); const imgUrl = document.getElementById("qrImage").src; btn.innerText = "🔄 正在前往微信..."; paymentPending = true;
+function setVipOrderStatus(text, meta = "") {
+  const box = document.getElementById("vipOrderStatusBox");
+  const textEl = document.getElementById("vipOrderStatusText");
+  const metaEl = document.getElementById("vipOrderMeta");
+  const checkBtn = document.getElementById("checkOrderBtn");
+  if (box) box.style.display = "block";
+  if (textEl) textEl.textContent = text;
+  if (metaEl) metaEl.textContent = meta;
+  if (checkBtn) checkBtn.style.display = "block";
+}
+
+function stopVipOrderPolling() {
+  if (vipOrderPollTimer) {
+    clearInterval(vipOrderPollTimer);
+    vipOrderPollTimer = null;
+  }
+}
+
+function getCurrentVipProductType() {
+  return activeReadingMode === "compatibility" ? "compatibility" : "deep";
+}
+
+async function createVipPaymentOrder() {
+  const productType = getCurrentVipProductType();
+  const response = await fetch("/api/vip-payment-order", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ scene: "deep-reading", productType })
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error || "创建订单失败");
+  }
+  return response.json();
+}
+
+async function exchangeVipOrderToToken(orderId) {
+  const response = await fetch("/api/vip-payment-unlock", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ orderId })
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error || "支付已完成但解锁失败");
+  }
+
+  const data = await response.json();
+  localStorage.setItem(VIP_TOKEN_KEY, JSON.stringify({ token: data.token, expiresAt: data.expiresAt }));
+  currentVipOrderId = "";
+  localStorage.removeItem(VIP_ORDER_ID_KEY);
+  closeVipModal();
+  showEnergyEffect(true);
+}
+
+async function queryVipOrderStatus({ exchangeOnPaid = false, silent = true } = {}) {
+  if (!currentVipOrderId) {
+    if (!silent) setVipOrderStatus("支付状态：尚未创建订单", "请先点击“创建订单并检查支付”。");
+    return null;
+  }
+
+  const response = await fetch(`/api/vip-payment-status?orderId=${encodeURIComponent(currentVipOrderId)}`);
+  if (!response.ok) {
+    if (!silent) setVipOrderStatus("支付状态：订单不可用", "请重新创建订单。");
+    return null;
+  }
+
+  const statusData = await response.json();
+  if (statusData.status === "paid" || statusData.status === "unlocked") {
+    setVipOrderStatus("支付状态：已支付", `订单 ${statusData.orderId} 已确认，正在解锁...`);
+    if (exchangeOnPaid) {
+      await exchangeVipOrderToToken(statusData.orderId);
+    }
+    return statusData;
+  }
+
+  if (statusData.status === "expired") {
+    setVipOrderStatus("支付状态：订单已过期", "请重新点击创建支付订单。");
+    stopVipOrderPolling();
+    return statusData;
+  }
+
+  setVipOrderStatus("支付状态：等待支付", `订单 ${statusData.orderId} 还未确认，系统会自动轮询。`);
+  return statusData;
+}
+
+function startVipOrderPolling() {
+  stopVipOrderPolling();
+  vipOrderPollTimer = setInterval(async () => {
+    try {
+      await queryVipOrderStatus({ exchangeOnPaid: true, silent: true });
+    } catch {
+      // Keep polling even if a single request fails.
+    }
+  }, 4000);
+}
+
+function prepareVipPaymentFlow() {
+  const priceFen = getUnlockPriceForMode(activeReadingMode, document.getElementById("spreadSelect")?.value || "");
+  const checkBtn = document.getElementById("checkOrderBtn");
+  if (checkBtn) checkBtn.style.display = "block";
+  if (currentVipOrderId) {
+    setVipOrderStatus("支付状态：等待支付", `订单 ${currentVipOrderId} 轮询中，金额 ${formatFenPrice(priceFen)}/次。`);
+    startVipOrderPolling();
+    return;
+  }
+  setVipOrderStatus("支付状态：尚未创建订单", `点击“创建订单并检查支付”后将按 ${formatFenPrice(priceFen)}/次 创建订单并自动轮询。`);
+}
+
+function closeVipModal() {
+  document.getElementById("vipModal").style.display = "none";
+  paymentPending = false;
+  stopVipOrderPolling();
+}
+
+async function pcPayFlow() {
+  const btn = document.getElementById("pcPayBtn");
+  if (btn) {
+    btn.innerText = "订单创建中...";
+    btn.disabled = true;
+  }
+  try {
+    const order = await createVipPaymentOrder();
+    currentVipOrderId = order.orderId;
+    localStorage.setItem(VIP_ORDER_ID_KEY, currentVipOrderId);
+    if (order.qrUrl) {
+      const qrImg = document.getElementById("qrImage");
+      if (qrImg) qrImg.src = order.qrUrl;
+    }
+    setVipOrderStatus("支付状态：等待支付", `订单 ${order.orderId} 已创建（${formatFenPrice(order.amountFen)}/次），支付后会自动解锁。`);
+    startVipOrderPolling();
+    document.getElementById("vipCodeInput")?.focus();
+  } catch (err) {
+    setVipOrderStatus("支付状态：创建失败", err.message || "请稍后重试");
+  } finally {
+    if (btn) {
+      btn.innerText = "✅ 创建订单并检查支付";
+      btn.disabled = false;
+    }
+  }
+}
+
+async function mobilePayFlow() {
+  const btn = document.getElementById("mobilePayBtn");
+  if (!currentVipOrderId) {
+    try {
+      const order = await createVipPaymentOrder();
+      currentVipOrderId = order.orderId;
+      localStorage.setItem(VIP_ORDER_ID_KEY, currentVipOrderId);
+      if (order.qrUrl) {
+        const qrImg = document.getElementById("qrImage");
+        if (qrImg) qrImg.src = order.qrUrl;
+      }
+    } catch (err) {
+      setVipOrderStatus("支付状态：创建失败", err.message || "请稍后重试");
+      return;
+    }
+  }
+
+  const imgUrl = document.getElementById("qrImage").src;
+  btn.innerText = "🔄 正在前往微信...";
+  paymentPending = true;
+  setVipOrderStatus("支付状态：等待支付", `订单 ${currentVipOrderId} 轮询中，请在微信完成支付。`);
+  startVipOrderPolling();
   fetch(imgUrl).then(res => res.blob()).then(blob => {
     const url = window.URL.createObjectURL(blob); const a = document.createElement('a'); a.style.display = 'none'; a.href = url; a.download = '命运星盘解锁二维码.jpg'; document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
     setTimeout(() => { window.location.href = "weixin://"; btn.innerText = "完成后请切回此页"; }, 1000);
@@ -1086,8 +1290,9 @@ function mobilePayFlow() {
 }
 document.addEventListener("visibilitychange", function() {
   if (document.visibilityState === 'visible' && paymentPending) {
-    paymentPending = false; document.getElementById("mobilePayBtn").innerText = "✅ 已赞赏，请输入密钥";
+    paymentPending = false; document.getElementById("mobilePayBtn").innerText = "✅ 已返回，正在检查支付";
     setTimeout(() => { document.getElementById("vipCodeInput")?.focus(); }, 1200);
+    queryVipOrderStatus({ exchangeOnPaid: true, silent: true }).catch(() => {});
   }
 });
 
@@ -1144,6 +1349,48 @@ async function verifyVipUnlock() {
   }
 }
 
+async function verifyFriendTestCode() {
+  const input = document.getElementById("friendTestCodeInput");
+  const btn = document.getElementById("verifyFriendTestBtn");
+  const code = input?.value?.trim() || "";
+  if (!code) {
+    alert("请输入测试码");
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerText = "校验中...";
+  }
+
+  try {
+    const response = await fetch("/api/vip-test-code-verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code })
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({}));
+      throw new Error(errData.error || "测试码无效");
+    }
+
+    const data = await response.json();
+    localStorage.setItem(VIP_TOKEN_KEY, JSON.stringify({ token: data.token, expiresAt: data.expiresAt }));
+    currentVipOrderId = "";
+    localStorage.removeItem(VIP_ORDER_ID_KEY);
+    closeVipModal();
+    showEnergyEffect(true);
+  } catch (err) {
+    alert(`测试码校验失败：${err.message}`);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerText = "测试码校验";
+    }
+  }
+}
+
 function showEnergyEffect(isVip = false) {
   forcePlayMusic();
   setFlowStep(2);
@@ -1169,20 +1416,30 @@ function showEnergyEffect(isVip = false) {
 function initFanDeck() {
   cardsDrawn = 0; cardsFlipped = 0; drawnCardsData = []; shuffledDeck = shuffle([...deck]);
   const fanDeck = document.getElementById("fanDeck"); fanDeck.innerHTML = "";
-  const totalCards = isMobile ? 28 : 36;
-  const centerIndex = (totalCards - 1) / 2;
+  fanDeck.classList.add("table-spread");
+  const totalCards = isMobile ? 12 : 16;
+  const rows = 2;
+  const cardsPerRow = Math.ceil(totalCards / rows);
+  const actualRows = Math.ceil(totalCards / cardsPerRow);
+  const rowCenter = (actualRows - 1) / 2;
+  const colCenter = (cardsPerRow - 1) / 2;
+  const xSpacing = isMobile ? 18 : 20;
+  const ySpacing = isMobile ? 28 : 32;
   document.getElementById("cardsLeft").innerText = requiredCardsCount;
   for (let i = 0; i < totalCards; i++) {
-    const distanceFromCenter = i - centerIndex;
-    const angle = distanceFromCenter * (isMobile ? 2.2 : 1.8);
-    const offsetX = distanceFromCenter * (isMobile ? 18 : 28);
-    const offsetY = Math.abs(distanceFromCenter) * (isMobile ? 1.6 : 1.2);
+    const row = Math.floor(i / cardsPerRow);
+    const col = i % cardsPerRow;
+    const offsetX = (col - colCenter) * xSpacing;
+    const offsetY = (row - rowCenter) * ySpacing;
+    const angle = ((col % 2 === 0 ? -1 : 1) * 0.45) + (row - rowCenter) * 0.45;
+    const scale = 1 - Math.abs(row - rowCenter) * 0.02;
     const cardEl = document.createElement("div");
     cardEl.className = "deck-card";
     cardEl.style.setProperty("--deck-x", `${offsetX}px`);
     cardEl.style.setProperty("--deck-y", `${offsetY}px`);
     cardEl.style.setProperty("--deck-rotate", `${angle}deg`);
-    cardEl.style.zIndex = String(totalCards - Math.abs(Math.round(distanceFromCenter)));
+    cardEl.style.setProperty("--deck-scale", `${scale}`);
+    cardEl.style.zIndex = String(120 + row * cardsPerRow + col);
     cardEl.onclick = function() { if (cardsDrawn < requiredCardsCount && !this.classList.contains("drawn")) { userDrawsOneCard(this); } };
     fanDeck.appendChild(cardEl);
   }

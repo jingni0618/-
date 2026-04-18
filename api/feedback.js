@@ -29,7 +29,7 @@ export default async function handler(req, res) {
   }
 
   const resendKey = process.env.RESEND_API_KEY;
-  const toEmail = process.env.FEEDBACK_TO_EMAIL || "jingni18@hotmail.com";
+  const toEmail = "jingni18@hotmail.com";
   const fromEmail = process.env.FEEDBACK_FROM_EMAIL || "onboarding@resend.dev";
 
   if (!resendKey) {

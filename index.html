@@ -96,7 +96,7 @@
         <div class="choice-card choice-card--love card-love">
           <div class="choice-card__eyebrow">双人合盘</div>
           <h2 class="choice-card__title">双人关系合盘</h2>
-          <p class="choice-card__desc">聚焦关系课题，查看彼此状态与走向。</p>
+          <p class="choice-card__desc">聚焦关系课题，查看彼此状态与走向。<span class="price-tag">进阶 ¥5/次</span></p>
           <div class="choice-card__body" id="couplePanel">
             <div class="input-group dual-inputs">
               <div>
@@ -125,8 +125,8 @@
   <!-- VIP 赞赏弹窗 -->
   <div id="vipModal" class="modal-overlay" style="display: none;">
     <div class="modal-content">
-      <h3 class="classic-title" style="font-size: 1.5rem; margin-top:0;">👑 解锁深度牌阵</h3>
-      <p style="font-size: 13px; margin-bottom: 10px; color: #8e8579;">4~5张深度牌阵（含双人合盘）可获得更完整的因果脉络与行动指引。</p>
+      <h3 class="classic-title" style="font-size: 1.5rem; margin-top:0;">👑 解锁进阶牌阵</h3>
+      <p style="font-size: 13px; margin-bottom: 10px; color: #8e8579;">4~5张进阶牌阵：深度牌阵 ¥3/次，双人合盘 ¥5/次。</p>
       <div class="vip-step-title">你将获得</div>
       <ul class="vip-value-list">
         <li>更完整的因果链路分析（现状/阻碍/走向）</li>
@@ -134,16 +134,29 @@
         <li>解牌结果可沉淀到成长档案，持续复盘</li>
       </ul>
       <div class="vip-step-title">如何解锁</div>
-      <p style="font-size: 14px; color: #c5a059; font-weight: bold; margin-bottom: 15px;">👉 扫码赞赏 1 元，解锁深度解牌</p>
+      <p style="font-size: 14px; color: #c5a059; font-weight: bold; margin-bottom: 15px;">👉 先创建订单并扫码支付，系统会自动确认支付状态；也可手动点“检查支付状态”。</p>
       <div class="qr-container"><img id="qrImage" src="https://i.postimg.cc/vBRq8rJn/IMG-9022.jpg" alt="微信赞赏码"></div>
+      <div id="vipOrderStatusBox" class="vip-order-status" style="display:none;">
+        <div id="vipOrderStatusText">支付状态：等待创建订单</div>
+        <div id="vipOrderMeta" class="vip-order-meta"></div>
+      </div>
       <div style="display: flex; gap: 8px; margin: 12px 0 8px;">
         <input id="vipCodeInput" type="password" placeholder="输入解锁密钥" style="flex:1; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.25); background: rgba(10,10,14,0.35); color:#f8e6b5;">
         <button id="verifyVipBtn" class="main-btn" style="white-space: nowrap; width:auto; min-width:92px;">校验</button>
       </div>
+      <button id="checkOrderBtn" class="secondary-btn" style="margin-top: 8px; width: 100%; display:none;">检查支付状态</button>
+      <div class="friend-test-box">
+        <div class="friend-test-title">朋友测试通道（免付费）</div>
+        <div class="friend-test-input-row">
+          <input id="friendTestCodeInput" type="text" placeholder="输入测试码，例如 FRIEND" autocomplete="off">
+          <button id="verifyFriendTestBtn" class="secondary-btn" style="width:auto; min-width:98px;">测试码校验</button>
+        </div>
+        <div class="friend-test-tip">你可给朋友测试码：FRIEND（大写）。</div>
+      </div>
       <button id="mobilePayBtn" class="secondary-btn pulse-btn" style="margin-top: 15px; width: 100%; display:none;">📱 保存二维码后前往微信</button>
       <div class="modal-btns" style="margin-top: 15px;">
         <button id="closeVipBtn" class="cancel-btn">再想想</button>
-        <button id="pcPayBtn" class="secondary-btn">✅ 我已赞赏，继续解牌</button>
+        <button id="pcPayBtn" class="secondary-btn">✅ 创建订单并检查支付</button>
       </div>
     </div>
   </div>
@@ -187,7 +200,7 @@
 
     <!-- 交互抽牌区 -->
     <div id="deckArea" class="deck-area" style="display: none;">
-      <h3 id="instructionText" class="ritual-text">请从牌扇中抽取 <span id="cardsLeft">0</span> 张牌</h3>
+      <h3 id="instructionText" class="ritual-text">请从桌面牌阵中抽取 <span id="cardsLeft">0</span> 张牌</h3>
       <div class="fan-deck" id="fanDeck"></div>
     </div>
 
@@ -314,14 +327,10 @@
   <div id="contactModal" class="modal-overlay" style="display:none;">
     <div class="modal-content contact-panel-content">
       <h3 style="margin-top: 0; color:#f6e6b5; letter-spacing:1px;">联系作者</h3>
-      <p class="contact-desc">如果你想定制专属占卜流程，优先直接微信联系会更快。</p>
+      <p class="contact-desc">如果你想定制专属占卜流程，直接发邮件给我就可以。</p>
       <div class="contact-item">
-        <span class="contact-label">微信 / 手机</span>
-        <a href="tel:18501738312" class="contact-value">18501738312</a>
-      </div>
-      <div class="contact-item contact-item--stack">
-        <span class="contact-label">其他联系方式</span>
-        <span class="contact-value contact-value--plain">如果你更习惯微信号、小红书或邮箱，也可以直接在留言里留下，我会按你写的方式联系你。</span>
+        <span class="contact-label">邮箱</span>
+        <a href="mailto:jingni18@hotmail.com" class="contact-value">jingni18@hotmail.com</a>
       </div>
       <div class="modal-btns" style="margin-top: 14px;">
         <button id="closeContactBtn" class="confirm-btn" style="width:100%;">返回主页</button>
@@ -334,8 +343,8 @@
       <h3 style="margin-top: 0; color:#f6e6b5; letter-spacing:1px;">给星盘留一句话</h3>
       <p class="contact-desc">你夸我、吐槽我、许愿我都收。每一条我都会认真看，也会继续把这片星盘打磨得更好（通常 48 小时内会阅读并整理）。</p>
       <div class="input-group">
-        <label>联系方式（可选，微信 / 小红书 / 邮箱都可以）</label>
-        <input id="feedbackContact" type="text" placeholder="例如：微信号、小红书名、邮箱">
+        <label>你的邮箱（可选，方便我回你）</label>
+        <input id="feedbackEmail" type="email" placeholder="例如：jingni18@hotmail.com">
       </div>
       <div class="input-group">
         <label>想告诉我的话</label>

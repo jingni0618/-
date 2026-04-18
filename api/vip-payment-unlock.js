@@ -1,3 +1,4 @@
+import { consumeVipPaymentUnlock, getVipPaymentOrder } from './_vipPaymentRepository.js';
 import { createVipToken } from './_vipToken.js';
 
 function applyCors(req, res) {
@@ -21,18 +22,21 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: '只接受 POST 请求' });
 
-  const unlockCode = process.env.VIP_UNLOCK_CODE;
   const signingSecret = process.env.VIP_SIGNING_SECRET || process.env.OPENAI_API_KEY;
-
-  if (!unlockCode || !signingSecret) {
+  if (!signingSecret) {
     return res.status(503).json({ error: 'VIP 验证未配置' });
   }
 
-  const body = req.body || {};
-  if ((body.unlockCode || '').trim() !== unlockCode) {
-    return res.status(401).json({ error: '口令错误' });
+  const orderId = String(req.body?.orderId || '').trim();
+  if (!orderId) return res.status(400).json({ error: '缺少 orderId' });
+
+  const order = await getVipPaymentOrder(orderId);
+  if (!order) return res.status(404).json({ error: '订单不存在' });
+  if (order.status !== 'paid' && order.status !== 'unlocked') {
+    return res.status(402).json({ error: '订单尚未支付完成' });
   }
 
+  await consumeVipPaymentUnlock(orderId);
   const tokenData = createVipToken(signingSecret);
   return res.status(200).json(tokenData);
 }
