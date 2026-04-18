@@ -455,7 +455,7 @@ async function sendFeedback() {
 
   if (btn) {
     btn.disabled = true;
-    btn.textContent = "投递中...";
+    btn.textContent = "投递中…";
   }
 
   try {
@@ -664,7 +664,7 @@ function renderTimeline() {
     item.innerHTML = `
       <div class="timeline-item-time">${record.date || "未知时间"}</div>
       <div class="timeline-item-main">${record.question || "单牌速读"} · ${record.spread || "未知牌阵"}</div>
-      <div class="timeline-item-snippet">${snippet ? `${snippet}...` : "无解牌节选"}</div>
+      <div class="timeline-item-snippet">${snippet ? `${snippet}…` : "无解牌节选"}</div>
       <div class="timeline-tags">${tags.map(t => `<span class="timeline-tag">${t}</span>`).join("")}</div>
     `;
     item.addEventListener("click", () => openHistoryDetail({ ...record, timelineTopic: topic }));
@@ -1259,7 +1259,7 @@ function checkVipAndStart({ requireQuestion = true, mode = "standard" } = {}) {
     updateStatus("先写下问题，再开启解牌。");
     return;
   }
-  updateStatus(mode === "compatibility" ? "正在准备双人合盘..." : "正在准备深度解牌...");
+  updateStatus(mode === "compatibility" ? "正在准备双人合盘…" : "正在准备深度解牌…");
   if (requiredCardsCount > 3 && !hasValidVipToken()) {
     document.getElementById("vipModal").style.display = "flex";
     const priceFen = getUnlockPriceForMode(mode, document.getElementById("spreadSelect")?.value || "");
@@ -1276,7 +1276,7 @@ function quickDrawSingleCard() {
   document.getElementById("spreadSelect").value = "single";
   renderSpread();
   document.getElementById("questionInput").value = "";
-  updateStatus("单牌速读准备中，抽取你的灵感之牌...");
+  updateStatus("单牌速读准备中，抽取你的灵感之牌…");
   updateQuestionHint();
   showEnergyEffect();
 }
@@ -1425,7 +1425,7 @@ async function submitVipCode() {
 
   if (button) {
     button.disabled = true;
-    button.textContent = "验证中...";
+    button.textContent = "验证中…";
   }
 
   try {
@@ -1462,7 +1462,7 @@ function showEnergyEffect(isVip = false) {
     energyText.style.display = "none";
     playSound("drawSound"); if (navigator.vibrate) navigator.vibrate([100, 50, 100]); 
     const shuffleArea = document.getElementById("shuffleArea"); shuffleArea.style.display = "flex";
-    setTimeout(() => { shuffleArea.style.display = "none"; document.getElementById("deckArea").style.display = "flex"; initFanDeck(); }, 1800);
+    setTimeout(() => { shuffleArea.style.display = "none"; document.getElementById("deckArea").style.display = "flex"; initFanDeck(); }, 3800);
   }, 800);
 }
 
@@ -1476,7 +1476,7 @@ function initFanDeck() {
   deckSpreadUnlocked = false;
   const totalCards = isMobile ? 13 : 21;
   const fanRange = isMobile ? 118 : 132; // total arc in degrees
-  document.getElementById("cardsLeft").innerText = requiredCardsCount;
+  const cardsLeftEl = document.getElementById("cardsLeft"); if (cardsLeftEl) cardsLeftEl.innerText = requiredCardsCount;
   for (let i = 0; i < totalCards; i++) {
     const ratio = totalCards <= 1 ? 0.5 : i / (totalCards - 1);
     const fanAngle = (ratio - 0.5) * fanRange; // -66 to +66 deg
@@ -1542,6 +1542,9 @@ function unlockDeckSpread() {
     hint.classList.add("show");
     window.setTimeout(() => hint.classList.remove("show"), 2400);
   }
+  // 标题加光晕提示
+  const instrEl = document.getElementById("instructionText");
+  if (instrEl) instrEl.classList.add("draw-hint");
 }
 
 function updateDeckSpreadHint(progress = 0) {
@@ -1668,7 +1671,7 @@ function userDrawsOneCard(clickedCardElement) {
   drawnCardsData.push({ position: currentSpreadConfig.cards[cardsDrawn].label, cardName: cardData.name + reversedText, meaning: cardData.meaning, isReversed: isReversed, emoji: cardData.emoji, imageUrl: getTarotImageUrl(cardData.name) });
   const targetSlotCard = document.getElementById(`card-${cardsDrawn}`);
   targetSlotCard.classList.add("dealt"); document.getElementById(`label-${cardsDrawn}`).classList.add("visible");
-  cardsDrawn++; document.getElementById("cardsLeft").innerText = (requiredCardsCount - cardsDrawn);
+  cardsDrawn++; const cardsLeftEl2 = document.getElementById("cardsLeft"); if (cardsLeftEl2) cardsLeftEl2.innerText = (requiredCardsCount - cardsDrawn);
 
   if (cardsDrawn === requiredCardsCount) { 
     const deckArea = document.getElementById("deckArea");
@@ -1702,7 +1705,7 @@ function userFlipsCard(i) {
   if (cardsFlipped === requiredCardsCount) {
     document.getElementById("revealInstruction").style.display = "none";
     setFlowStep(2);
-    updateStatus("牌面已揭晓，正在进入最终转场...");
+    updateStatus("牌面已揭晓，正在进入最终转场…");
     const context = getReadingContext("", activeReadingMode);
     const question = context.question;
     const style = "classic";
@@ -1728,14 +1731,6 @@ async function fadeOutAndPauseAudio() {
     });
     await waitMs(55);
   }
-}
-
-function getTimePhaseColor() {
-  const h = new Date().getHours();
-  if (h >= 5 && h < 8) return "linear-gradient(135deg, #ffecd2, #fcb69f)";  // 晨光
-  if (h >= 8 && h < 17) return "linear-gradient(135deg, #fff9e6, #ffe0b2)"; // 日光金
-  if (h >= 17 && h < 20) return "linear-gradient(135deg, #e8cfe8, #c3aed6)"; // 暮紫
-  return "linear-gradient(135deg, #1a1a2e, #16213e)"; // 夜蓝
 }
 
 async function playFinalFlashTransition() {
@@ -1994,7 +1989,7 @@ async function fetchStream(question, style, cards, context = getReadingContext(q
             if (cursor) cursor.style.display = "inline-block";
           } catch (e) {
             console.error("流数据解析失败", e);
-            updateStatus("内容加载有轻微抖动，系统正在自动修复中...");
+            updateStatus("内容加载有轻微抖动，系统正在自动修复中…");
           }
         }
       }
@@ -2161,7 +2156,7 @@ function extractCoreQuote(reading = "") {
   if (!plain) return "此刻的答案，藏在你已经看见却还没行动的那一步里。";
   const parts = plain.split(/(?<=[。！？!?])/).map(s => s.trim()).filter(Boolean);
   const first = parts[0] || plain;
-  return first.length > 72 ? `${first.slice(0, 72)}...` : first;
+  return first.length > 72 ? `${first.slice(0, 72)}…` : first;
 }
 
 function loadExternalScript(src) {
@@ -2198,7 +2193,7 @@ async function saveAsImage() {
     return;
   }
 
-  btn.innerText = "正在生成海报...";
+  btn.innerText = "正在生成海报…";
   btn.disabled = true;
 
   try {

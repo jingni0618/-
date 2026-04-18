@@ -90,8 +90,7 @@
           <div class="choice-card__body" id="deepSettings">
             <div class="input-group">
               <label>你此刻最想照见什么？</label>
-              <input type="text" id="questionInput" placeholder="越具体，牌意越清晰...">
-              <div class="field-hint" id="questionHint">你的问题仅用于本次解牌，不会公开展示。</div>
+              <input type="text" id="questionInput" placeholder="越具体，牌意越清晰…">
             </div>
             <div class="spread-guide-head">先选择牌阵（推荐）</div>
             <div class="spread-visual-guide" id="spreadVisualGuide" aria-live="polite"></div>
@@ -114,13 +113,14 @@
         </div>
 
         <div class="choice-card choice-card--love card-love couple-collapsed" id="coupleCard">
-          <button class="couple-toggle" id="coupleToggleBtn" type="button">
-            <span class="couple-toggle__icon">💞</span>
+          <button class="couple-toggle" id="coupleToggleBtn" type="button" aria-label="展开双人关系合盘">
+            <span class="couple-toggle__heart" aria-hidden="true">💗</span>
             <span class="couple-toggle__text">双人关系合盘</span>
             <span class="price-tag">进阶 ¥5/次</span>
+            <span class="couple-toggle__expand-hint">点击展开</span>
             <span class="couple-toggle__arrow">▾</span>
           </button>
-          <p class="couple-toggle__desc">看清你与 TA 的当下状态、关系阿靡与未来走向</p>
+          <p class="couple-toggle__desc">看清你与 TA 的当下状态、关系阻碍与未来走向</p>
           <div class="couple-expand" id="couplePanel">
             <p class="choice-card__desc">聚焦关系课题，查看彼此状态与走向。</p>
             <div class="choice-card__body">
@@ -200,7 +200,7 @@
       </div>
       <div class="daily-copy">
         <div class="daily-copy__eyebrow">今天这张牌，想先轻轻提醒你</div>
-        <div class="daily-quote" id="dailyQuote">今日牌面正在为你写下一句日签...</div>
+        <div class="daily-quote" id="dailyQuote">今日牌面正在为你写下一句日签…</div>
         <div class="daily-copy__hint">如果这句话刚好击中你，今天就把它当成一个温柔但明确的行动提示。</div>
         <button id="dailyBackBtn" class="save-btn restart">回到主页</button>
       </div>
@@ -219,13 +219,20 @@
     <div id="energyText" class="energy-text" style="display: none;"></div>
 
     <div id="shuffleArea" class="deck-area" style="display: none;">
-      <h3 class="ritual-text">洗牌中...塔罗牌正在与你校准</h3>
-       <div class="shuffling-deck"></div>
+      <p class="ritual-text shuffle-ritual-text">牌正在与你的能量共振…</p>
+      <div class="shuffling-deck-multi">
+        <div class="sdm-card sdm-card--1"></div>
+        <div class="sdm-card sdm-card--2"></div>
+        <div class="sdm-card sdm-card--3"></div>
+        <div class="sdm-card sdm-card--4"></div>
+        <div class="sdm-card sdm-card--5"></div>
+      </div>
+      <p class="shuffle-sub-text">请在心中默想你的问题…</p>
     </div>
 
     <!-- 交互抽牌区 -->
     <div id="deckArea" class="deck-area" style="display: none;">
-      <h3 id="instructionText" class="ritual-text">请从桌面牌阵中抽取 <span id="cardsLeft">0</span> 张牌</h3>
+      <h3 id="instructionText" class="ritual-text">✨ 用心感受，选择与你共鸣的牌</h3>
       <div class="fan-deck" id="fanDeck"></div>
       <div class="deck-spread-track" aria-hidden="true">
         <span id="deckSpreadHint" class="deck-spread-hint">← 滑动或点击展开牌阵 →</span>
@@ -240,7 +247,7 @@
     <div class="reading-wrapper" id="readingWrapper" style="display: none;">
       <div id="miniCardBar" class="mini-card-bar" style="display:none;"></div>
       <div class="parchment-box" id="readingBox">
-        <div class="ai-status" id="aiStatus"><div class="crystal-ball">🔮</div><span>塔罗解读中，正在编织你的答案...</span></div>
+        <div class="ai-status" id="aiStatus"><div class="crystal-ball">🔮</div><span>塔罗解读中，正在编织你的答案…</span></div>
         <div id="readingSummary" class="reading-summary" style="display:none;"></div>
         <div id="streamContent" class="stream-content parchment-text"></div>
         <span id="cursor" class="typing-cursor"></span>
@@ -294,7 +301,7 @@
             </div>
             <div class="input-group">
               <label>写下此刻感受</label>
-              <textarea id="journalNoteInput" rows="3" placeholder="一句话记录此刻感受..."></textarea>
+              <textarea id="journalNoteInput" rows="3" placeholder="一句话记录此刻感受…"></textarea>
             </div>
             <button id="saveJournalNoteBtn" class="main-btn">保存札记</button>
             <div id="journalNotesList" class="journal-notes-list"></div>
@@ -333,7 +340,7 @@
       </div>
       <div class="input-group">
         <label>想告诉我的话</label>
-        <textarea id="feedbackMessage" rows="5" placeholder="例如：我想要更可爱的翻牌动画，或者某个牌阵说明再清楚一点..." required></textarea>
+        <textarea id="feedbackMessage" rows="5" placeholder="例如：我想要更可爱的翻牌动画，或者某个牌阵说明再清楚一点…" required></textarea>
       </div>
       <div class="modal-btns" style="margin-top: 14px;">
         <button id="closeFeedbackBtn" class="cancel-btn">我再想想</button>
