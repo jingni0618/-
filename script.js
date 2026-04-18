@@ -107,32 +107,34 @@ const START_HOLD_MS = 3000;
 const DECK_SPREAD_THRESHOLD = 140;
 // Removed emotion range labels — now using emoji reaction bar
 
-window.onload = function() {
-  isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-  // ── Intro dismiss logic registered FIRST ─────────────────────────────────
-  // Even if later init steps throw, the intro will still dismiss correctly.
-  let introDone = false;
-  function dismissIntro() {
-    if (introDone) return;
-    introDone = true;
-    const introEl = document.getElementById('introScreen');
-    if (introEl) introEl.style.opacity = 0;
-    setTimeout(() => {
-      if (introEl) introEl.style.display = 'none';
-      const ui = document.getElementById('uiElements');
-      if (ui) { ui.style.opacity = 1; ui.style.display = 'flex'; }
-      document.body.classList.add("home-ready");
-    }, 380);
-  }
-
+// ── Intro dismiss: registered immediately at script load ─────────────────
+// script.js is at the bottom of <body>, so DOM is ready here.
+// Do NOT put this in window.onload — fonts/CDN could delay it for seconds.
+let introDone = false;
+function dismissIntro() {
+  if (introDone) return;
+  introDone = true;
+  const introEl = document.getElementById('introScreen');
+  if (introEl) introEl.style.opacity = 0;
+  setTimeout(() => {
+    if (introEl) introEl.style.display = 'none';
+    const ui = document.getElementById('uiElements');
+    if (ui) { ui.style.opacity = 1; ui.style.display = 'flex'; }
+    document.body.classList.add("home-ready");
+  }, 380);
+}
+(function() {
   const introEl = document.getElementById('introScreen');
   if (introEl) {
     introEl.addEventListener('click', dismissIntro, { once: true });
     introEl.addEventListener('touchend', dismissIntro, { once: true });
+    introEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') dismissIntro(); }, { once: true });
   }
-  // Absolute failsafe: dismiss after 3s no matter what
   setTimeout(dismissIntro, 3000);
+})();
+
+window.onload = function() {
+  isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
   // ── Rest of init ─────────────────────────────────────────────────────────
   applyDensityMode(localStorage.getItem(DENSITY_MODE_KEY) || "compact");
@@ -1757,9 +1759,6 @@ function userDrawsOneCard(clickedCardElement) {
   if (drawnImageUrl) { const preImg = new Image(); preImg.src = drawnImageUrl; }
   const targetSlotCard = document.getElementById(`card-${cardsDrawn}`);
   targetSlotCard.classList.add("dealt"); document.getElementById(`label-${cardsDrawn}`).classList.add("visible");
-  // Update draw progress tracker
-  const dstSlot = document.getElementById(`dst-${cardsDrawn}`);
-  if (dstSlot) dstSlot.classList.add("filled");
   // Update draw progress tracker
   const dstSlot = document.getElementById(`dst-${cardsDrawn}`);
   if (dstSlot) dstSlot.classList.add("filled");
