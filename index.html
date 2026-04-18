@@ -94,7 +94,6 @@
               <div class="field-hint" id="questionHint">你的问题仅用于本次解牌，不会公开展示。</div>
             </div>
             <div class="spread-guide-head">先选择牌阵（推荐）</div>
-            <p class="spread-guide-hint">不确定选哪个？新手推荐「单牌神谕」或「时间之流」，几分钟即可完成。</p>
             <div class="spread-visual-guide" id="spreadVisualGuide" aria-live="polite"></div>
             <select id="spreadSelect" style="display:none;">
               <optgroup label="基础指引">
@@ -121,7 +120,7 @@
             <span class="price-tag">进阶 ¥5/次</span>
             <span class="couple-toggle__arrow">▾</span>
           </button>
-          <p class="couple-toggle__desc">看清你与 TA 的关系走向</p>
+          <p class="couple-toggle__desc">看清你与 TA 的当下状态、关系阿靡与未来走向</p>
           <div class="couple-expand" id="couplePanel">
             <p class="choice-card__desc">聚焦关系课题，查看彼此状态与走向。</p>
             <div class="choice-card__body">
@@ -274,20 +273,6 @@
         <p class="growth-intro">这是你的长期观察面板：看见重复课题、情绪波动和行动兑现率。</p>
         <div class="vault-meta" id="vaultMeta"></div>
         <div id="timelineSummary" class="timeline-summary"></div>
-        <div class="timeline-toolbar">
-          <label for="timelineFilter">筛选主题</label>
-          <select id="timelineFilter">
-            <option value="all">全部</option>
-            <option value="情感">情感</option>
-            <option value="事业">事业</option>
-            <option value="选择">选择</option>
-            <option value="综合">综合</option>
-          </select>
-          <select id="timelineSort">
-            <option value="desc">最新优先</option>
-            <option value="asc">最早优先</option>
-          </select>
-        </div>
 
         <div class="journal-grid">
           <div>
@@ -354,9 +339,14 @@
         <button id="closeFeedbackBtn" class="cancel-btn">我再想想</button>
         <button id="sendFeedbackBtn" class="confirm-btn">投递星语</button>
       </div>
+      <div id="feedbackSendStatus" style="display:none; margin-top:8px; font-size:13px; color:#e07060; text-align:center;"></div>
+      <a id="feedbackMailtoFallback" href="#" style="display:none; margin-top:8px; font-size:13px; color:#d4aa70; text-align:center; text-decoration:underline;">→ 点此直接发邮件给我</a>
       <div class="feedback-contact-shortcut">
         <div class="contact-desc" style="margin-top:10px;">需要定制占卜流程？可直接联系作者。</div>
-        <button id="openContactFromFeedbackBtn" class="secondary-btn">查看联系方式</button>
+        <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+          <button id="openContactFromFeedbackBtn" class="secondary-btn">查看联系方式</button>
+          <button id="feedbackBackHomeBtn" class="secondary-btn">← 回到主页</button>
+        </div>
       </div>
     </div>
   </div>

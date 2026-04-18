@@ -171,6 +171,10 @@ function initEventBindings() {
     closeFeedbackModal();
     openContactModal();
   });
+  byId("feedbackBackHomeBtn")?.addEventListener("click", () => {
+    closeFeedbackModal();
+    handleReturnToHomePage();
+  });
   byId("quickDrawBtn")?.addEventListener("click", quickDrawSingleCard);
   initStartHoldGesture();
   byId("startBtn")?.addEventListener("click", () => {
@@ -185,8 +189,7 @@ function initEventBindings() {
     renderSpread();
     renderSpreadGuide();
   });
-  byId("timelineFilter")?.addEventListener("change", () => renderTimeline());
-  byId("timelineSort")?.addEventListener("change", () => renderTimeline());
+
   byId("saveJournalNoteBtn")?.addEventListener("click", saveJournalNote);
   byId("confirmVipPaidBtn")?.addEventListener("click", openVipConfirmModal);
   byId("submitVipCodeBtn")?.addEventListener("click", submitVipCode);
@@ -463,18 +466,31 @@ async function sendFeedback() {
     });
 
     if (!res.ok) {
-      throw new Error("信使暂时离线");
+      let errMsg = "信使暂时离线";
+      try { const d = await res.json(); errMsg = d.error || errMsg; } catch {}
+      throw new Error(errMsg);
     }
 
     if (msgEl) msgEl.value = "";
     if (emailEl) emailEl.value = "";
+    const statusEl = document.getElementById("feedbackSendStatus");
+    if (statusEl) statusEl.style.display = "none";
+    document.getElementById("feedbackMailtoFallback")?.style.setProperty("display", "none", "important");
     closeFeedbackModal();
     updateStatus("感谢你的星语，已送达邮箱。");
-  } catch {
-    const subject = encodeURIComponent("塔罗之眼用户意见反馈");
-    const body = encodeURIComponent(`称呼：${name}\n邮箱：${email}\n时间：${new Date().toLocaleString()}\n页面：${window.location.href}\n\n意见内容：\n${message}`);
-    window.location.href = `mailto:jingni18@hotmail.com?subject=${subject}&body=${body}`;
-    updateStatus("已为你打开邮箱草稿，发送后即可完成反馈。");
+  } catch (err) {
+    const statusEl = document.getElementById("feedbackSendStatus");
+    const fallback = document.getElementById("feedbackMailtoFallback");
+    if (statusEl) {
+      statusEl.textContent = `接口暂时不可用：${err.message || "网络异常"}。可以直接发邮件给我。`;
+      statusEl.style.display = "block";
+    }
+    if (fallback) {
+      const subject = encodeURIComponent("塔罗之眼用户意见反馈");
+      const body = encodeURIComponent(`邮箱：${email}\n\n意见：\n${message}`);
+      fallback.href = `mailto:jingni18@hotmail.com?subject=${subject}&body=${body}`;
+      fallback.style.display = "inline-block";
+    }
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -609,8 +625,7 @@ function extractTimelineTags(record) {
 
 function renderTimeline() {
   const list = document.getElementById("timelineList");
-  const filter = document.getElementById("timelineFilter")?.value || "all";
-  const sortMode = document.getElementById("timelineSort")?.value || "desc";
+  const sortMode = "desc";
   const summary = document.getElementById("timelineSummary");
   if (!list) return;
   const records = Array.isArray(HistoryService.records) ? HistoryService.records : [];
@@ -634,12 +649,11 @@ function renderTimeline() {
     return;
   }
 
-  let mapped = records.map(r => ({ record: r, topic: inferTimelineTopic(r), tags: extractTimelineTags(r) }));
-  if (sortMode === "asc") mapped = [...mapped].reverse();
-  const filtered = filter === "all" ? mapped : mapped.filter(m => m.topic === filter);
+  const mapped = records.map(r => ({ record: r, topic: inferTimelineTopic(r), tags: extractTimelineTags(r) }));
+  const filtered = mapped;
 
   if (!filtered.length) {
-    list.innerHTML = '<div class="timeline-item"><div class="timeline-item-main">该主题暂时没有记录。</div></div>';
+    list.innerHTML = '<div class="timeline-item"><div class="timeline-item-main">暂无记录。</div></div>';
     return;
   }
 
@@ -878,6 +892,9 @@ function openFeedbackModal() {
   const modal = document.getElementById("feedbackModal");
   if (!modal) return;
   modal.style.display = "flex";
+  const statusEl = document.getElementById("feedbackSendStatus");
+  if (statusEl) statusEl.style.display = "none";
+  document.getElementById("feedbackMailtoFallback")?.style.setProperty("display", "none", "important");
 }
 
 function closeFeedbackModal() {
@@ -1350,7 +1367,7 @@ function confirmVipPaidAndContinue() {
 
 function readVipToken() {
   try {
-    const raw = localStorage.getItem(VIP_TOKEN_KEY);
+    const raw = sessionStorage.getItem(VIP_TOKEN_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed?.token || !parsed?.expiresAt) return null;
@@ -1366,7 +1383,7 @@ function hasValidVipToken() {
   if (!vip) return false;
   const stillValid = Date.now() < vip.expiresAt;
   if (!stillValid) {
-    localStorage.removeItem(VIP_TOKEN_KEY);
+    sessionStorage.removeItem(VIP_TOKEN_KEY);
     return false;
   }
   return true;
@@ -1413,8 +1430,8 @@ async function submitVipCode() {
 
   try {
     const tokenData = await requestVipTokenByCode(code);
-    localStorage.setItem(VIP_TOKEN_KEY, JSON.stringify({ token: tokenData.token, expiresAt: tokenData.expiresAt }));
-    setVipCodeHint("校验通过，已为你解锁当前设备 24 小时。", false);
+    sessionStorage.setItem(VIP_TOKEN_KEY, JSON.stringify({ token: tokenData.token, expiresAt: tokenData.expiresAt }));
+    setVipCodeHint("校验通过，已为你解锁本次会话。", false);
     setVipOrderStatus("状态：已验证", "口令校验通过，现在可以继续解牌。");
     closeVipModal();
     showEnergyEffect(true);
@@ -1654,12 +1671,16 @@ function userDrawsOneCard(clickedCardElement) {
   cardsDrawn++; document.getElementById("cardsLeft").innerText = (requiredCardsCount - cardsDrawn);
 
   if (cardsDrawn === requiredCardsCount) { 
+    const deckArea = document.getElementById("deckArea");
     setTimeout(() => {
-      document.getElementById("deckArea").style.display = "none"; 
-      document.getElementById("revealInstruction").style.display = "block";
-      updateStatus("牌已就位，依次翻牌揭晓答案。");
-      for(let i=0; i<requiredCardsCount; i++) { document.getElementById(`card-${i}`).onclick = function() { userFlipsCard(i); }; }
-    }, 1000); 
+      if (deckArea) deckArea.classList.add("fading-out");
+      setTimeout(() => {
+        if (deckArea) { deckArea.style.display = "none"; deckArea.classList.remove("fading-out"); }
+        document.getElementById("revealInstruction").style.display = "block";
+        updateStatus("牌已就位，依次翻牌揭晓答案。");
+        for(let i=0; i<requiredCardsCount; i++) { document.getElementById(`card-${i}`).onclick = function() { userFlipsCard(i); }; }
+      }, 560);
+    }, 500);
   }
 }
 
@@ -1718,20 +1739,17 @@ function getTimePhaseColor() {
 }
 
 async function playFinalFlashTransition() {
-  await fadeOutAndPauseAudio();
-  await waitMs(1200);
+  fadeOutAndPauseAudio(); // fire-and-forget
+  await waitMs(400);
 
   const overlay = document.getElementById("finalFlashOverlay");
   if (overlay) {
-    overlay.style.background = getTimePhaseColor();
     overlay.classList.add("active");
   }
-  document.body.classList.add("screen-shake");
-  if (navigator.vibrate) navigator.vibrate([40, 60, 40, 80]);
+  if (navigator.vibrate) navigator.vibrate(25);
 
-  await waitMs(720);
+  await waitMs(1500);
   if (overlay) overlay.classList.remove("active");
-  document.body.classList.remove("screen-shake");
 }
 
 async function triggerFinalRevealAndReading(question, style, cards, context) {
