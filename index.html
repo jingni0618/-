@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>👀仔的命运星盘</title>
+  <title>塔罗之眼 Tarot Eye</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -24,7 +24,7 @@
   <!-- UX-1：开场打字机欢迎语 -->
   <div id="introScreen" class="intro-screen">
     <div class="intro-panel">
-      <div class="intro-badge">命运星盘</div>
+      <div class="intro-badge">塔罗之眼 Tarot Eye</div>
       <p id="introText" class="intro-text"></p>
       <div class="intro-hint">让答案在一呼一吸之间慢慢显现</div>
     </div>
@@ -40,15 +40,25 @@
       <div class="top-nav-actions">
         <button id="dailyBtn" class="icon-btn highlight">✨ 今日神谕</button>
         <button id="growthHubBtn" class="icon-btn subtle">🗂 成长档案</button>
-        <button id="feedbackBtn" class="icon-btn subtle">💌 给👀仔留言</button>
+        <button id="feedbackBtn" class="icon-btn subtle">💌 留言反馈</button>
       </div>
     </div>
 
     <div class="container">
       <div class="hero-header">
-        <h1 id="mainTitle" class="classic-title">👀仔的命运星盘</h1>
+        <h1 id="mainTitle" class="classic-title">塔罗之眼 <span class="title-en">Tarot Eye</span></h1>
       </div>
       <div id="statusBanner" class="status-banner" aria-live="polite"></div>
+
+      <!-- 主页小互动：能量水晶球 -->
+      <div class="home-ritual-widget" id="homeRitualWidget">
+        <button class="ritual-orb" id="ritualOrbBtn" type="button" aria-label="长按感应能量">
+          <span class="ritual-orb__glow" aria-hidden="true"></span>
+          <span class="ritual-orb__icon">🔮</span>
+          <span class="ritual-orb__ring" aria-hidden="true"><span id="ritualOrbProgress"></span></span>
+        </button>
+        <div class="ritual-orb__label" id="ritualOrbLabel">长按水晶球，感应今日能量</div>
+      </div>
 
       <div class="home-orbit">
         <div class="home-main">
@@ -90,31 +100,37 @@
               </optgroup>
             </select>
             <div class="pay-hint" id="payHintText">当前牌阵无需解锁。</div>
-            <button id="startBtn" class="main-btn">开启解牌</button>
+            <button id="startBtn" class="main-btn" type="button">🔮 开启解牌</button>
           </div>
         </div>
 
-        <div class="choice-card choice-card--love card-love">
-          <div class="choice-card__eyebrow">双人合盘</div>
-          <h2 class="choice-card__title">双人关系合盘</h2>
-          <p class="choice-card__desc">聚焦关系课题，查看彼此状态与走向。<span class="price-tag">进阶 ¥5/次</span></p>
-          <div class="choice-card__body" id="couplePanel">
-            <div class="input-group dual-inputs">
-              <div>
-                <label>你的昵称</label>
-                <input type="text" id="coupleUserInput" placeholder="例如：小宇">
+        <div class="choice-card choice-card--love card-love couple-collapsed" id="coupleCard">
+          <button class="couple-toggle" id="coupleToggleBtn" type="button">
+            <span class="couple-toggle__icon">💞</span>
+            <span class="couple-toggle__text">双人关系合盘</span>
+            <span class="price-tag">进阶 ¥5/次</span>
+            <span class="couple-toggle__arrow">▾</span>
+          </button>
+          <div class="couple-expand" id="couplePanel">
+            <p class="choice-card__desc">聚焦关系课题，查看彼此状态与走向。</p>
+            <div class="choice-card__body">
+              <div class="input-group dual-inputs">
+                <div>
+                  <label>你的昵称</label>
+                  <input type="text" id="coupleUserInput" placeholder="例如：小宇">
+                </div>
+                <div>
+                  <label>TA 的昵称</label>
+                  <input type="text" id="couplePartnerInput" placeholder="例如：阿南">
+                </div>
               </div>
-              <div>
-                <label>TA 的昵称</label>
-                <input type="text" id="couplePartnerInput" placeholder="例如：阿南">
+              <div class="input-group">
+                <label>你想照见这段关系的什么课题？</label>
+                <input type="text" id="coupleQuestionInput" placeholder="例如：我们接下来该如何靠近彼此？">
+                <div class="field-hint" id="coupleQuestionHint">双人信息仅用于本次解牌，不会公开。</div>
               </div>
+              <button id="startCoupleBtn" class="secondary-btn">💞 开启双人合盘</button>
             </div>
-            <div class="input-group">
-              <label>你想照见这段关系的什么课题？</label>
-              <input type="text" id="coupleQuestionInput" placeholder="例如：我们接下来该如何靠近彼此？">
-              <div class="field-hint" id="coupleQuestionHint">双人信息仅用于本次解牌，不会公开。</div>
-            </div>
-            <button id="startCoupleBtn" class="secondary-btn">💞 开启双人合盘</button>
           </div>
         </div>
           </div>
@@ -194,6 +210,9 @@
     <div id="deckArea" class="deck-area" style="display: none;">
       <h3 id="instructionText" class="ritual-text">请从桌面牌阵中抽取 <span id="cardsLeft">0</span> 张牌</h3>
       <div class="fan-deck" id="fanDeck"></div>
+      <div class="deck-spread-track" aria-hidden="true">
+        <span id="deckSpreadHint" class="deck-spread-hint">← 左右滑动展开牌阵 →</span>
+      </div>
     </div>
 
     <!-- 悬念揭秘与牌阵区 -->
@@ -209,7 +228,7 @@
         <div id="streamContent" class="stream-content parchment-text"></div>
         <span id="cursor" class="typing-cursor"></span>
       </div>
-      <div id="shareHeader" class="share-only" style="color: #2c241b; font-weight: bold; margin-bottom: 20px;">✨ 命运星盘 · 你的专属解牌卷轴 ✨</div>
+      <div id="shareHeader" class="share-only" style="color: #2c241b; font-weight: bold; margin-bottom: 20px;">✨ 塔罗之眼 · 你的专属解牌卷轴 ✨</div>
     </div>
 
     <div id="actionPlanBox" class="action-plan-box" style="display:none;">
@@ -218,15 +237,6 @@
     </div>
     
     <div id="actionBtns" class="action-btns" style="margin-top: 30px; display: none; justify-content: center; gap: 15px; padding-bottom: 50px;">
-      <select id="shareThemeSelect" class="share-theme-select">
-        <option value="parchment">古卷主题</option>
-        <option value="night">夜幕主题</option>
-        <option value="nebula">星云主题</option>
-      </select>
-      <select id="densityModeSelect" class="share-theme-select">
-        <option value="compact">紧凑排版</option>
-        <option value="relaxed">舒展排版</option>
-      </select>
       <button id="saveBtn" class="save-btn">📸 保存解牌卷轴</button>
       <button id="pushToArchiveBtn" class="save-btn">🗂 写入成长档案</button>
       <button id="restartBtn" class="save-btn restart">回到主页</button>
@@ -371,6 +381,26 @@
           <h3 id="cardPreviewName" class="card-preview-name">牌名</h3>
           <p id="cardPreviewMeaning" class="card-preview-meaning">牌意说明</p>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="finalFlashOverlay" class="final-flash-overlay" aria-hidden="true"></div>
+
+  <div id="posterCanvasHost" class="poster-canvas-host" aria-hidden="true">
+    <div id="posterCanvas" class="poster-canvas" role="presentation">
+      <div class="poster-header">
+        <div class="poster-title">塔罗之眼 Tarot Eye</div>
+        <div class="poster-subtitle">Tarot Insight Poster</div>
+      </div>
+      <div id="posterCards" class="poster-cards"></div>
+      <div class="poster-quote-wrap">
+        <div class="poster-quote-label">核心金句</div>
+        <p id="posterQuote" class="poster-quote-text"></p>
+      </div>
+      <div class="poster-footer">
+        <img id="posterQr" class="poster-qr" src="https://i.postimg.cc/P525Vk7w/IMG-9071.png" alt="扫码进入塔罗之眼">
+        <div id="posterMeta" class="poster-meta"></div>
       </div>
     </div>
   </div>

@@ -57,7 +57,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         from: fromEmail,
         to: [toEmail],
-        subject: "[命运星盘] 新的用户意见",
+        subject: "[塔罗之眼] 新的用户意见",
         html
       })
     });

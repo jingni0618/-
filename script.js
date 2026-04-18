@@ -87,6 +87,13 @@ let latestReadingRecord = null;
 let screenModeHideTimer = null;
 let vipConfirmCountdownTimer = null;
 let vipConfirmRemainingSeconds = 0;
+let startHoldTimer = null;
+let startHoldStartedAt = 0;
+let startHoldCommitted = false;
+let deckSpreadProgress = 0;
+let deckSpreadUnlocked = false;
+let deckGestureCleanup = null;
+let finalRevealTransitionRunning = false;
 const DAILY_CACHE_KEY = "tarotDailyReading";
 const VIP_TOKEN_KEY = "tarotVipToken";
 const VIP_ORDER_ID_KEY = "tarotVipOrderId";
@@ -95,6 +102,8 @@ const VAULT_META_KEY = "tarotVaultMeta";
 const DENSITY_MODE_KEY = "tarotReadingDensityMode";
 const HISTORY_LIMIT = 20;
 const NOTES_LIMIT = 40;
+const START_HOLD_MS = 3000;
+const DECK_SPREAD_THRESHOLD = 320;
 let currentVipOrderId = localStorage.getItem(VIP_ORDER_ID_KEY) || "";
 let vipOrderPollTimer = null;
 const emotionLabels = {
@@ -148,8 +157,15 @@ function initEventBindings() {
     openContactModal();
   });
   byId("quickDrawBtn")?.addEventListener("click", quickDrawSingleCard);
-  byId("startBtn")?.addEventListener("click", () => checkVipAndStart({ requireQuestion: true, mode: "standard" }));
+  initStartHoldGesture();
+  byId("startBtn")?.addEventListener("click", () => {
+    checkVipAndStart({ requireQuestion: true, mode: "standard" });
+  });
   byId("startCoupleBtn")?.addEventListener("click", startCompatibilityReading);
+  byId("coupleToggleBtn")?.addEventListener("click", () => {
+    const card = document.getElementById("coupleCard");
+    if (card) card.classList.toggle("couple-collapsed");
+  });
   byId("spreadSelect")?.addEventListener("change", () => {
     renderSpread();
     renderSpreadGuide();
@@ -211,6 +227,106 @@ function initEventBindings() {
     applyTimePhaseTheme();
     renderHomeDate();
   }, 60 * 1000);
+}
+
+/* Old ritual-hold-btn functions removed — start button is now a normal click,
+   ritual orb on homepage handles hold gesture separately. */
+
+function clearStartHoldTimer() {
+  if (startHoldTimer) {
+    clearInterval(startHoldTimer);
+    startHoldTimer = null;
+  }
+}
+
+function initStartHoldGesture() {
+  const btn = document.getElementById("ritualOrbBtn");
+  if (!btn) return;
+
+  const energyMessages = [
+    "✦ 今日能量：热情与创造力在涌动",
+    "✦ 今日能量：你的直觉比平时更敏锐",
+    "✦ 今日能量：适合静心，答案会自己浮现",
+    "✦ 今日能量：改变正在悄悄靠近你",
+    "✦ 今日能量：放下执念，好运自然来",
+    "✦ 今日能量：今天适合做一个小小的冒险",
+    "✦ 今日能量：身边有人正想着你",
+    "✦ 今日能量：你比自己以为的更强大",
+  ];
+
+  const onDown = e => {
+    if (e?.cancelable) e.preventDefault();
+    if (startHoldTimer || startHoldCommitted) return;
+    startHoldStartedAt = performance.now();
+    setRitualOrbProgress(0.02);
+    setRitualOrbLabel("感应中…");
+    btn.classList.add("is-charging");
+
+    startHoldTimer = setInterval(() => {
+      const elapsed = performance.now() - startHoldStartedAt;
+      const progress = Math.min(1, elapsed / START_HOLD_MS);
+      setRitualOrbProgress(progress);
+      if (progress < 1) {
+        const leftSec = Math.max(0, Math.ceil((START_HOLD_MS - elapsed) / 1000));
+        setRitualOrbLabel(`能量校准中… ${leftSec}s`);
+        return;
+      }
+      startHoldCommitted = true;
+      clearStartHoldTimer();
+      btn.classList.remove("is-charging");
+      btn.classList.add("is-ready");
+      if (navigator.vibrate) navigator.vibrate([60, 40, 60]);
+      const msg = energyMessages[Math.floor(Math.random() * energyMessages.length)];
+      setRitualOrbLabel(msg);
+      setTimeout(() => {
+        resetRitualOrbState();
+        setRitualOrbLabel("再按一次，感应新的能量");
+      }, 4000);
+    }, 16);
+  };
+
+  const onUp = () => {
+    if (startHoldCommitted) return;
+    clearStartHoldTimer();
+    setRitualOrbProgress(0);
+    setRitualOrbLabel("松开了…再试一次");
+    btn.classList.remove("is-charging");
+    setTimeout(() => setRitualOrbLabel("长按水晶球，感应今日能量"), 1800);
+  };
+
+  btn.addEventListener("mousedown", onDown);
+  btn.addEventListener("touchstart", onDown, { passive: false });
+  btn.addEventListener("mouseup", onUp);
+  btn.addEventListener("mouseleave", onUp);
+  btn.addEventListener("touchend", onUp);
+  btn.addEventListener("touchcancel", onUp);
+  btn.addEventListener("contextmenu", e => e.preventDefault());
+}
+
+function setRitualOrbProgress(progress = 0) {
+  const ring = document.getElementById("ritualOrbProgress");
+  const btn = document.getElementById("ritualOrbBtn");
+  if (!ring) return;
+  const p = Math.max(0, Math.min(1, Number(progress) || 0));
+  ring.style.transform = `scaleX(${p})`;
+  if (btn) {
+    btn.classList.toggle("is-charging", p > 0 && p < 1);
+    btn.classList.toggle("is-ready", p >= 1);
+  }
+}
+
+function setRitualOrbLabel(text) {
+  const label = document.getElementById("ritualOrbLabel");
+  if (label) label.textContent = text;
+}
+
+function resetRitualOrbState() {
+  clearStartHoldTimer();
+  startHoldStartedAt = 0;
+  startHoldCommitted = false;
+  setRitualOrbProgress(0);
+  const btn = document.getElementById("ritualOrbBtn");
+  if (btn) btn.classList.remove("is-charging", "is-ready");
 }
 
 function setFlowStep(step) {
@@ -352,9 +468,9 @@ async function sendFeedback() {
     if (msgEl) msgEl.value = "";
     if (emailEl) emailEl.value = "";
     closeFeedbackModal();
-    updateStatus("感谢你的星语，已送达👀仔邮箱。");
+    updateStatus("感谢你的星语，已送达邮箱。");
   } catch {
-    const subject = encodeURIComponent("命运星盘用户意见反馈");
+    const subject = encodeURIComponent("塔罗之眼用户意见反馈");
     const body = encodeURIComponent(`称呼：${name}\n邮箱：${email}\n时间：${new Date().toLocaleString()}\n页面：${window.location.href}\n\n意见内容：\n${message}`);
     window.location.href = `mailto:jingni18@hotmail.com?subject=${subject}&body=${body}`;
     updateStatus("已为你打开邮箱草稿，发送后即可完成反馈。");
@@ -413,19 +529,17 @@ function renderSpreadGuide() {
     payHint.classList.toggle("locked", isPaid);
   }
   if (startBtn) {
-    startBtn.textContent = isPaid ? `开启解牌（${formatFenPrice(getUnlockPriceForMode(activeReadingMode, selected))}/次）` : "开启解牌";
+    const priceText = formatFenPrice(getUnlockPriceForMode(activeReadingMode, selected));
+    startBtn.textContent = isPaid ? `🔮 开启解牌（${priceText}/次）` : "🔮 开启解牌";
   }
 
   wrap.innerHTML = `
     <div class="spread-pills-groups">
-      <div class="spread-pills-group">
-        <div class="spread-pills-group__title">免费牌阵</div>
-        <div class="spread-pills">${freeCards}</div>
-      </div>
-      <div class="spread-pills-group spread-pills-group--paid">
-        <div class="spread-pills-group__title">进阶牌阵</div>
-        <div class="spread-pills">${paidCards}</div>
-      </div>
+      <div class="spread-pills spread-pills--free">${freeCards}</div>
+      <details class="spread-pills-advanced">
+        <summary class="spread-pills-advanced__toggle">进阶牌阵 <span class="spread-pills-advanced__arrow">▾</span></summary>
+        <div class="spread-pills spread-pills--paid">${paidCards}</div>
+      </details>
     </div>
     <div class="spread-guide-text">${info.desc}</div>
   `;
@@ -912,6 +1026,12 @@ function enterDailyMode() {
 
 function returnToHomePage() {
   stopVipOrderPolling();
+  resetStartHoldState();
+  resetDeckSpreadState();
+  finalRevealTransitionRunning = false;
+  document.body.classList.remove("screen-shake");
+  const finalFlash = document.getElementById("finalFlashOverlay");
+  if (finalFlash) finalFlash.classList.remove("active");
   const hideIds = [
     "vipModal",
     "historyDetailModal",
@@ -1263,38 +1383,179 @@ function showEnergyEffect(isVip = false) {
 function initFanDeck() {
   cardsDrawn = 0; cardsFlipped = 0; drawnCardsData = []; shuffledDeck = shuffle([...deck]);
   const fanDeck = document.getElementById("fanDeck"); fanDeck.innerHTML = "";
-  fanDeck.classList.add("table-spread");
-  const totalCards = isMobile ? 12 : 16;
-  const rows = 2;
-  const cardsPerRow = Math.ceil(totalCards / rows);
-  const actualRows = Math.ceil(totalCards / cardsPerRow);
-  const rowCenter = (actualRows - 1) / 2;
-  const colCenter = (cardsPerRow - 1) / 2;
-  const xSpacing = isMobile ? 18 : 20;
-  const ySpacing = isMobile ? 28 : 32;
+  fanDeck.classList.add("arc-fan", "is-stacked");
+  fanDeck.classList.remove("is-unlocked");
+  fanDeck.style.setProperty("--spread-progress", "0");
+  deckSpreadProgress = 0;
+  deckSpreadUnlocked = false;
+  const totalCards = isMobile ? 13 : 21;
+  const fanRange = isMobile ? 118 : 132; // total arc in degrees
   document.getElementById("cardsLeft").innerText = requiredCardsCount;
   for (let i = 0; i < totalCards; i++) {
-    const row = Math.floor(i / cardsPerRow);
-    const col = i % cardsPerRow;
-    const offsetX = (col - colCenter) * xSpacing;
-    const offsetY = (row - rowCenter) * ySpacing;
-    const angle = ((col % 2 === 0 ? -1 : 1) * 0.45) + (row - rowCenter) * 0.45;
-    const scale = 1 - Math.abs(row - rowCenter) * 0.02;
+    const ratio = totalCards <= 1 ? 0.5 : i / (totalCards - 1);
+    const fanAngle = (ratio - 0.5) * fanRange; // -66 to +66 deg
+    const jitter = (Math.random() - 0.5) * 8; // stacked randomness (deg)
+    const distFromCenter = Math.abs(i - Math.floor(totalCards / 2));
     const cardEl = document.createElement("div");
     cardEl.className = "deck-card";
-    cardEl.style.setProperty("--deck-x", `${offsetX}px`);
-    cardEl.style.setProperty("--deck-y", `${offsetY}px`);
-    cardEl.style.setProperty("--deck-rotate", `${angle}deg`);
-    cardEl.style.setProperty("--deck-scale", `${scale}`);
-    cardEl.style.zIndex = String(120 + row * cardsPerRow + col);
-    cardEl.onclick = function() { if (cardsDrawn < requiredCardsCount && !this.classList.contains("drawn")) { userDrawsOneCard(this); } };
+    cardEl.style.setProperty("--fan-angle", `${fanAngle.toFixed(2)}deg`);
+    cardEl.style.setProperty("--stack-jitter", `${jitter.toFixed(2)}deg`);
+    cardEl.style.zIndex = String(120 + totalCards - distFromCenter); // center cards on top when stacked
+    cardEl.onclick = function() {
+      if (!deckSpreadUnlocked) return;
+      if (cardsDrawn < requiredCardsCount && !this.classList.contains("drawn")) {
+        userDrawsOneCard(this);
+      }
+    };
     fanDeck.appendChild(cardEl);
+  }
+  attachDeckSpreadGesture(fanDeck);
+  updateStatus("左右滑动牌堆，让牌阵完全展开后再抽牌。");
+  const hint = document.getElementById("deckSpreadHint");
+  if (hint) {
+    hint.classList.remove("show", "unlocked", "near-unlock");
+    hint.textContent = "← 左右滑动展开牌阵 →";
+    window.setTimeout(() => hint.classList.add("show"), 420);
   }
   
   const spreadContainer = document.getElementById("spreadContainer");
   if(spreadContainer) {
       spreadContainer.style.opacity = "1";
   }
+}
+
+function setDeckSpreadProgress(nextProgress = 0) {
+  const fanDeck = document.getElementById("fanDeck");
+  if (!fanDeck) return;
+  deckSpreadProgress = Math.max(0, Math.min(1, Number(nextProgress) || 0));
+  fanDeck.style.setProperty("--spread-progress", deckSpreadProgress.toFixed(3));
+  fanDeck.classList.toggle("is-unlocked", deckSpreadProgress >= 0.999);
+  fanDeck.classList.toggle("is-stacked", deckSpreadProgress < 0.999);
+}
+
+function unlockDeckSpread() {
+  if (deckSpreadUnlocked) return;
+  deckSpreadUnlocked = true;
+  setDeckSpreadProgress(1);
+  updateStatus("牌堆已展开，请点击你想抽取的牌。");
+  if (navigator.vibrate) navigator.vibrate(35);
+  const hint = document.getElementById("deckSpreadHint");
+  if (hint) {
+    hint.classList.remove("show");
+    hint.classList.add("unlocked");
+    hint.textContent = "✨ 牌阵已展开，请点击抽牌";
+    hint.classList.add("show");
+    window.setTimeout(() => hint.classList.remove("show"), 2400);
+  }
+}
+
+function updateDeckSpreadHint(progress = 0) {
+  const hint = document.getElementById("deckSpreadHint");
+  if (!hint || deckSpreadUnlocked) return;
+  hint.classList.remove("unlocked");
+  if (progress <= 0.01) {
+    hint.classList.remove("show");
+    return;
+  }
+  const pct = Math.min(100, Math.round(progress * 100));
+  if (progress >= 0.7) {
+    hint.textContent = `松手即可展开牌阵（${pct}%）`;
+    hint.classList.add("show", "near-unlock");
+  } else {
+    hint.textContent = `继续滑动展开牌阵（${pct}%）`;
+    hint.classList.remove("near-unlock");
+    hint.classList.add("show");
+  }
+}
+
+function resetDeckSpreadState() {
+  if (typeof deckGestureCleanup === "function") {
+    deckGestureCleanup();
+    deckGestureCleanup = null;
+  }
+  deckSpreadProgress = 0;
+  deckSpreadUnlocked = false;
+  const fanDeck = document.getElementById("fanDeck");
+  if (!fanDeck) return;
+  fanDeck.style.setProperty("--spread-progress", "0");
+  fanDeck.classList.remove("is-unlocked");
+  fanDeck.classList.add("is-stacked");
+  const hint = document.getElementById("deckSpreadHint");
+  if (hint) hint.classList.remove("show", "unlocked", "near-unlock");
+}
+
+function attachDeckSpreadGesture(fanDeck) {
+  if (!fanDeck) return;
+  if (typeof deckGestureCleanup === "function") {
+    deckGestureCleanup();
+    deckGestureCleanup = null;
+  }
+
+  let isDragging = false;
+  let pointerId = null;
+  let startX = 0;
+  let originProgress = 0;
+  const threshold = isMobile ? DECK_SPREAD_THRESHOLD * 0.72 : DECK_SPREAD_THRESHOLD;
+
+  const onDown = event => {
+    if (deckSpreadUnlocked) return;
+    isDragging = true;
+    pointerId = event.pointerId;
+    startX = event.clientX;
+    originProgress = deckSpreadProgress;
+    fanDeck.classList.add("is-dragging");
+    if (fanDeck.setPointerCapture && pointerId !== null) {
+      fanDeck.setPointerCapture(pointerId);
+    }
+  };
+
+  const onMove = event => {
+    if (!isDragging || deckSpreadUnlocked) return;
+    if (pointerId !== null && event.pointerId !== pointerId) return;
+    const delta = Math.abs(event.clientX - startX);
+    const progress = Math.max(originProgress, delta / threshold);
+    setDeckSpreadProgress(progress);
+    updateDeckSpreadHint(progress);
+    if (progress >= 1) {
+      unlockDeckSpread();
+      onUp(event);
+    }
+  };
+
+  const onUp = event => {
+    if (!isDragging) return;
+    if (pointerId !== null && event?.pointerId !== undefined && event.pointerId !== pointerId) return;
+    isDragging = false;
+    fanDeck.classList.remove("is-dragging");
+    if (!deckSpreadUnlocked) {
+      if (deckSpreadProgress >= 0.7) {
+        unlockDeckSpread();
+      } else if (deckSpreadProgress < 0.15) {
+        setDeckSpreadProgress(0);
+        updateDeckSpreadHint(0);
+      } else {
+        updateDeckSpreadHint(deckSpreadProgress);
+      }
+    }
+    if (fanDeck.releasePointerCapture && pointerId !== null) {
+      try { fanDeck.releasePointerCapture(pointerId); } catch {}
+    }
+    pointerId = null;
+  };
+
+  fanDeck.addEventListener("pointerdown", onDown);
+  fanDeck.addEventListener("pointermove", onMove);
+  fanDeck.addEventListener("pointerup", onUp);
+  fanDeck.addEventListener("pointercancel", onUp);
+  fanDeck.addEventListener("pointerleave", onUp);
+
+  deckGestureCleanup = () => {
+    fanDeck.removeEventListener("pointerdown", onDown);
+    fanDeck.removeEventListener("pointermove", onMove);
+    fanDeck.removeEventListener("pointerup", onUp);
+    fanDeck.removeEventListener("pointercancel", onUp);
+    fanDeck.removeEventListener("pointerleave", onUp);
+  };
 }
 
 function userDrawsOneCard(clickedCardElement) {
@@ -1336,13 +1597,59 @@ function userFlipsCard(i) {
   if (cardsFlipped === requiredCardsCount) {
     document.getElementById("revealInstruction").style.display = "none";
     setFlowStep(3);
-    updateStatus("牌面已揭晓，正在生成你的专属解牌...");
+    updateStatus("牌面已揭晓，正在进入最终转场...");
     const context = getReadingContext("", activeReadingMode);
     const question = context.question;
     const style = "classic";
-    document.getElementById("readingWrapper").style.display = "block"; document.getElementById("readingBox").classList.add("visible");
-    renderMiniCardBar(drawnCardsData);
-    fetchStream(question, style, drawnCardsData, context);
+    triggerFinalRevealAndReading(question, style, drawnCardsData, context);
+  }
+}
+
+function waitMs(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function fadeOutAndPauseAudio() {
+  const audios = Array.from(document.querySelectorAll("audio"));
+  if (!audios.length) return;
+  const active = audios.filter(a => !a.paused && a.volume > 0.01);
+  if (!active.length) return;
+
+  for (let step = 0; step < 7; step++) {
+    active.forEach(audio => {
+      const nextVolume = Math.max(0, audio.volume - 0.12);
+      audio.volume = nextVolume;
+      if (nextVolume <= 0.01) audio.pause();
+    });
+    await waitMs(55);
+  }
+}
+
+async function playFinalFlashTransition() {
+  await fadeOutAndPauseAudio();
+  await waitMs(1200);
+
+  const overlay = document.getElementById("finalFlashOverlay");
+  if (overlay) overlay.classList.add("active");
+  document.body.classList.add("screen-shake");
+  if (navigator.vibrate) navigator.vibrate([40, 60, 40, 80]);
+
+  await waitMs(720);
+  if (overlay) overlay.classList.remove("active");
+  document.body.classList.remove("screen-shake");
+}
+
+async function triggerFinalRevealAndReading(question, style, cards, context) {
+  if (finalRevealTransitionRunning) return;
+  finalRevealTransitionRunning = true;
+  try {
+    await playFinalFlashTransition();
+    document.getElementById("readingWrapper").style.display = "block";
+    document.getElementById("readingBox").classList.add("visible");
+    renderMiniCardBar(cards);
+    fetchStream(question, style, cards, context);
+  } finally {
+    finalRevealTransitionRunning = false;
   }
 }
 
@@ -1758,41 +2065,7 @@ function initStarfield() {
   window.addEventListener('resize', resize); resize(); draw();
 }
 
-function drawRoundedRect(ctx, x, y, width, height, radius) {
-  const r = Math.min(radius, width / 2, height / 2);
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + width, y, x + width, y + height, r);
-  ctx.arcTo(x + width, y + height, x, y + height, r);
-  ctx.arcTo(x, y + height, x, y, r);
-  ctx.arcTo(x, y, x + width, y, r);
-  ctx.closePath();
-}
-
-function drawStardust(ctx, width, height, count = 140) {
-  for (let i = 0; i < count; i++) {
-    const x = Math.random() * width;
-    const y = Math.random() * height;
-    const r = Math.random() * 2.2 + 0.4;
-    const alpha = Math.random() * 0.55 + 0.12;
-    ctx.beginPath();
-    ctx.fillStyle = `rgba(244, 222, 183, ${alpha.toFixed(3)})`;
-    ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.fill();
-  }
-}
-
-function drawSpacedText(ctx, text, centerX, y, spacing = 2) {
-  const chars = [...String(text || "")];
-  if (!chars.length) return;
-  const widths = chars.map(ch => ctx.measureText(ch).width);
-  const totalWidth = widths.reduce((sum, w) => sum + w, 0) + spacing * (chars.length - 1);
-  let x = centerX - totalWidth / 2;
-  chars.forEach((ch, idx) => {
-    ctx.fillText(ch, x, y);
-    x += widths[idx] + spacing;
-  });
-}
+/* Old canvas drawing helpers removed — saveAsImage now uses html2canvas */
 
 function stripRichText(input = "") {
   return String(input || "")
@@ -1859,136 +2132,71 @@ async function saveAsImage() {
   btn.disabled = true;
 
   try {
-    const width = 1080;
-    const height = 1920;
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) throw new Error("Canvas 初始化失败");
-
-    const bg = ctx.createLinearGradient(0, 0, 0, height);
-    bg.addColorStop(0, "#0f1327");
-    bg.addColorStop(0.45, "#111a32");
-    bg.addColorStop(1, "#0a0f1f");
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, width, height);
-    drawStardust(ctx, width, height, 160);
-
-    const orb = ctx.createRadialGradient(width * 0.5, 290, 40, width * 0.5, 290, 420);
-    orb.addColorStop(0, "rgba(223, 186, 126, 0.22)");
-    orb.addColorStop(1, "rgba(223, 186, 126, 0)");
-    ctx.fillStyle = orb;
-    ctx.fillRect(0, 0, width, 720);
-    drawStardust(ctx, width, 620, 90);
-
-    ctx.fillStyle = "rgba(246, 231, 197, 0.92)";
-    ctx.font = "600 34px 'Noto Serif SC', serif";
-    ctx.textAlign = "left";
-    drawSpacedText(ctx, "命运星盘 Tarot Poster", width / 2, 96, 2.6);
-
-    const cards = latestReadingRecord.cards.slice(0, 5);
-    const cardWidth = 170;
-    const cardHeight = 270;
-    const gap = 18;
-    const totalWidth = cards.length * cardWidth + (cards.length - 1) * gap;
-    const startX = (width - totalWidth) / 2;
-    const baseY = 150;
-    const offsets = [20, 6, 0, 6, 20];
-
-    const cardImages = await Promise.all(cards.map(card => loadCanvasImage(card?.imageUrl || "")));
-
-    cards.forEach((card, idx) => {
-      const x = startX + idx * (cardWidth + gap);
-      const y = baseY + (offsets[idx] || 0);
-
-      ctx.save();
-      ctx.shadowColor = "rgba(0, 0, 0, 0.45)";
-      ctx.shadowBlur = 18;
-      drawRoundedRect(ctx, x, y, cardWidth, cardHeight, 20);
-      ctx.fillStyle = "rgba(14, 18, 33, 0.92)";
-      ctx.fill();
-      ctx.restore();
-
-      const image = cardImages[idx];
-      if (image) {
-        ctx.save();
-        drawRoundedRect(ctx, x + 10, y + 10, cardWidth - 20, cardHeight - 68, 14);
-        ctx.clip();
-        ctx.drawImage(image, x + 10, y + 10, cardWidth - 20, cardHeight - 68);
-        ctx.restore();
-      } else {
-        ctx.fillStyle = "rgba(248, 233, 201, 0.95)";
-        ctx.font = "600 56px 'Noto Serif SC', serif";
-        ctx.textAlign = "center";
-        ctx.fillText(String(card?.emoji || "🔮"), x + cardWidth / 2, y + 122);
-      }
-
-      ctx.fillStyle = "rgba(246, 229, 193, 0.92)";
-      ctx.font = "600 20px 'Noto Serif SC', serif";
-      ctx.textAlign = "center";
-      ctx.fillText(String(card?.position || `位置${idx + 1}`), x + cardWidth / 2, y + cardHeight - 30);
-    });
-
-    const quote = extractCoreQuote(latestReadingRecord.reading || "");
-    const quoteY = 690;
-
-    drawRoundedRect(ctx, 92, quoteY - 28, width - 184, 430, 26);
-    ctx.fillStyle = "rgba(255, 250, 238, 0.06)";
-    ctx.fill();
-    ctx.strokeStyle = "rgba(230, 198, 140, 0.45)";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    ctx.fillStyle = "rgba(218, 182, 117, 0.95)";
-    ctx.font = "600 26px 'Noto Serif SC', serif";
-    ctx.textAlign = "center";
-    ctx.fillText("核心金句", width / 2, quoteY + 30);
-
-    ctx.fillStyle = "rgba(245, 233, 206, 0.98)";
-    ctx.font = "500 42px 'Noto Serif SC', serif";
-    const quoteLines = wrapTextByWidth(ctx, `“${quote}”`, width - 270).slice(0, 4);
-    quoteLines.forEach((line, idx) => {
-      ctx.fillText(line, width / 2, quoteY + 118 + idx * 62);
-    });
-
-    const qrSrc = document.getElementById("qrImage")?.src || "";
-    const qrImg = await loadCanvasImage(qrSrc);
-    const qrSize = 290;
-    const qrX = (width - qrSize) / 2;
-    const qrY = 1460;
-
-    drawRoundedRect(ctx, qrX - 24, qrY - 24, qrSize + 48, qrSize + 48, 28);
-    ctx.fillStyle = "rgba(255, 252, 245, 0.92)";
-    ctx.fill();
-
-    if (qrImg) {
-      ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
-    } else {
-      ctx.fillStyle = "#1a223f";
-      ctx.font = "600 30px 'Manrope', sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText("QR", width / 2, qrY + qrSize / 2 + 10);
+    if (typeof html2canvas !== "function") {
+      throw new Error("html2canvas 未加载");
     }
 
-    ctx.fillStyle = "rgba(244, 231, 202, 0.95)";
-    ctx.font = "500 24px 'Noto Serif SC', serif";
-    ctx.textAlign = "center";
-    ctx.fillText("扫码进入命运星盘", width / 2, 1815);
+    const host = document.getElementById("posterCanvasHost");
+    const poster = document.getElementById("posterCanvas");
+    if (!host || !poster) throw new Error("海报容器不存在");
 
-    ctx.fillStyle = "rgba(219, 190, 136, 0.9)";
-    ctx.font = "500 20px 'Manrope', sans-serif";
-    ctx.textAlign = "left";
-    drawSpacedText(ctx, "BY  👀仔 · 命运星盘", width / 2, 1860, 1.6);
+    fillPosterCanvasFromReading(latestReadingRecord);
+    host.classList.add("is-rendering");
+    await waitMs(40);
+
+    const canvas = await html2canvas(poster, {
+      backgroundColor: null,
+      useCORS: true,
+      scale: 2,
+      width: 1080,
+      height: 1920
+    });
 
     const link = document.createElement("a");
-    link.download = "命运星盘海报-9x16.png";
+    link.download = "塔罗之眼海报-9x16.png";
     link.href = canvas.toDataURL("image/png");
     link.click();
+    host.classList.remove("is-rendering");
   } catch (error) {
     alert(`生成海报失败：${error.message || "未知错误"}`);
   } finally {
+    const host = document.getElementById("posterCanvasHost");
+    if (host) host.classList.remove("is-rendering");
     btn.innerText = "📸 保存解牌卷轴";
     btn.disabled = false;
   }
+}
+
+function extractPosterCoreLineFromDom() {
+  const quoteNode = document.querySelector("#streamContent blockquote p");
+  const quoteText = String(quoteNode?.textContent || "").replace(/\s+/g, " ").trim();
+  if (quoteText) return quoteText.slice(0, 64);
+
+  const plain = String(document.getElementById("streamContent")?.textContent || "").replace(/\s+/g, " ").trim();
+  if (!plain) return "你真正要的答案，已经在你心里出现了第一束光。";
+  const first = plain.split(/(?<=[。！？!?])/).map(s => s.trim()).filter(Boolean)[0] || plain;
+  return first.slice(0, 64);
+}
+
+function fillPosterCanvasFromReading(record) {
+  const cardsWrap = document.getElementById("posterCards");
+  const quoteEl = document.getElementById("posterQuote");
+  const qrEl = document.getElementById("posterQr");
+  const metaEl = document.getElementById("posterMeta");
+  if (!cardsWrap || !quoteEl || !qrEl || !metaEl) return;
+
+  const cards = Array.isArray(record?.cards) ? record.cards.slice(0, 5) : [];
+  cardsWrap.innerHTML = cards.map((card, idx) => {
+    const name = String(card?.cardName || `牌 ${idx + 1}`);
+    const position = String(card?.position || `位置${idx + 1}`);
+    const imgUrl = String(card?.imageUrl || "").trim();
+    if (imgUrl) {
+      return `<div class="poster-card"><img src="${imgUrl}" alt="${name}"><span>${position}</span></div>`;
+    }
+    return `<div class="poster-card"><div class="poster-card-emoji">${String(card?.emoji || "🔮")}</div><span>${position}</span></div>`;
+  }).join("");
+
+  quoteEl.textContent = `“${extractPosterCoreLineFromDom()}”`;
+  qrEl.src = document.getElementById("qrImage")?.src || VIP_STATIC_QR_URL;
+  metaEl.textContent = `${record?.date || new Date().toLocaleString()} · 塔罗之眼`; 
 }
