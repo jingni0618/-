@@ -125,7 +125,14 @@ function dismissIntro() {
 }
 
 // script.js is at the end of <body>, so DOM is fully parsed here.
-// Bind events IMMEDIATELY — do NOT wait for window.onload.
+// Bind CRITICAL nav buttons immediately, before anything else can fail.
+(function bindNavButtons() {
+  var g = document.getElementById("growthHubBtn");
+  var f = document.getElementById("feedbackBtn");
+  if (g) g.addEventListener("click", function() { openGrowthHub(); });
+  if (f) f.addEventListener("click", function() { openFeedbackModal(); });
+})();
+
 try { initEventBindings(); } catch(e) { console.error("initEventBindings:", e); }
 
 window.onload = function() {
