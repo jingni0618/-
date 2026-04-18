@@ -159,7 +159,7 @@ function initEventBindings() {
       const now = Date.now();
       if (now - lastTriggerAt < 250) return;
       lastTriggerAt = now;
-      returnToHomePage();
+      handleReturnToHomePage();
     };
     element.addEventListener("click", trigger);
     element.addEventListener("pointerup", event => {
@@ -1095,6 +1095,14 @@ function returnToHomePage() {
   }
   renderSpread();
   updateStatus("");
+}
+
+function handleReturnToHomePage() {
+  try {
+    returnToHomePage();
+  } catch (error) {
+    console.error("[Tarot Eye] returnToHomePage failed:", error);
+  }
 }
 
 function startCompatibilityReading() {
