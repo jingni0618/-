@@ -85,6 +85,8 @@ let currentSpreadConfig = {}; let requiredCardsCount = 0; let cardsDrawn = 0; le
 let activeReadingMode = "standard";
 let latestReadingRecord = null;
 let screenModeHideTimer = null;
+let vipConfirmCountdownTimer = null;
+let vipConfirmRemainingSeconds = 0;
 const DAILY_CACHE_KEY = "tarotDailyReading";
 const VIP_TOKEN_KEY = "tarotVipToken";
 const VIP_ORDER_ID_KEY = "tarotVipOrderId";
@@ -162,7 +164,9 @@ function initEventBindings() {
   byId("timelineSort")?.addEventListener("change", () => renderTimeline());
   byId("saveJournalNoteBtn")?.addEventListener("click", saveJournalNote);
   byId("vaultUnlockBtn")?.addEventListener("click", unlockVault);
-  byId("confirmVipPaidBtn")?.addEventListener("click", confirmVipPaidAndContinue);
+  byId("confirmVipPaidBtn")?.addEventListener("click", openVipConfirmModal);
+  byId("cancelVipConfirmBtn")?.addEventListener("click", closeVipConfirmModal);
+  byId("confirmVipContinueBtn")?.addEventListener("click", confirmVipPaidAndContinue);
   byId("closeVipBtn")?.addEventListener("click", closeVipModal);
   byId("clearHistoryBtn")?.addEventListener("click", clearHistory);
   byId("closeGrowthHubBtn")?.addEventListener("click", closeGrowthHub);
@@ -1158,16 +1162,60 @@ function prepareVipPaymentFlow() {
 
 function closeVipModal() {
   document.getElementById("vipModal").style.display = "none";
+  closeVipConfirmModal();
   paymentPending = false;
   stopVipOrderPolling();
 }
 
+function clearVipConfirmCountdown() {
+  if (vipConfirmCountdownTimer) {
+    clearInterval(vipConfirmCountdownTimer);
+    vipConfirmCountdownTimer = null;
+  }
+}
+
+function updateVipConfirmButtonState() {
+  const btn = document.getElementById("confirmVipContinueBtn");
+  if (!btn) return;
+  if (vipConfirmRemainingSeconds > 0) {
+    btn.disabled = true;
+    btn.textContent = `确认并继续（${vipConfirmRemainingSeconds}）`;
+    return;
+  }
+  btn.disabled = false;
+  btn.textContent = "确认并继续";
+}
+
+function openVipConfirmModal() {
+  const modal = document.getElementById("vipConfirmModal");
+  if (!modal) return;
+  clearVipConfirmCountdown();
+  vipConfirmRemainingSeconds = 2;
+  updateVipConfirmButtonState();
+  modal.style.display = "flex";
+  vipConfirmCountdownTimer = setInterval(() => {
+    vipConfirmRemainingSeconds -= 1;
+    updateVipConfirmButtonState();
+    if (vipConfirmRemainingSeconds <= 0) clearVipConfirmCountdown();
+  }, 1000);
+}
+
+function closeVipConfirmModal() {
+  clearVipConfirmCountdown();
+  vipConfirmRemainingSeconds = 0;
+  const modal = document.getElementById("vipConfirmModal");
+  if (modal) modal.style.display = "none";
+  updateVipConfirmButtonState();
+}
+
 function confirmVipPaidAndContinue() {
+  if (vipConfirmRemainingSeconds > 0) return;
   const now = Date.now();
   const expiresAt = now + 24 * 60 * 60 * 1000;
   const token = `vip_static_${now.toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
   localStorage.setItem(VIP_TOKEN_KEY, JSON.stringify({ token, expiresAt }));
   setVipOrderStatus("状态：已放行", "本次设备已解锁，24 小时内可继续使用进阶牌阵。");
+  closeVipConfirmModal();
   closeVipModal();
   showEnergyEffect(true);
 }

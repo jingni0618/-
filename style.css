@@ -1129,6 +1129,24 @@ body[data-phase="dusk"] #starfield {
 }
 .qr-container img { width: 100%; height: 100%; object-fit: contain; }
 
+.vip-confirm-content {
+  width: min(92vw, 430px);
+  text-align: left;
+}
+
+.vip-confirm-text {
+  margin: 8px 0 0;
+  color: rgba(240, 224, 186, 0.9);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+#confirmVipContinueBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  filter: saturate(0.7);
+}
+
 .timeline-panel-content {
   width: min(94vw, 620px);
   max-height: 84vh;
