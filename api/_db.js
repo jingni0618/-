@@ -49,6 +49,16 @@ export async function ensureVipSchema() {
     );
   `);
 
+  await pool.query('CREATE INDEX IF NOT EXISTS idx_vip_payment_orders_status ON vip_payment_orders(status);');
+  await pool.query('CREATE INDEX IF NOT EXISTS idx_vip_payment_orders_created_at ON vip_payment_orders(created_at);');
+  await pool.query('CREATE INDEX IF NOT EXISTS idx_vip_payment_events_order_id ON vip_payment_events(order_id);');
+  await pool.query('CREATE INDEX IF NOT EXISTS idx_vip_payment_events_created_at ON vip_payment_events(created_at);');
+  await pool.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS ux_vip_payment_events_paid_txn
+    ON vip_payment_events (type, transaction_id)
+    WHERE type = 'alipay_notify_paid' AND transaction_id IS NOT NULL
+  `);
+
   schemaReady = true;
 }
 

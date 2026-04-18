@@ -134,8 +134,8 @@
         <li>解牌结果可沉淀到成长档案，持续复盘</li>
       </ul>
       <div class="vip-step-title">如何解锁</div>
-      <p style="font-size: 14px; color: #c5a059; font-weight: bold; margin-bottom: 15px;">👉 先创建订单并扫码支付，系统会自动确认支付状态；也可手动点“检查支付状态”。</p>
-      <div class="qr-container"><img id="qrImage" src="https://i.postimg.cc/vBRq8rJn/IMG-9022.jpg" alt="微信赞赏码"></div>
+      <p style="font-size: 14px; color: #c5a059; font-weight: bold; margin-bottom: 15px;">👉 先创建订单并扫码支付，再等待人工确认。确认通过后点击“检查确认结果”即可继续。</p>
+      <div class="qr-container"><img id="qrImage" src="https://i.postimg.cc/vBRq8rJn/IMG-9022.jpg" alt="支付宝收款码"></div>
       <div id="vipOrderStatusBox" class="vip-order-status" style="display:none;">
         <div id="vipOrderStatusText">支付状态：等待创建订单</div>
         <div id="vipOrderMeta" class="vip-order-meta"></div>
@@ -144,7 +144,7 @@
         <input id="vipCodeInput" type="password" placeholder="输入解锁密钥" style="flex:1; padding:10px; border-radius:8px; border:1px solid rgba(255,255,255,0.25); background: rgba(10,10,14,0.35); color:#f8e6b5;">
         <button id="verifyVipBtn" class="main-btn" style="white-space: nowrap; width:auto; min-width:92px;">校验</button>
       </div>
-      <button id="checkOrderBtn" class="secondary-btn" style="margin-top: 8px; width: 100%; display:none;">检查支付状态</button>
+      <button id="checkOrderBtn" class="secondary-btn" style="margin-top: 8px; width: 100%; display:none;">检查确认结果</button>
       <div class="friend-test-box">
         <div class="friend-test-title">朋友测试通道（免付费）</div>
         <div class="friend-test-input-row">
@@ -153,10 +153,10 @@
         </div>
         <div class="friend-test-tip">你可给朋友测试码：FRIEND（大写）。</div>
       </div>
-      <button id="mobilePayBtn" class="secondary-btn pulse-btn" style="margin-top: 15px; width: 100%; display:none;">📱 保存二维码后前往微信</button>
+      <button id="mobilePayBtn" class="secondary-btn pulse-btn" style="margin-top: 15px; width: 100%; display:none;">📱 保存二维码后前往支付宝</button>
       <div class="modal-btns" style="margin-top: 15px;">
         <button id="closeVipBtn" class="cancel-btn">再想想</button>
-        <button id="pcPayBtn" class="secondary-btn">✅ 创建订单并检查支付</button>
+        <button id="pcPayBtn" class="secondary-btn">✅ 创建订单并提交人工确认</button>
       </div>
     </div>
   </div>

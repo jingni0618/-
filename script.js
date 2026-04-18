@@ -1100,7 +1100,7 @@ function checkVipAndStart({ requireQuestion = true, mode = "standard" } = {}) {
   if (requiredCardsCount > 3 && !hasValidVipToken()) {
     document.getElementById("vipModal").style.display = "flex";
     const priceFen = getUnlockPriceForMode(mode, document.getElementById("spreadSelect")?.value || "");
-    updateStatus(`该牌阵需解锁，当前价格 ${formatFenPrice(priceFen)}/次。完成支付并校验后继续。`);
+    updateStatus(`该牌阵需解锁，当前价格 ${formatFenPrice(priceFen)}/次。支付后等待人工确认，再点击“检查确认结果”。`);
     prepareVipPaymentFlow();
     if (isMobile) { document.getElementById("mobilePayBtn").style.display = "block"; document.getElementById("pcPayBtn").style.display = "none"; } else { document.getElementById("mobilePayBtn").style.display = "none"; document.getElementById("pcPayBtn").style.display = "block"; }
     return;
@@ -1176,7 +1176,7 @@ async function exchangeVipOrderToToken(orderId) {
 
 async function queryVipOrderStatus({ exchangeOnPaid = false, silent = true } = {}) {
   if (!currentVipOrderId) {
-    if (!silent) setVipOrderStatus("支付状态：尚未创建订单", "请先点击“创建订单并检查支付”。");
+    if (!silent) setVipOrderStatus("支付状态：尚未创建订单", "请先点击“创建订单并提交人工确认”。");
     return null;
   }
 
@@ -1188,7 +1188,7 @@ async function queryVipOrderStatus({ exchangeOnPaid = false, silent = true } = {
 
   const statusData = await response.json();
   if (statusData.status === "paid" || statusData.status === "unlocked") {
-    setVipOrderStatus("支付状态：已支付", `订单 ${statusData.orderId} 已确认，正在解锁...`);
+    setVipOrderStatus("支付状态：已确认", `订单 ${statusData.orderId} 已通过人工确认，正在解锁...`);
     if (exchangeOnPaid) {
       await exchangeVipOrderToToken(statusData.orderId);
     }
@@ -1201,19 +1201,8 @@ async function queryVipOrderStatus({ exchangeOnPaid = false, silent = true } = {
     return statusData;
   }
 
-  setVipOrderStatus("支付状态：等待支付", `订单 ${statusData.orderId} 还未确认，系统会自动轮询。`);
+  setVipOrderStatus("支付状态：人工确认中", `订单 ${statusData.orderId} 已提交，人工确认通过后请点击“检查确认结果”。`);
   return statusData;
-}
-
-function startVipOrderPolling() {
-  stopVipOrderPolling();
-  vipOrderPollTimer = setInterval(async () => {
-    try {
-      await queryVipOrderStatus({ exchangeOnPaid: true, silent: true });
-    } catch {
-      // Keep polling even if a single request fails.
-    }
-  }, 4000);
 }
 
 function prepareVipPaymentFlow() {
@@ -1221,11 +1210,10 @@ function prepareVipPaymentFlow() {
   const checkBtn = document.getElementById("checkOrderBtn");
   if (checkBtn) checkBtn.style.display = "block";
   if (currentVipOrderId) {
-    setVipOrderStatus("支付状态：等待支付", `订单 ${currentVipOrderId} 轮询中，金额 ${formatFenPrice(priceFen)}/次。`);
-    startVipOrderPolling();
+    setVipOrderStatus("支付状态：待人工确认", `订单 ${currentVipOrderId} 已创建，金额 ${formatFenPrice(priceFen)}/次。支付后请点击“检查确认结果”。`);
     return;
   }
-  setVipOrderStatus("支付状态：尚未创建订单", `点击“创建订单并检查支付”后将按 ${formatFenPrice(priceFen)}/次 创建订单并自动轮询。`);
+  setVipOrderStatus("支付状态：尚未创建订单", `点击“创建订单并提交人工确认”后将按 ${formatFenPrice(priceFen)}/次 创建订单。`);
 }
 
 function closeVipModal() {
@@ -1248,14 +1236,13 @@ async function pcPayFlow() {
       const qrImg = document.getElementById("qrImage");
       if (qrImg) qrImg.src = order.qrUrl;
     }
-    setVipOrderStatus("支付状态：等待支付", `订单 ${order.orderId} 已创建（${formatFenPrice(order.amountFen)}/次），支付后会自动解锁。`);
-    startVipOrderPolling();
+    setVipOrderStatus("支付状态：待人工确认", `订单 ${order.orderId} 已创建（${formatFenPrice(order.amountFen)}/次）。扫码后请手动点击“检查确认结果”。`);
     document.getElementById("vipCodeInput")?.focus();
   } catch (err) {
     setVipOrderStatus("支付状态：创建失败", err.message || "请稍后重试");
   } finally {
     if (btn) {
-      btn.innerText = "✅ 创建订单并检查支付";
+      btn.innerText = "✅ 创建订单并提交人工确认";
       btn.disabled = false;
     }
   }
@@ -1279,20 +1266,18 @@ async function mobilePayFlow() {
   }
 
   const imgUrl = document.getElementById("qrImage").src;
-  btn.innerText = "🔄 正在前往微信...";
+  btn.innerText = "🔄 正在保存收款码...";
   paymentPending = true;
-  setVipOrderStatus("支付状态：等待支付", `订单 ${currentVipOrderId} 轮询中，请在微信完成支付。`);
-  startVipOrderPolling();
+  setVipOrderStatus("支付状态：待人工确认", `订单 ${currentVipOrderId} 已创建，请在支付宝完成支付后点击“检查确认结果”。`);
   fetch(imgUrl).then(res => res.blob()).then(blob => {
     const url = window.URL.createObjectURL(blob); const a = document.createElement('a'); a.style.display = 'none'; a.href = url; a.download = '命运星盘解锁二维码.jpg'; document.body.appendChild(a); a.click(); window.URL.revokeObjectURL(url);
-    setTimeout(() => { window.location.href = "weixin://"; btn.innerText = "完成后请切回此页"; }, 1000);
-  }).catch(() => { window.location.href = "weixin://"; btn.innerText = "请先截图后前往微信"; });
+    setTimeout(() => { btn.innerText = "已保存二维码，请打开支付宝扫码"; }, 1000);
+  }).catch(() => { btn.innerText = "请先截图二维码后前往支付宝"; });
 }
 document.addEventListener("visibilitychange", function() {
   if (document.visibilityState === 'visible' && paymentPending) {
-    paymentPending = false; document.getElementById("mobilePayBtn").innerText = "✅ 已返回，正在检查支付";
+    paymentPending = false; document.getElementById("mobilePayBtn").innerText = "✅ 已返回，可点击检查确认结果";
     setTimeout(() => { document.getElementById("vipCodeInput")?.focus(); }, 1200);
-    queryVipOrderStatus({ exchangeOnPaid: true, silent: true }).catch(() => {});
   }
 });
 

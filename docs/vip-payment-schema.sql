@@ -32,3 +32,6 @@ CREATE TABLE IF NOT EXISTS vip_payment_events (
 
 CREATE INDEX IF NOT EXISTS idx_vip_payment_events_order_id ON vip_payment_events(order_id);
 CREATE INDEX IF NOT EXISTS idx_vip_payment_events_created_at ON vip_payment_events(created_at);
+CREATE UNIQUE INDEX IF NOT EXISTS ux_vip_payment_events_paid_txn
+ON vip_payment_events (type, transaction_id)
+WHERE type = 'alipay_notify_paid' AND transaction_id IS NOT NULL;

@@ -105,7 +105,7 @@ export async function markVipPaymentPaid(orderId, channel = 'admin') {
   return mapOrder(result.rows[0]);
 }
 
-export async function markVipPaymentPaidByCallback({ orderId, transactionId = '', channel = 'wechat', rawNotifyJson = null } = {}) {
+export async function markVipPaymentPaidByCallback({ orderId, transactionId = '', channel = 'alipay', rawNotifyJson = null } = {}) {
   await ensureVipSchema();
   const paidAt = now();
 
@@ -148,10 +148,11 @@ export async function consumeVipPaymentUnlock(orderId) {
 
 export async function saveVipPaymentEvent(event) {
   await ensureVipSchema();
-  await pool.query(
+  const result = await pool.query(
     `
       INSERT INTO vip_payment_events (type, order_id, transaction_id, payload, created_at)
       VALUES ($1, $2, $3, $4::jsonb, $5)
+      ON CONFLICT DO NOTHING
     `,
     [
       String(event?.type || 'unknown'),
@@ -161,5 +162,26 @@ export async function saveVipPaymentEvent(event) {
       now()
     ]
   );
+
+  return result.rowCount > 0;
+}
+
+export async function hasVipPaymentEventTransaction({ type = '', transactionId = '' } = {}) {
+  await ensureVipSchema();
+  const eventType = String(type || '').trim();
+  const txnId = String(transactionId || '').trim();
+  if (!eventType || !txnId) return false;
+
+  const result = await pool.query(
+    `
+      SELECT 1
+      FROM vip_payment_events
+      WHERE type = $1 AND transaction_id = $2
+      LIMIT 1
+    `,
+    [eventType, txnId]
+  );
+
+  return result.rowCount > 0;
 }
 
