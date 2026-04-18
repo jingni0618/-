@@ -107,12 +107,13 @@ const START_HOLD_MS = 3000;
 const DECK_SPREAD_THRESHOLD = 140;
 // Removed emotion range labels — now using emoji reaction bar
 
-// ── Intro dismiss: registered immediately at script load ─────────────────
-// script.js is at the bottom of <body>, so DOM is ready here.
-// Do NOT put this in window.onload — fonts/CDN could delay it for seconds.
+// ── Intro dismiss ────────────────────────────────────────────────────────
 let introDone = false;
+let initDone = false;
 function dismissIntro() {
   if (introDone) return;
+  // Don't dismiss until initEventBindings has run, unless failsafe kicks in
+  if (!initDone) return;
   introDone = true;
   const introEl = document.getElementById('introScreen');
   if (introEl) introEl.style.opacity = 0;
@@ -123,15 +124,13 @@ function dismissIntro() {
     document.body.classList.add("home-ready");
   }, 380);
 }
-(function() {
-  const introEl = document.getElementById('introScreen');
-  if (introEl) {
-    introEl.addEventListener('click', dismissIntro, { once: true });
-    introEl.addEventListener('touchend', dismissIntro, { once: true });
-    introEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') dismissIntro(); }, { once: true });
+// Absolute failsafe: force dismiss after 6s even if window.onload never fires
+setTimeout(() => {
+  if (!introDone) {
+    initDone = true;
+    dismissIntro();
   }
-  setTimeout(dismissIntro, 3000);
-})();
+}, 6000);
 
 window.onload = function() {
   isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -140,23 +139,9 @@ window.onload = function() {
   applyDensityMode(localStorage.getItem(DENSITY_MODE_KEY) || "compact");
   applyTimePhaseTheme(); initStarfield(); renderSpread(); renderSpreadGuide(); loadHistory(); initEventBindings(); renderHomeDate(); updateStatus("");
 
-  // Typewriter intro text (every page load)
-  const introStr = isNightMode ? "夜色已深，愿你在这里照见真实的自己。" : "欢迎来到塔罗之眼，今天也值得被温柔对待。";
-  let i = 0;
-
-  function typeIntro() {
-    if (introDone) return;
-    const textEl = document.getElementById('introText');
-    if (!textEl) { setTimeout(dismissIntro, 800); return; }
-    if (i < introStr.length) {
-      textEl.innerText += introStr.charAt(i); i++; setTimeout(typeIntro, 38);
-    } else {
-      const tapHint = document.getElementById('introTapHint');
-      if (tapHint) tapHint.classList.add('visible');
-      setTimeout(dismissIntro, 800);
-    }
-  }
-  typeIntro();
+  // Mark init complete, then auto-dismiss intro after a brief pause
+  initDone = true;
+  setTimeout(dismissIntro, 800);
 };
 
 function applyDensityMode(mode = "compact") {
