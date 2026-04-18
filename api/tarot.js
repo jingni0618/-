@@ -43,7 +43,7 @@ export default async function handler(req, res) {
   const API_KEY = process.env.OPENAI_API_KEY;
   if (!API_KEY) return res.status(500).json({ error: '后端未配置 API Key' });
 
-  const { question, cards, readingStyle, soulCard, isDaily, isNight, vipToken, fallbackShort, userName, partnerName, emotionLevel, emotionLabel, isCompatibility } = req.body || {};
+  const { question, cards, soulCard, isDaily, isNight, vipToken, fallbackShort, userName, partnerName, emotionLevel, emotionLabel, isCompatibility } = req.body || {};
   const safeCards = Array.isArray(cards) ? cards : [];
   const vipUnlockCode = process.env.VIP_UNLOCK_CODE;
   const vipSigningSecret = process.env.VIP_SIGNING_SECRET || API_KEY;
@@ -71,10 +71,7 @@ export default async function handler(req, res) {
   } 
   // 模式 B：超长专业解盘模式（动态流派）
   else {
-    let styleDesc = "";
-    if (readingStyle === "harsh") styleDesc = "你是一位被称为“毒舌导师”的塔罗师，极其犀利、一针见血，专治矫情和恋爱脑，语言像刀子一样剖析人性的阴暗面。";
-    else if (readingStyle === "healing") styleDesc = "你是一位极度温柔的“星空疗愈师”，充满母性光辉，给受伤的灵魂提供巨大的情绪价值与安慰。";
-    else styleDesc = "你是一位经验丰富、客观睿智的经典韦特塔罗大师，中正平和，娓娓道来。";
+    let styleDesc = "你是一位经验丰富、客观睿智的经典韦特塔罗大师，中正平和，娓娓道来。";
 
     if (isNight) styleDesc += " 此时正值深夜，你的语气要变得极度轻柔、催眠，安抚深夜容易焦虑的灵魂。";
     
@@ -96,10 +93,11 @@ ${safeCards.map(c => `- ${c.position}: 抽到 ${c.cardName}。含义：${c.meani
 
 你的解盘必须严格遵守以下结构和 HTML 排版：
 1. 必须强制提取3个关键词，格式为：<div class="reading-keywords">【命运箴言】：词1 | 词2 | 词3</div>
-2. <h4>🔮 神谕总览</h4>：用一句充满哲理的金句定调，并清晰直接地回答TA的问题（是/否/吉/凶）。
-3. <h4>🌟 灵魂拆解</h4>：将这几张牌的内在逻辑交织在一起讲故事。过去埋下什么因？现在卡在哪里？
-4. <h4>💡 破局之眼</h4>：挑出最关键的一张牌，点破死穴或转机。
-5. <h4>✨ 凡尘指南</h4>：给出3条极度具体的现实行动建议。
+2. <div class="reading-summary">用2-3句话给出核心结论摘要，让读者一眼看懂：问题的答案 + 关键转折点 + 最该做的一件事。</div>
+3. <h4>🔮 神谕总览</h4>：用一句充满哲理的金句定调，并清晰直接地回答TA的问题（是/否/吉/凶）。
+4. <h4>🌟 灵魂拆解</h4>：将这几张牌的内在逻辑交织在一起讲故事。过去埋下什么因？现在卡在哪里？
+5. <h4>💡 破局之眼</h4>：挑出最关键的一张牌，点破死穴或转机。
+6. <h4>✨ 凡尘指南</h4>：给出3条极度具体的现实行动建议。
 
 排版铁律：
 1. 只能使用基础 HTML 标签（<h4>, <p>, <strong>, <ul>, <li>）。

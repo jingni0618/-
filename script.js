@@ -81,7 +81,7 @@ function getUnlockPriceForMode(mode = activeReadingMode, spread = document.getEl
   return 0;
 }
 
-let currentSpreadConfig = {}; let requiredCardsCount = 0; let cardsDrawn = 0; let cardsFlipped = 0; let drawnCardsData = []; let shuffledDeck = []; let isMobile = false; let paymentPending = false; let isNightMode = false;
+let currentSpreadConfig = {}; let requiredCardsCount = 0; let cardsDrawn = 0; let cardsFlipped = 0; let drawnCardsData = []; let shuffledDeck = []; let isMobile = false; let isNightMode = false;
 let activeReadingMode = "standard";
 let latestReadingRecord = null;
 let screenModeHideTimer = null;
@@ -103,39 +103,43 @@ const DENSITY_MODE_KEY = "tarotReadingDensityMode";
 const HISTORY_LIMIT = 20;
 const NOTES_LIMIT = 40;
 const START_HOLD_MS = 3000;
-const DECK_SPREAD_THRESHOLD = 320;
+const DECK_SPREAD_THRESHOLD = 140;
 let currentVipOrderId = localStorage.getItem(VIP_ORDER_ID_KEY) || "";
 let vipOrderPollTimer = null;
-const emotionLabels = {
-  1: "平稳如水",
-  2: "微微起伏",
-  3: "平静观察",
-  4: "波动明显",
-  5: "能量拉满"
-};
+// Removed emotion range labels — now using emoji reaction bar
 
 window.onload = function() {
   isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   applyDensityMode(localStorage.getItem(DENSITY_MODE_KEY) || "compact");
   applyTimePhaseTheme(); initStarfield(); renderSpread(); renderSpreadGuide(); loadHistory(); initEventBindings(); renderHomeDate(); updateStatus("");
+
+  const isReturning = localStorage.getItem("tarotHasVisited");
   
-  const introStr = isNightMode ? "夜色已深，愿你在这里照见真实的自己。\n把困惑放在掌心，我们慢慢翻开答案。" : "欢迎回来，今天也值得被温柔对待。\n从一个问题开始，把方向交给牌面。";
-  let i = 0;
-  function typeIntro() {
-    if(i < introStr.length) {
-      document.getElementById('introText').innerText += introStr.charAt(i); i++; setTimeout(typeIntro, 34);
-    } else {
-      setTimeout(() => {
-        document.getElementById('introScreen').style.opacity = 0;
-        setTimeout(()=> {
-          document.getElementById('introScreen').style.display = 'none';
-          document.getElementById('uiElements').style.opacity = 1;
-          document.body.classList.add("home-ready");
-        }, 550);
-      }, 500);
+  if (isReturning) {
+    // 回访用户：快速淡入，跳过打字机
+    document.getElementById('introScreen').style.display = 'none';
+    document.getElementById('uiElements').style.opacity = 1;
+    document.body.classList.add("home-ready");
+  } else {
+    localStorage.setItem("tarotHasVisited", "1");
+    const introStr = isNightMode ? "夜色已深，愿你在这里照见真实的自己。\n把困惑放在掌心，我们慢慢翻开答案。" : "欢迎回来，今天也值得被温柔对待。\n从一个问题开始，把方向交给牌面。";
+    let i = 0;
+    function typeIntro() {
+      if(i < introStr.length) {
+        document.getElementById('introText').innerText += introStr.charAt(i); i++; setTimeout(typeIntro, 34);
+      } else {
+        setTimeout(() => {
+          document.getElementById('introScreen').style.opacity = 0;
+          setTimeout(()=> {
+            document.getElementById('introScreen').style.display = 'none';
+            document.getElementById('uiElements').style.opacity = 1;
+            document.body.classList.add("home-ready");
+          }, 550);
+        }, 500);
+      }
     }
+    typeIntro();
   }
-  typeIntro();
 };
 
 function applyDensityMode(mode = "compact") {
@@ -175,11 +179,9 @@ function initEventBindings() {
     applyDensityMode(mode);
     localStorage.setItem(DENSITY_MODE_KEY, mode);
   });
-  byId("emotionRange")?.addEventListener("input", updateEmotionLabel);
   byId("timelineFilter")?.addEventListener("change", () => renderTimeline());
   byId("timelineSort")?.addEventListener("change", () => renderTimeline());
   byId("saveJournalNoteBtn")?.addEventListener("click", saveJournalNote);
-  byId("vaultUnlockBtn")?.addEventListener("click", unlockVault);
   byId("confirmVipPaidBtn")?.addEventListener("click", openVipConfirmModal);
   byId("cancelVipConfirmBtn")?.addEventListener("click", closeVipConfirmModal);
   byId("confirmVipContinueBtn")?.addEventListener("click", confirmVipPaidAndContinue);
@@ -194,17 +196,14 @@ function initEventBindings() {
   byId("saveBtn")?.addEventListener("click", saveAsImage);
   byId("pushToArchiveBtn")?.addEventListener("click", pushLatestReadingToArchive);
   byId("restartBtn")?.addEventListener("click", returnToHomePage);
+  byId("immersiveBackBtn")?.addEventListener("click", returnToHomePage);
   byId("historyDetailCloseBtn")?.addEventListener("click", closeHistoryDetail);
   byId("questionInput")?.addEventListener("input", () => updateQuestionHint());
   byId("coupleQuestionInput")?.addEventListener("input", () => updateCoupleHint());
-  document.querySelectorAll("#emotionQuickTags .emotion-preset").forEach(btn => {
+  document.querySelectorAll(".emoji-react").forEach(btn => {
     btn.addEventListener("click", () => {
-      const value = Number(btn.getAttribute("data-value") || "3");
-      const range = byId("emotionRange");
-      if (range) {
-        range.value = String(value);
-        updateEmotionLabel();
-      }
+      document.querySelectorAll(".emoji-react").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
     });
   });
 
@@ -220,7 +219,6 @@ function initEventBindings() {
   byId("cardPreviewModal")?.addEventListener("click", e => {
     if (e.target?.id === "cardPreviewModal") closeCardPreview();
   });
-  updateEmotionLabel();
   updateQuestionHint();
   updateCoupleHint();
   setInterval(() => {
@@ -410,14 +408,8 @@ function applyTimePhaseTheme() {
 function applySeasonWeatherTheme() {
   const now = new Date();
   const month = now.getMonth() + 1;
-  let season = "spring";
-  if ([6, 7, 8].includes(month)) season = "summer";
-  else if ([9, 10, 11].includes(month)) season = "autumn";
-  else if ([12, 1, 2].includes(month)) season = "winter";
-
   const weather = getDailyWeatherMood(now);
 
-  document.body.setAttribute("data-season", season);
   document.body.setAttribute("data-weather", weather);
 }
 
@@ -462,7 +454,7 @@ async function sendFeedback() {
     });
 
     if (!res.ok) {
-      throw new Error("星盘信使暂时离线");
+      throw new Error("信使暂时离线");
     }
 
     if (msgEl) msgEl.value = "";
@@ -533,16 +525,31 @@ function renderSpreadGuide() {
     startBtn.textContent = isPaid ? `🔮 开启解牌（${priceText}/次）` : "🔮 开启解牌";
   }
 
+  const currentInfo = spreadGuideMeta[selected] || spreadGuideMeta.cross;
+
   wrap.innerHTML = `
-    <div class="spread-pills-groups">
-      <div class="spread-pills spread-pills--free">${freeCards}</div>
-      <details class="spread-pills-advanced">
-        <summary class="spread-pills-advanced__toggle">进阶牌阵 <span class="spread-pills-advanced__arrow">▾</span></summary>
-        <div class="spread-pills spread-pills--paid">${paidCards}</div>
-      </details>
+    <div class="spread-current-pick">
+      <span class="spread-current-pick__icon">${currentInfo.icon}</span>
+      <span class="spread-current-pick__name">${currentInfo.title}</span>
+      <span class="spread-current-pick__meta">${currentInfo.count}张${currentInfo.paid ? ' · 🔒' : ''}</span>
+      <button class="spread-current-pick__change" type="button">更换牌阵</button>
+    </div>
+    <div class="spread-picker-drawer" style="display:none;">
+      <div class="spread-pills-groups">
+        <div class="spread-pills spread-pills--free">${freeCards}</div>
+        <details class="spread-pills-advanced">
+          <summary class="spread-pills-advanced__toggle">进阶牌阵 <span class="spread-pills-advanced__arrow">▾</span></summary>
+          <div class="spread-pills spread-pills--paid">${paidCards}</div>
+        </details>
+      </div>
     </div>
     <div class="spread-guide-text">${info.desc}</div>
   `;
+
+  wrap.querySelector(".spread-current-pick__change")?.addEventListener("click", () => {
+    const drawer = wrap.querySelector(".spread-picker-drawer");
+    if (drawer) drawer.style.display = drawer.style.display === "none" ? "" : "none";
+  });
 
   wrap.querySelectorAll(".spread-pill").forEach(btn => {
     btn.addEventListener("click", () => {
@@ -555,15 +562,11 @@ function renderSpreadGuide() {
   });
 }
 
-function getEmotionState() {
-  const value = Number(document.getElementById("emotionRange")?.value || 3);
-  return { value, label: emotionLabels[value] || emotionLabels[3] };
-}
-
-function updateEmotionLabel() {
-  const labelEl = document.getElementById("emotionLabel");
-  if (!labelEl) return;
-  labelEl.textContent = getEmotionState().label;
+function getSelectedMood() {
+  const active = document.querySelector(".emoji-react.active");
+  const mood = active?.getAttribute("data-mood") || "calm";
+  const label = active?.textContent?.trim() || "😌 平静";
+  return { value: mood, label };
 }
 
 function getReadingContext(question = "", mode = activeReadingMode) {
@@ -573,7 +576,7 @@ function getReadingContext(question = "", mode = activeReadingMode) {
   const baseQuestion = isCompatibility
     ? (document.getElementById("coupleQuestionInput")?.value?.trim() || "")
     : (document.getElementById("questionInput")?.value?.trim() || "");
-  const emotion = getEmotionState();
+  const emotion = getSelectedMood();
   const finalQuestion = question || baseQuestion;
   return { userName, partnerName, emotion, isCompatibility, question: finalQuestion, mode };
 }
@@ -646,10 +649,6 @@ function renderTimeline() {
   });
 
   renderJournalRecordOptions();
-}
-
-function checkNightMode() {
-  applyTimePhaseTheme();
 }
 
 function updateStatus(text) {
@@ -726,7 +725,15 @@ const JournalService = {
 
 function loadHistory() { HistoryService.load(); JournalService.load(); }
 function addHistoryRecord(record) { HistoryService.add(record); }
-function clearHistory() { HistoryService.clear(); updateStatus("解牌记录已清空，新的旅程可以开始了。"); }
+function clearHistory() {
+  const count = HistoryService.records.length;
+  if (!count) { updateStatus("暂无记录可清空。"); return; }
+  const msg = `确定要清空全部 ${count} 条解牌记录吗？此操作不可撤销。`;
+  if (!confirm(msg)) return;
+  HistoryService.clear();
+  renderTimeline();
+  updateStatus("解牌记录已清空，新的旅程可以开始了。");
+}
 
 function simpleHash(input) {
   let hash = 0;
@@ -750,66 +757,20 @@ function getVaultStorageSuffix() {
   return `${meta.name}:${meta.pinHash}`;
 }
 
-function unlockVault() {
-  const nameInput = document.getElementById("vaultNameInput");
-  const pinInput = document.getElementById("vaultPinInput");
-  const name = nameInput?.value?.trim() || "";
-  const pin = pinInput?.value?.trim() || "";
-
-  if (!name) {
-    alert("请输入档案昵称");
-    return;
-  }
-  if (!/^\d{4}$/.test(pin)) {
-    alert("口令需为4位数字");
-    return;
-  }
-
-  const meta = readVaultMeta();
-  const pinHash = simpleHash(pin);
-  if (meta?.name && meta.pinHash !== pinHash) {
-    alert("口令不正确，请再试一次。");
-    return;
-  }
-
-  localStorage.setItem(VAULT_META_KEY, JSON.stringify({ name, pinHash }));
-  loadHistory();
-  JournalService.load();
-  showGrowthHubPanel();
-}
-
 function openGrowthHub() {
   const modal = document.getElementById("growthHubModal");
-  const authPanel = document.getElementById("vaultAuthPanel");
   const panel = document.getElementById("growthHubPanel");
-  const nameInput = document.getElementById("vaultNameInput");
-  if (!modal || !authPanel || !panel) return;
+  if (!modal || !panel) return;
 
-  const meta = readVaultMeta();
-  if (nameInput && meta?.name) nameInput.value = meta.name;
-
-  authPanel.style.display = "block";
-  panel.style.display = "none";
-  modal.style.display = "flex";
-}
-
-function showGrowthHubPanel() {
-  const authPanel = document.getElementById("vaultAuthPanel");
-  const panel = document.getElementById("growthHubPanel");
-  const meta = readVaultMeta();
-  if (!panel || !authPanel || !meta?.name) return;
-
-  authPanel.style.display = "none";
+  loadHistory();
+  JournalService.load();
   panel.style.display = "block";
-
-  const vaultMeta = document.getElementById("vaultMeta");
-  if (vaultMeta) {
-    vaultMeta.textContent = `当前档案：${meta.name} · 仅此口令可开启`;
-  }
-
+  modal.style.display = "flex";
   renderTimeline();
   renderJournalNotes();
+  renderJournalRecordOptions();
 }
+
 
 function closeGrowthHub() {
   const modal = document.getElementById("growthHubModal");
@@ -837,7 +798,7 @@ function saveJournalNote() {
   }
   const selectedIndex = Number(recordSelect?.value || "-1");
   const linked = Number.isInteger(selectedIndex) && selectedIndex >= 0 ? HistoryService.records[selectedIndex] : null;
-  const emotion = getEmotionState();
+  const emotion = getSelectedMood();
   JournalService.add({
     text,
     date: new Date().toLocaleString(),
@@ -907,7 +868,7 @@ function openCardPreview(cardData) {
   if (!modal || !imageEl || !emojiEl || !positionEl || !nameEl || !meaningEl || !cardData) return;
 
   positionEl.textContent = cardData.position || "已翻开的牌";
-  nameEl.textContent = cardData.cardName || normalizeCardName(cardData.cardName);
+  nameEl.textContent = normalizeCardName(cardData.cardName) || cardData.cardName || "未知牌";
   meaningEl.textContent = cardData.meaning || "这张牌正在给你一个更清楚的提示。";
 
   if (cardData.imageUrl) {
@@ -1018,6 +979,8 @@ function hideHomeShell(modeClass) {
 
 function enterReadingMode() {
   hideHomeShell("reading-mode");
+  const backBtn = document.getElementById("immersiveBackBtn");
+  if (backBtn) backBtn.style.display = "";
 }
 
 function enterDailyMode() {
@@ -1032,6 +995,8 @@ function returnToHomePage() {
   document.body.classList.remove("screen-shake");
   const finalFlash = document.getElementById("finalFlashOverlay");
   if (finalFlash) finalFlash.classList.remove("active");
+  const backBtn = document.getElementById("immersiveBackBtn");
+  if (backBtn) backBtn.style.display = "none";
   const hideIds = [
     "vipModal",
     "historyDetailModal",
@@ -1045,7 +1010,6 @@ function returnToHomePage() {
     "revealInstruction",
     "readingWrapper",
     "actionBtns",
-    "actionPlanBox",
     "energyText"
   ];
   hideIds.forEach(id => {
@@ -1119,13 +1083,13 @@ function returnToHomePage() {
 }
 
 function startCompatibilityReading() {
-  activeReadingMode = "compatibility";
-  setFlowStep(1);
   const partnerName = document.getElementById("couplePartnerInput")?.value?.trim();
   if (!partnerName) {
     alert("请先填写 TA 的昵称，再开启双人合盘。");
     return;
   }
+  activeReadingMode = "compatibility";
+  setFlowStep(1);
   updateCoupleHint(true);
   const spreadSelect = document.getElementById("spreadSelect");
   if (spreadSelect) {
@@ -1198,7 +1162,7 @@ function pushLatestReadingToArchive() {
 }
 
 function shuffle(array) { let cur = array.length, rnd; while (cur !== 0) { rnd = Math.floor(Math.random() * cur); cur--; [array[cur], array[rnd]] = [array[rnd], array[cur]]; } return array; }
-function forcePlayMusic() { return; }
+
 function playSound(id) { const audio = document.getElementById(id); audio.currentTime = 0; audio.volume = 0.4; audio.play().catch(e => {}); }
 
 /* 核心修复：渲染空卡牌，默认先隐藏（display:none），冥想结束后才出现 */
@@ -1283,7 +1247,6 @@ function prepareVipPaymentFlow() {
 function closeVipModal() {
   document.getElementById("vipModal").style.display = "none";
   closeVipConfirmModal();
-  paymentPending = false;
   stopVipOrderPolling();
 }
 
@@ -1359,11 +1322,10 @@ function hasValidVipToken() {
 }
 
 function showEnergyEffect(isVip = false) {
-  forcePlayMusic();
-  setFlowStep(2);
+  setFlowStep(1);
   enterReadingMode();
   const energyText = document.getElementById("energyText");
-  energyText.innerText = isVip ? "能量已接收...更深层的因果线正在展开" : "灵感已汇聚...星盘正在缓缓转动";
+  energyText.innerText = isVip ? "能量已接收…更深层的因果线正在展开" : "灵感已汇聚…塔罗之眼正在缓缓张开";
   energyText.style.display = "block";
 
   const spreadContainer = document.getElementById("spreadContainer");
@@ -1376,7 +1338,7 @@ function showEnergyEffect(isVip = false) {
     energyText.style.display = "none";
     playSound("drawSound"); if (navigator.vibrate) navigator.vibrate([100, 50, 100]); 
     const shuffleArea = document.getElementById("shuffleArea"); shuffleArea.style.display = "flex";
-    setTimeout(() => { shuffleArea.style.display = "none"; document.getElementById("deckArea").style.display = "flex"; initFanDeck(); }, 700);
+    setTimeout(() => { shuffleArea.style.display = "none"; document.getElementById("deckArea").style.display = "flex"; initFanDeck(); }, 1800);
   }, 800);
 }
 
@@ -1410,11 +1372,11 @@ function initFanDeck() {
     fanDeck.appendChild(cardEl);
   }
   attachDeckSpreadGesture(fanDeck);
-  updateStatus("左右滑动牌堆，让牌阵完全展开后再抽牌。");
+  updateStatus("滑动或点击牌堆展开牌阵，然后抽牌。");
   const hint = document.getElementById("deckSpreadHint");
   if (hint) {
     hint.classList.remove("show", "unlocked", "near-unlock");
-    hint.textContent = "← 左右滑动展开牌阵 →";
+    hint.textContent = "← 滑动或点击展开牌阵 →";
     window.setTimeout(() => hint.classList.add("show"), 420);
   }
   
@@ -1422,6 +1384,15 @@ function initFanDeck() {
   if(spreadContainer) {
       spreadContainer.style.opacity = "1";
   }
+
+  // Auto-demo: briefly nudge the fan open to hint at the swipe gesture
+  setTimeout(() => {
+    if (deckSpreadUnlocked) return;
+    const nudgeSteps = [0.08, 0.15, 0.20, 0.15, 0.08, 0];
+    nudgeSteps.forEach((p, i) => {
+      setTimeout(() => { if (!deckSpreadUnlocked) setDeckSpreadProgress(p); }, i * 100);
+    });
+  }, 800);
 }
 
 function setDeckSpreadProgress(nextProgress = 0) {
@@ -1458,7 +1429,7 @@ function updateDeckSpreadHint(progress = 0) {
     return;
   }
   const pct = Math.min(100, Math.round(progress * 100));
-  if (progress >= 0.7) {
+  if (progress >= 0.35) {
     hint.textContent = `松手即可展开牌阵（${pct}%）`;
     hint.classList.add("show", "near-unlock");
   } else {
@@ -1494,6 +1465,7 @@ function attachDeckSpreadGesture(fanDeck) {
   let isDragging = false;
   let pointerId = null;
   let startX = 0;
+  let startY = 0;
   let originProgress = 0;
   const threshold = isMobile ? DECK_SPREAD_THRESHOLD * 0.72 : DECK_SPREAD_THRESHOLD;
 
@@ -1502,6 +1474,7 @@ function attachDeckSpreadGesture(fanDeck) {
     isDragging = true;
     pointerId = event.pointerId;
     startX = event.clientX;
+    startY = event.clientY;
     originProgress = deckSpreadProgress;
     fanDeck.classList.add("is-dragging");
     if (fanDeck.setPointerCapture && pointerId !== null) {
@@ -1527,8 +1500,12 @@ function attachDeckSpreadGesture(fanDeck) {
     if (pointerId !== null && event?.pointerId !== undefined && event.pointerId !== pointerId) return;
     isDragging = false;
     fanDeck.classList.remove("is-dragging");
+    // Tap detection: if barely moved, treat as tap → auto-expand
+    const dx = event ? Math.abs(event.clientX - startX) : 0;
+    const dy = event ? Math.abs(event.clientY - startY) : 0;
+    const isTap = dx < 10 && dy < 10;
     if (!deckSpreadUnlocked) {
-      if (deckSpreadProgress >= 0.7) {
+      if (isTap || deckSpreadProgress >= 0.4) {
         unlockDeckSpread();
       } else if (deckSpreadProgress < 0.15) {
         setDeckSpreadProgress(0);
@@ -1596,7 +1573,7 @@ function userFlipsCard(i) {
   cardsFlipped++;
   if (cardsFlipped === requiredCardsCount) {
     document.getElementById("revealInstruction").style.display = "none";
-    setFlowStep(3);
+    setFlowStep(2);
     updateStatus("牌面已揭晓，正在进入最终转场...");
     const context = getReadingContext("", activeReadingMode);
     const question = context.question;
@@ -1625,12 +1602,23 @@ async function fadeOutAndPauseAudio() {
   }
 }
 
+function getTimePhaseColor() {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 8) return "linear-gradient(135deg, #ffecd2, #fcb69f)";  // 晨光
+  if (h >= 8 && h < 17) return "linear-gradient(135deg, #fff9e6, #ffe0b2)"; // 日光金
+  if (h >= 17 && h < 20) return "linear-gradient(135deg, #e8cfe8, #c3aed6)"; // 暮紫
+  return "linear-gradient(135deg, #1a1a2e, #16213e)"; // 夜蓝
+}
+
 async function playFinalFlashTransition() {
   await fadeOutAndPauseAudio();
   await waitMs(1200);
 
   const overlay = document.getElementById("finalFlashOverlay");
-  if (overlay) overlay.classList.add("active");
+  if (overlay) {
+    overlay.style.background = getTimePhaseColor();
+    overlay.classList.add("active");
+  }
   document.body.classList.add("screen-shake");
   if (navigator.vibrate) navigator.vibrate([40, 60, 40, 80]);
 
@@ -1651,46 +1639,6 @@ async function triggerFinalRevealAndReading(question, style, cards, context) {
   } finally {
     finalRevealTransitionRunning = false;
   }
-}
-
-function generateActionPlan({ question, cards, emotion, isCompatibility, userName, partnerName }) {
-  const firstCard = cards?.[0]?.cardName || "这张牌";
-  const planner = [];
-  planner.push(`在接下来 24 小时内，用一句话写下你真正想要的结果，并贴在手机备忘录。`);
-  planner.push(`围绕“${firstCard}”做一次最小行动：把一个拖延事项拆成 15 分钟可完成的第一步。`);
-
-  if (emotion?.value >= 4) {
-    planner.push("情绪偏高，先做 4 轮深呼吸（4秒吸气-4秒停顿-6秒呼气）后再做决定。");
-  } else {
-    planner.push("情绪较稳，今天适合完成一件需要专注的关键任务，时长建议 45 分钟。");
-  }
-
-  if (isCompatibility) {
-    planner.push(`为 ${partnerName || "对方"} 发送一条不带指责的信息，格式：观察 + 感受 + 具体请求。`);
-  }
-
-  if (question) {
-    planner.push(`今晚复盘问题“${question}”：记录一个证据，证明你正在朝答案前进。`);
-  }
-
-  return planner.slice(0, 5);
-}
-
-function renderActionPlan(context, cards, style) {
-  const box = document.getElementById("actionPlanBox");
-  const list = document.getElementById("actionPlanList");
-  if (!box || !list) return;
-  const plans = generateActionPlan({
-    question: context.question,
-    cards,
-    emotion: context.emotion,
-    isCompatibility: context.isCompatibility,
-    userName: context.userName,
-    partnerName: context.partnerName
-  });
-  list.innerHTML = plans.map(item => `<li>${item}</li>`).join("");
-  box.style.display = "block";
-  setFlowStep(4);
 }
 
 function renderMiniCardBar(cards = []) {
@@ -1721,19 +1669,21 @@ function renderMiniCardBar(cards = []) {
 function renderReadingSummary(rawHtml) {
   const box = document.getElementById("readingSummary");
   if (!box) return;
+
+  // Try to extract the AI-generated summary div first
+  const summaryMatch = String(rawHtml || "").match(/<div class="reading-summary">([\s\S]*?)<\/div>/);
+  if (summaryMatch) {
+    box.innerHTML = `<div class="reading-summary">${summaryMatch[1]}</div>`;
+    box.style.display = "block";
+    return;
+  }
+
+  // Fallback: extract first 3 sentences
   const plain = String(rawHtml || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
-  if (!plain) {
-    box.style.display = "none";
-    return;
-  }
+  if (!plain) { box.style.display = "none"; return; }
   const parts = plain.split(/(?<=[。！？!?])/).map(s => s.trim()).filter(Boolean).slice(0, 3);
-  if (!parts.length) {
-    box.style.display = "none";
-    return;
-  }
-  const topic = inferTimelineTopic({ spread: latestReadingRecord?.spread || "", question: latestReadingRecord?.question || "" });
-  const risk = Number(latestReadingRecord?.emotionLevel || 3) >= 4 ? "高波动" : "可控";
-  box.innerHTML = `<div class="reading-summary-tags"><span>主题：${topic}</span><span>状态：${risk}</span><span>模型：经典解牌</span></div><strong>三行结论</strong><ol>${parts.map(p => `<li>${p}</li>`).join("")}</ol>`;
+  if (!parts.length) { box.style.display = "none"; return; }
+  box.innerHTML = `<div class="reading-summary">${parts.join("")}</div>`;
   box.style.display = "block";
 }
 
@@ -1943,7 +1893,7 @@ async function fetchStream(question, style, cards, context = getReadingContext(q
       emotionLevel: detailContext.emotion.value
     };
     renderReadingSummary(historyRecord.reading);
-    renderActionPlan(detailContext, cards, style);
+    setFlowStep(3);
   } catch (error) {
     try {
       const fallback = await TarotApiService.requestFallbackReading({
@@ -1978,7 +1928,7 @@ async function fetchStream(question, style, cards, context = getReadingContext(q
         emotionLevel: detailContext.emotion.value
       };
       renderReadingSummary(historyRecord.reading);
-      renderActionPlan(detailContext, cards, style);
+      setFlowStep(3);
       updateStatus("网络波动，已自动切换到稳定模式。你可以继续阅读，不影响结果。");
     } catch {
       renderMarkdown(`> 🔮 宇宙连接中断: ${error.message}`);
@@ -2062,7 +2012,8 @@ function initStarfield() {
     }
     requestAnimationFrame(draw);
   }
-  window.addEventListener('resize', resize); resize(); draw();
+  let resizeTimer;
+  window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(resize, 200); }); resize(); draw();
 }
 
 /* Old canvas drawing helpers removed — saveAsImage now uses html2canvas */
@@ -2086,37 +2037,6 @@ function extractCoreQuote(reading = "") {
   const parts = plain.split(/(?<=[。！？!?])/).map(s => s.trim()).filter(Boolean);
   const first = parts[0] || plain;
   return first.length > 72 ? `${first.slice(0, 72)}...` : first;
-}
-
-function wrapTextByWidth(ctx, text, maxWidth) {
-  const lines = [];
-  let current = "";
-  for (const ch of String(text || "")) {
-    const test = current + ch;
-    if (ctx.measureText(test).width > maxWidth && current) {
-      lines.push(current);
-      current = ch;
-    } else {
-      current = test;
-    }
-  }
-  if (current) lines.push(current);
-  return lines;
-}
-
-function loadCanvasImage(src) {
-  return new Promise(resolve => {
-    const url = String(src || "").trim();
-    if (!url) {
-      resolve(null);
-      return;
-    }
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => resolve(img);
-    img.onerror = () => resolve(null);
-    img.src = url;
-  });
 }
 
 async function saveAsImage() {
@@ -2197,6 +2117,6 @@ function fillPosterCanvasFromReading(record) {
   }).join("");
 
   quoteEl.textContent = `“${extractPosterCoreLineFromDom()}”`;
-  qrEl.src = document.getElementById("qrImage")?.src || VIP_STATIC_QR_URL;
+  qrEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(window.location.origin)}`;
   metaEl.textContent = `${record?.date || new Date().toLocaleString()} · 塔罗之眼`; 
 }

@@ -38,9 +38,8 @@
         <div class="phase-chip date-chip" id="homeDate">日期载入中</div>
       </div>
       <div class="top-nav-actions">
-        <button id="dailyBtn" class="icon-btn highlight">✨ 今日神谕</button>
-        <button id="growthHubBtn" class="icon-btn subtle">🗂 成长档案</button>
-        <button id="feedbackBtn" class="icon-btn subtle">💌 留言反馈</button>
+        <button id="growthHubBtn" class="icon-btn subtle" data-icon="🗂"><span class="btn-label">成长档案</span></button>
+        <button id="feedbackBtn" class="icon-btn subtle" data-icon="💌"><span class="btn-label">给👀仔留言</span></button>
       </div>
     </div>
 
@@ -58,6 +57,17 @@
           <span class="ritual-orb__ring" aria-hidden="true"><span id="ritualOrbProgress"></span></span>
         </button>
         <div class="ritual-orb__label" id="ritualOrbLabel">长按水晶球，感应今日能量</div>
+      </div>
+
+      <!-- 每日神谕入口 -->
+      <button id="dailyBtn" class="daily-entry-btn" type="button">
+        <span class="daily-entry-btn__icon">✨</span>
+        <span class="daily-entry-btn__text">今日神谕 · 每天一张日签牌</span>
+        <span class="daily-entry-btn__arrow">›</span>
+      </button>
+
+      <div class="mystical-divider" aria-hidden="true">
+        <span>·</span><span>✦</span><span>·</span>
       </div>
 
       <div class="home-orbit">
@@ -85,6 +95,7 @@
               <div class="field-hint" id="questionHint">你的问题仅用于本次解牌，不会公开展示。</div>
             </div>
             <div class="spread-guide-head">先选择牌阵（推荐）</div>
+            <p class="spread-guide-hint">不确定选哪个？新手推荐「单牌神谕」或「时间之流」，几分钟即可完成。</p>
             <div class="spread-visual-guide" id="spreadVisualGuide" aria-live="polite"></div>
             <select id="spreadSelect" style="display:none;">
               <optgroup label="基础指引">
@@ -111,6 +122,7 @@
             <span class="price-tag">进阶 ¥5/次</span>
             <span class="couple-toggle__arrow">▾</span>
           </button>
+          <p class="couple-toggle__desc">看清你与 TA 的关系走向</p>
           <div class="couple-expand" id="couplePanel">
             <p class="choice-card__desc">聚焦关系课题，查看彼此状态与走向。</p>
             <div class="choice-card__body">
@@ -143,7 +155,7 @@
   <div id="vipModal" class="modal-overlay" style="display: none;">
     <div class="modal-content">
       <h3 class="classic-title" style="font-size: 1.5rem; margin-top:0;">👑 解锁进阶牌阵</h3>
-      <p style="font-size: 13px; margin-bottom: 8px; color: #8e8579;">深度牌阵 ¥3/次，双人合盘 ¥5/次。</p>
+      <p style="font-size: 13px; margin-bottom: 8px; color: rgba(245,236,219,0.8);">深度牌阵 ¥3/次，双人合盘 ¥5/次。</p>
       <div class="vip-step-title">如何解锁</div>
       <p style="font-size: 14px; color: #c5a059; font-weight: 700; margin-bottom: 12px;">👉 扫码支付后，点击“我已完成支付，继续解牌”。</p>
       <div class="qr-container"><img id="qrImage" src="https://i.postimg.cc/P525Vk7w/IMG-9071.png" alt="支付宝收款码"></div>
@@ -191,18 +203,18 @@
   </div>
 
   <div class="immersive-container">
+    <button id="immersiveBackBtn" class="immersive-back-btn" style="display:none;">← 返回主页</button>
     <div id="flowSteps" class="flow-steps" style="display:none;">
-      <div class="flow-step" data-step="1">1 选阵</div>
-      <div class="flow-step" data-step="2">2 抽牌</div>
-      <div class="flow-step" data-step="3">3 翻牌</div>
-      <div class="flow-step" data-step="4">4 落地</div>
+      <div class="flow-step" data-step="1">1 抽牌</div>
+      <div class="flow-step" data-step="2">2 揭牌</div>
+      <div class="flow-step" data-step="3">3 解读</div>
     </div>
 
     <!-- 能量交互文字 -->
     <div id="energyText" class="energy-text" style="display: none;"></div>
 
     <div id="shuffleArea" class="deck-area" style="display: none;">
-      <h3 class="ritual-text">洗牌中...星盘正在与你校准</h3>
+      <h3 class="ritual-text">洗牌中...塔罗牌正在与你校准</h3>
        <div class="shuffling-deck"></div>
     </div>
 
@@ -211,7 +223,7 @@
       <h3 id="instructionText" class="ritual-text">请从桌面牌阵中抽取 <span id="cardsLeft">0</span> 张牌</h3>
       <div class="fan-deck" id="fanDeck"></div>
       <div class="deck-spread-track" aria-hidden="true">
-        <span id="deckSpreadHint" class="deck-spread-hint">← 左右滑动展开牌阵 →</span>
+        <span id="deckSpreadHint" class="deck-spread-hint">← 滑动或点击展开牌阵 →</span>
       </div>
     </div>
 
@@ -231,22 +243,18 @@
       <div id="shareHeader" class="share-only" style="color: #2c241b; font-weight: bold; margin-bottom: 20px;">✨ 塔罗之眼 · 你的专属解牌卷轴 ✨</div>
     </div>
 
-    <div id="actionPlanBox" class="action-plan-box" style="display:none;">
-      <h3>行动锚点（24小时）</h3>
-      <ul id="actionPlanList"></ul>
-    </div>
     
     <div id="actionBtns" class="action-btns" style="margin-top: 30px; display: none; justify-content: center; gap: 15px; padding-bottom: 50px;">
-      <button id="saveBtn" class="save-btn">📸 保存解牌卷轴</button>
-      <button id="pushToArchiveBtn" class="save-btn">🗂 写入成长档案</button>
-      <button id="restartBtn" class="save-btn restart">回到主页</button>
+      <button id="saveBtn" class="main-btn">📸 保存解牌卷轴</button>
+      <button id="pushToArchiveBtn" class="secondary-btn">🗂 写入成长档案</button>
+      <button id="restartBtn" class="ghost-btn">回到主页</button>
     </div>
   </div>
 
   <div id="historyDetailModal" class="modal-overlay" style="display:none;">
     <div class="modal-content" style="max-width: 620px; text-align: left;">
       <h3 style="margin-top:0; color:#f6e6b5;">解牌详情</h3>
-      <div id="historyDetailBody" style="max-height: 58vh; overflow-y: auto; color:#eadfbe; line-height:1.7;"></div>
+      <div id="historyDetailBody" style="max-height: 58vh; overflow-y: auto; color: rgba(245,236,219,0.95); line-height:1.7;"></div>
       <div class="modal-btns" style="margin-top:16px;">
         <button id="historyDetailCloseBtn" class="confirm-btn" style="width:100%;">关闭</button>
       </div>
@@ -255,24 +263,7 @@
 
   <div id="growthHubModal" class="modal-overlay" style="display:none;">
     <div class="modal-content growth-hub-modal">
-      <div id="vaultAuthPanel" class="vault-auth-panel">
-        <h3 style="margin-top: 0; color:#f6e6b5;">成长档案 · 私密空间</h3>
-        <p class="contact-desc">设置昵称与4位数字口令后，只有你能查看这份星盘档案。</p>
-        <div class="input-group">
-          <label>档案昵称</label>
-          <input type="text" id="vaultNameInput" placeholder="例如：小宇" maxlength="20">
-        </div>
-        <div class="input-group">
-          <label>私密口令（4位数字）</label>
-          <input type="password" id="vaultPinInput" placeholder="例如：2026" maxlength="4" inputmode="numeric">
-        </div>
-        <div class="modal-btns">
-          <button id="vaultUnlockBtn" class="confirm-btn">进入档案</button>
-          <button id="closeGrowthHubBtn" class="cancel-btn">关闭</button>
-        </div>
-      </div>
-
-      <div id="growthHubPanel" style="display:none;">
+      <div id="growthHubPanel">
         <h3 style="margin-top: 0; color:#f6e6b5;">成长档案</h3>
         <p class="growth-intro">这是你的长期观察面板：看见重复课题、情绪波动和行动兑现率。</p>
         <div class="vault-meta" id="vaultMeta"></div>
@@ -297,16 +288,12 @@
             <div id="timelineList" class="timeline-list"></div>
           </div>
           <div class="journal-notebook">
-            <h4>心境札记</h4>
-            <div class="input-group emotion-group">
-              <label>当前心境：<span id="emotionLabel">平静观察</span></label>
-              <input type="range" id="emotionRange" min="1" max="5" value="3" step="1">
-              <div class="emotion-quick-tags" id="emotionQuickTags">
-                <button class="emotion-preset" data-value="1" type="button">我很平稳</button>
-                <button class="emotion-preset" data-value="3" type="button">我还可以</button>
-                <button class="emotion-preset" data-value="5" type="button">我有点上头</button>
-              </div>
-              <div class="emotion-ticks"><span>低压</span><span>平衡</span><span>高压</span></div>
+            <h4>快捷心境</h4>
+            <div class="emoji-reaction-bar" id="emojiReactionBar">
+              <button class="emoji-react" data-mood="calm" type="button">😌 平静</button>
+              <button class="emoji-react" data-mood="inspired" type="button">✨ 有启发</button>
+              <button class="emoji-react" data-mood="confused" type="button">🤔 待消化</button>
+              <button class="emoji-react" data-mood="excited" type="button">🔥 上头了</button>
             </div>
             <div class="input-group">
               <label>关联占卜记录（可选）</label>
@@ -316,7 +303,7 @@
             </div>
             <div class="input-group">
               <label>写下此刻感受</label>
-              <textarea id="journalNoteInput" rows="5" placeholder="写下你此刻的感受、领悟，或下一步要落地的行动..."></textarea>
+              <textarea id="journalNoteInput" rows="3" placeholder="一句话记录此刻感受..."></textarea>
             </div>
             <button id="saveJournalNoteBtn" class="main-btn">保存札记</button>
             <div id="journalNotesList" class="journal-notes-list"></div>
@@ -347,8 +334,8 @@
 
   <div id="feedbackModal" class="modal-overlay" style="display:none;">
     <div class="modal-content feedback-panel-content">
-      <h3 style="margin-top: 0; color:#f6e6b5; letter-spacing:1px;">给星盘留一句话</h3>
-      <p class="contact-desc">你夸我、吐槽我、许愿我都收。每一条我都会认真看，也会继续把这片星盘打磨得更好（通常 48 小时内会阅读并整理）。</p>
+      <h3 style="margin-top: 0; color:#f6e6b5; letter-spacing:1px;">给👀仔留言</h3>
+      <p class="contact-desc">你夸我、吐槽我、许愿都收。每一条👀仔都会认真看，也会继续把塔罗之眼打磨得更好（通常 48 小时内会阅读并整理）。</p>
       <div class="input-group">
         <label>你的邮箱（可选，方便我回你）</label>
         <input id="feedbackEmail" type="email" placeholder="例如：jingni18@hotmail.com">
