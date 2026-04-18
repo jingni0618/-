@@ -9,7 +9,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
 
@@ -18,8 +17,8 @@
   <canvas id="starfield"></canvas>
 
   <!-- 音效统管 -->
-  <audio id="drawSound" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_3d19114cb3.mp3"></audio>
-  <audio id="revealSound" src="https://cdn.pixabay.com/download/audio/2022/02/10/audio_4d99430db6.mp3"></audio>
+  <audio id="drawSound" preload="none" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_3d19114cb3.mp3"></audio>
+  <audio id="revealSound" preload="none" src="https://cdn.pixabay.com/download/audio/2022/02/10/audio_4d99430db6.mp3"></audio>
 
   <!-- UX-1：开场打字机欢迎语 -->
   <div id="introScreen" class="intro-screen">
@@ -62,7 +61,7 @@
       <!-- 每日神谕入口 -->
       <button id="dailyBtn" class="daily-entry-btn" type="button">
         <span class="daily-entry-btn__icon">✨</span>
-        <span class="daily-entry-btn__text">今日神谕 · 每天一张日签牌</span>
+        <span class="daily-entry-btn__text">今日神谕 · 每天领取一张日签</span>
         <span class="daily-entry-btn__arrow">›</span>
       </button>
 
@@ -87,7 +86,7 @@
         <div class="choice-card choice-card--main card-deep">
           <div class="choice-card__eyebrow">主题占问</div>
           <h2 class="choice-card__title">写下问题，开启占问</h2>
-          <p class="choice-card__desc">适合深度推演：选阵、抽牌、解牌、落地。</p>
+          <p class="choice-card__desc">适合认真梳理一件事：选阵、抽牌、解牌，再落到行动。</p>
           <div class="choice-card__body" id="deepSettings">
             <div class="input-group">
               <label>你此刻最想照见什么？</label>
@@ -101,13 +100,13 @@
               <optgroup label="基础指引">
                 <option value="single">单牌神谕（1张：直觉指引）</option>
                 <option value="yesno">是非决断阵（3张：支持/反对/答案）</option>
-                <option value="time">时间之流（3张：过去/现在/未来）</option>
+                <option value="time" selected>时间之流（3张：过去/现在/未来）</option>
               </optgroup>
               <optgroup label="深度专栏">
                 <option value="relationship">情感透视阵（4张：你/对方/阻碍/未来）</option>
                 <option value="career">财富事业阵（4张：现状/机遇/风险/走向）</option>
                 <option value="choice">二选一岔路阵（5张：现状/选A/选B/A结局/B结局）</option>
-                <option value="cross" selected>灵感十字阵（5张：核心/阻碍/目标/潜意识/结局）</option>
+                <option value="cross">灵感十字阵（5张：核心/阻碍/目标/潜意识/结局）</option>
               </optgroup>
             </select>
             <div class="pay-hint" id="payHintText">当前牌阵无需解锁。</div>
@@ -153,18 +152,25 @@
 
   <!-- VIP 赞赏弹窗 -->
   <div id="vipModal" class="modal-overlay" style="display: none;">
-    <div class="modal-content">
+    <div class="modal-content vip-modal-content">
       <h3 class="classic-title" style="font-size: 1.5rem; margin-top:0;">👑 解锁进阶牌阵</h3>
-      <p style="font-size: 13px; margin-bottom: 8px; color: rgba(245,236,219,0.8);">深度牌阵 ¥3/次，双人合盘 ¥5/次。</p>
+      <p style="font-size: 13px; margin-bottom: 8px; color: rgba(245,236,219,0.8);">深度牌阵 ¥3/次，双人合盘 ¥5/次。你可以扫码支付，也可以输入 VIP 口令 / 测试码直接解锁。</p>
       <div class="vip-step-title">如何解锁</div>
-      <p style="font-size: 14px; color: #c5a059; font-weight: 700; margin-bottom: 12px;">👉 扫码支付后，点击“我已完成支付，继续解牌”。</p>
+      <p style="font-size: 14px; color: #c5a059; font-weight: 700; margin-bottom: 12px;">👉 方式一：扫码完成后点击继续。方式二：直接输入 VIP 口令 / 测试码验证。</p>
       <div class="qr-container"><img id="qrImage" src="https://i.postimg.cc/P525Vk7w/IMG-9071.png" alt="支付宝收款码"></div>
       <div id="vipOrderStatusBox" class="vip-order-status" style="display:none;">
         <div id="vipOrderStatusText">状态：等待你扫码支付</div>
         <div id="vipOrderMeta" class="vip-order-meta">这是前端静态收款页，支付后可直接继续。</div>
       </div>
+      <div class="vip-code-divider"><span>或使用口令解锁</span></div>
+      <div class="input-group vip-code-group">
+        <label for="vipCodeInput">VIP 口令 / 朋友测试码</label>
+        <input id="vipCodeInput" type="text" placeholder="输入口令后立即校验">
+        <div class="field-hint" id="vipCodeHint">输入后会优先走 VIP 口令，其次尝试朋友测试码。</div>
+      </div>
       <div class="modal-btns" style="margin-top: 15px;">
         <button id="closeVipBtn" class="cancel-btn">再想想</button>
+        <button id="submitVipCodeBtn" class="secondary-btn">输入口令解锁</button>
         <button id="confirmVipPaidBtn" class="secondary-btn">✅ 我已完成支付，继续解牌</button>
       </div>
     </div>

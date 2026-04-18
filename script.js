@@ -104,8 +104,6 @@ const HISTORY_LIMIT = 20;
 const NOTES_LIMIT = 40;
 const START_HOLD_MS = 3000;
 const DECK_SPREAD_THRESHOLD = 140;
-let currentVipOrderId = localStorage.getItem(VIP_ORDER_ID_KEY) || "";
-let vipOrderPollTimer = null;
 // Removed emotion range labels — now using emoji reaction bar
 
 window.onload = function() {
@@ -146,8 +144,6 @@ function applyDensityMode(mode = "compact") {
   const normalized = mode === "relaxed" ? "relaxed" : "compact";
   document.body.classList.remove("reading-density-compact", "reading-density-relaxed");
   document.body.classList.add(`reading-density-${normalized}`);
-  const select = document.getElementById("densityModeSelect");
-  if (select && select.value !== normalized) select.value = normalized;
 }
 
 function initEventBindings() {
@@ -189,15 +185,14 @@ function initEventBindings() {
     renderSpread();
     renderSpreadGuide();
   });
-  byId("densityModeSelect")?.addEventListener("change", e => {
-    const mode = String(e?.target?.value || "compact");
-    applyDensityMode(mode);
-    localStorage.setItem(DENSITY_MODE_KEY, mode);
-  });
   byId("timelineFilter")?.addEventListener("change", () => renderTimeline());
   byId("timelineSort")?.addEventListener("change", () => renderTimeline());
   byId("saveJournalNoteBtn")?.addEventListener("click", saveJournalNote);
   byId("confirmVipPaidBtn")?.addEventListener("click", openVipConfirmModal);
+  byId("submitVipCodeBtn")?.addEventListener("click", submitVipCode);
+  byId("vipCodeInput")?.addEventListener("keydown", event => {
+    if (event.key === "Enter") submitVipCode();
+  });
   byId("cancelVipConfirmBtn")?.addEventListener("click", closeVipConfirmModal);
   byId("confirmVipContinueBtn")?.addEventListener("click", confirmVipPaidAndContinue);
   byId("closeVipBtn")?.addEventListener("click", closeVipModal);
@@ -422,7 +417,6 @@ function applyTimePhaseTheme() {
 
 function applySeasonWeatherTheme() {
   const now = new Date();
-  const month = now.getMonth() + 1;
   const weather = getDailyWeatherMood(now);
 
   document.body.setAttribute("data-weather", weather);
@@ -626,7 +620,7 @@ function renderTimeline() {
     const total = records.length;
     const compatibility = records.filter(r => r.isCompatibility).length;
     const notes = JournalService.notes.length;
-    const avgEmotion = total ? (records.reduce((sum, r) => sum + Number(r.emotionLevel || 3), 0) / total).toFixed(1) : "0.0";
+    const avgEmotion = total ? (records.reduce((sum, r) => sum + getMoodScore(r.emotionLevel), 0) / total).toFixed(1) : "0.0";
     summary.innerHTML = `
       <div class="timeline-summary-item"><div class="timeline-summary-label">总记录</div><div class="timeline-summary-value">${total}</div></div>
       <div class="timeline-summary-item"><div class="timeline-summary-label">双人占卜</div><div class="timeline-summary-value">${compatibility}</div></div>
@@ -746,16 +740,23 @@ function clearHistory() {
   const msg = `确定要清空全部 ${count} 条解牌记录吗？此操作不可撤销。`;
   if (!confirm(msg)) return;
   HistoryService.clear();
+  renderVaultMeta();
   renderTimeline();
   updateStatus("解牌记录已清空，新的旅程可以开始了。");
 }
 
-function simpleHash(input) {
-  let hash = 0;
-  for (let i = 0; i < input.length; i++) {
-    hash = (hash * 31 + input.charCodeAt(i)) >>> 0;
-  }
-  return hash.toString(16);
+function getMoodScore(level) {
+  const moodScoreMap = {
+    calm: 3,
+    inspired: 4,
+    confused: 2,
+    excited: 5
+  };
+  const normalized = String(level || "").trim();
+  if (normalized in moodScoreMap) return moodScoreMap[normalized];
+  const numeric = Number(normalized);
+  if (Number.isFinite(numeric) && numeric > 0) return Math.max(1, Math.min(5, numeric));
+  return 3;
 }
 
 function readVaultMeta() {
@@ -779,6 +780,7 @@ function openGrowthHub() {
 
   loadHistory();
   JournalService.load();
+  renderVaultMeta();
   panel.style.display = "block";
   modal.style.display = "flex";
   renderTimeline();
@@ -790,6 +792,22 @@ function openGrowthHub() {
 function closeGrowthHub() {
   const modal = document.getElementById("growthHubModal");
   if (modal) modal.style.display = "none";
+}
+
+function renderVaultMeta() {
+  const metaEl = document.getElementById("vaultMeta");
+  if (!metaEl) return;
+
+  const meta = readVaultMeta();
+  const totalReadings = Array.isArray(HistoryService.records) ? HistoryService.records.length : 0;
+  const totalNotes = Array.isArray(JournalService.notes) ? JournalService.notes.length : 0;
+
+  if (!meta?.name) {
+    metaEl.textContent = `当前为访客档案，共保存 ${totalReadings} 条解牌记录、${totalNotes} 条札记。`;
+    return;
+  }
+
+  metaEl.textContent = `${meta.name} 的成长档案，当前保存 ${totalReadings} 条解牌记录、${totalNotes} 条札记。`;
 }
 
 function renderJournalRecordOptions() {
@@ -823,6 +841,7 @@ function saveJournalNote() {
     linkedSpread: linked?.spread || ""
   });
   if (noteInput) noteInput.value = "";
+  renderVaultMeta();
   updateStatus("心境札记已保存到成长档案。");
 }
 
@@ -1176,10 +1195,11 @@ function pushLatestReadingToArchive() {
     text: `来自解牌总结：${summaryText || "已完成一次解牌，后续可继续补充行动反馈。"}`,
     date: new Date().toLocaleString(),
     emotionLabel: emotion,
-    emotionLevel: Number(latestReadingRecord.emotionLevel || 3),
+    emotionLevel: latestReadingRecord.emotionLevel || "calm",
     linkedQuestion: latestReadingRecord.question || "",
     linkedSpread: latestReadingRecord.spread || ""
   });
+  renderVaultMeta();
   updateStatus("已写入成长档案，可在心境札记继续补充行动反馈。");
   openGrowthHub();
 }
@@ -1253,18 +1273,25 @@ function setVipOrderStatus(text, meta = "") {
   if (metaEl) metaEl.textContent = meta;
 }
 
+function setVipCodeHint(text, isError = false) {
+  const hint = document.getElementById("vipCodeHint");
+  if (!hint) return;
+  hint.textContent = text;
+  hint.classList.toggle("error", isError);
+}
+
 function stopVipOrderPolling() {
-  if (vipOrderPollTimer) {
-    clearInterval(vipOrderPollTimer);
-    vipOrderPollTimer = null;
-  }
+  localStorage.removeItem(VIP_ORDER_ID_KEY);
 }
 
 function prepareVipPaymentFlow() {
   const priceFen = getUnlockPriceForMode(activeReadingMode, document.getElementById("spreadSelect")?.value || "");
   const qrImg = document.getElementById("qrImage");
+  const codeInput = document.getElementById("vipCodeInput");
   if (qrImg) qrImg.src = VIP_STATIC_QR_URL;
-  setVipOrderStatus("状态：请扫码支付", `当前价格 ${formatFenPrice(priceFen)}/次，完成后点击“我已完成支付”。`);
+  if (codeInput) codeInput.value = "";
+  setVipCodeHint("输入后会优先走 VIP 口令，其次尝试朋友测试码。", false);
+  setVipOrderStatus("状态：请扫码支付", `当前价格 ${formatFenPrice(priceFen)}/次，支付后点击“我已完成支付，继续解牌”。`);
 }
 
 function closeVipModal() {
@@ -1316,14 +1343,9 @@ function closeVipConfirmModal() {
 
 function confirmVipPaidAndContinue() {
   if (vipConfirmRemainingSeconds > 0) return;
-  const now = Date.now();
-  const expiresAt = now + 24 * 60 * 60 * 1000;
-  const token = `vip_static_${now.toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
-  localStorage.setItem(VIP_TOKEN_KEY, JSON.stringify({ token, expiresAt }));
-  setVipOrderStatus("状态：已放行", "本次设备已解锁，24 小时内可继续使用进阶牌阵。");
   closeVipConfirmModal();
-  closeVipModal();
-  showEnergyEffect(true);
+  setVipOrderStatus("状态：等待验证", "如已完成支付，请输入 VIP 口令，或等待支付回调接通后自动放行。当前不会再使用前端假解锁。");
+  setVipCodeHint("支付后如已拿到 VIP 口令，请直接输入校验。", false);
 }
 
 function readVipToken() {
@@ -1332,6 +1354,7 @@ function readVipToken() {
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed?.token || !parsed?.expiresAt) return null;
+    if (!String(parsed.token).includes(".")) return null;
     return parsed;
   } catch {
     return null;
@@ -1341,14 +1364,75 @@ function readVipToken() {
 function hasValidVipToken() {
   const vip = readVipToken();
   if (!vip) return false;
-  return Date.now() < vip.expiresAt;
+  const stillValid = Date.now() < vip.expiresAt;
+  if (!stillValid) {
+    localStorage.removeItem(VIP_TOKEN_KEY);
+    return false;
+  }
+  return true;
+}
+
+async function requestVipTokenByCode(code) {
+  const endpoints = [
+    { url: "/api/vip-verify", payload: { unlockCode: code } },
+    { url: "/api/vip-test-code-verify", payload: { code } }
+  ];
+
+  for (const item of endpoints) {
+    try {
+      const response = await fetch(item.url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(item.payload)
+      });
+
+      if (!response.ok) continue;
+      const data = await response.json();
+      if (data?.token && data?.expiresAt) return data;
+    } catch {
+      continue;
+    }
+  }
+
+  throw new Error("口令无效或当前验证服务不可用");
+}
+
+async function submitVipCode() {
+  const input = document.getElementById("vipCodeInput");
+  const button = document.getElementById("submitVipCodeBtn");
+  const code = String(input?.value || "").trim();
+  if (!code) {
+    setVipCodeHint("请先输入 VIP 口令或朋友测试码。", true);
+    return;
+  }
+
+  if (button) {
+    button.disabled = true;
+    button.textContent = "验证中...";
+  }
+
+  try {
+    const tokenData = await requestVipTokenByCode(code);
+    localStorage.setItem(VIP_TOKEN_KEY, JSON.stringify({ token: tokenData.token, expiresAt: tokenData.expiresAt }));
+    setVipCodeHint("校验通过，已为你解锁当前设备 24 小时。", false);
+    setVipOrderStatus("状态：已验证", "口令校验通过，现在可以继续解牌。");
+    closeVipModal();
+    showEnergyEffect(true);
+  } catch (error) {
+    setVipCodeHint(error.message || "口令校验失败，请重试。", true);
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = "输入口令解锁";
+    }
+  }
 }
 
 function showEnergyEffect(isVip = false) {
   setFlowStep(1);
   enterReadingMode();
   const energyText = document.getElementById("energyText");
-  energyText.innerText = isVip ? "能量已接收…更深层的因果线正在展开" : "灵感已汇聚…塔罗之眼正在缓缓张开";
+  energyText.innerText = isVip ? "能量已接收，更深层的因果线正在展开" : "灵感已汇聚，塔罗之眼正在缓缓张开";
   energyText.style.display = "block";
 
   const spreadContainer = document.getElementById("spreadContainer");
@@ -2015,7 +2099,7 @@ async function startDailyDraw() {
 
   applyDailyCardArtwork(dailyData.cardName, dailyData.cardEmoji);
   document.getElementById("dailyName").innerText = dailyData.cardName;
-  document.getElementById("dailyQuote").innerText = `“${dailyData.reading}”`;
+  document.getElementById("dailyQuote").innerText = dailyData.reading;
 }
 
 function initStarfield() {
@@ -2062,6 +2146,31 @@ function extractCoreQuote(reading = "") {
   return first.length > 72 ? `${first.slice(0, 72)}...` : first;
 }
 
+function loadExternalScript(src) {
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector(`script[src="${src}"]`);
+    if (existing) {
+      if (existing.getAttribute("data-loaded") === "true") {
+        resolve();
+        return;
+      }
+      existing.addEventListener("load", () => resolve(), { once: true });
+      existing.addEventListener("error", () => reject(new Error(`脚本加载失败: ${src}`)), { once: true });
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = src;
+    script.async = true;
+    script.addEventListener("load", () => {
+      script.setAttribute("data-loaded", "true");
+      resolve();
+    }, { once: true });
+    script.addEventListener("error", () => reject(new Error(`脚本加载失败: ${src}`)), { once: true });
+    document.head.appendChild(script);
+  });
+}
+
 async function saveAsImage() {
   const btn = document.getElementById("saveBtn");
   if (!btn) return;
@@ -2075,6 +2184,9 @@ async function saveAsImage() {
   btn.disabled = true;
 
   try {
+    if (typeof html2canvas !== "function") {
+      await loadExternalScript("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js");
+    }
     if (typeof html2canvas !== "function") {
       throw new Error("html2canvas 未加载");
     }

@@ -16,6 +16,15 @@ function applyCors(req, res) {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 }
 
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export default async function handler(req, res) {
   applyCors(req, res);
 
@@ -23,8 +32,9 @@ export default async function handler(req, res) {
   if (req.method !== "POST") return res.status(405).json({ error: "只接受 POST 请求" });
 
   const { name, email, contact, message, page, createdAt } = req.body || {};
-  const mergedContact = contact || email || "未填写";
-  if (!message || !String(message).trim()) {
+  const mergedContact = String(contact || email || "未填写").trim().slice(0, 200);
+  const safeMessage = String(message || "").trim().slice(0, 5000);
+  if (!safeMessage) {
     return res.status(400).json({ error: "意见内容不能为空" });
   }
 
@@ -38,13 +48,13 @@ export default async function handler(req, res) {
 
   const html = `
     <h2>新的用户意见反馈</h2>
-    <p><strong>称呼：</strong>${String(name || "匿名用户")}</p>
-    <p><strong>联系方式：</strong>${String(mergedContact)}</p>
-    <p><strong>提交时间：</strong>${String(createdAt || new Date().toISOString())}</p>
-    <p><strong>来源页面：</strong>${String(page || "未知")}</p>
+    <p><strong>称呼：</strong>${escapeHtml(String(name || "匿名用户").trim().slice(0, 80))}</p>
+    <p><strong>联系方式：</strong>${escapeHtml(mergedContact)}</p>
+    <p><strong>提交时间：</strong>${escapeHtml(String(createdAt || new Date().toISOString()))}</p>
+    <p><strong>来源页面：</strong>${escapeHtml(String(page || "未知").slice(0, 500))}</p>
     <hr />
     <p><strong>意见内容：</strong></p>
-    <pre style="white-space: pre-wrap; line-height: 1.6;">${String(message)}</pre>
+    <pre style="white-space: pre-wrap; line-height: 1.6;">${escapeHtml(safeMessage)}</pre>
   `;
 
   try {
