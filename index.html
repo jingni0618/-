@@ -26,6 +26,7 @@
       <div class="intro-badge">塔罗之眼 Tarot Eye</div>
       <p id="introText" class="intro-text"></p>
       <div class="intro-hint">让答案在一呼一吸之间慢慢显现</div>
+      <div class="intro-tagline">基于韦特牌 · AI 深度解读 · 每次都是你专属</div>
       <div class="intro-tap-hint" id="introTapHint">轻触屏幕继续 ↓</div>
     </div>
   </div>
@@ -259,10 +260,8 @@
     
     <div id="actionBtns" class="action-btns" style="margin-top: 30px; display: none; justify-content: center; gap: 15px; padding-bottom: 50px;">
       <button id="saveBtn" class="main-btn">📸 保存解牌卷轴</button>
-      <button id="pushToArchiveBtn" class="secondary-btn">🗂 写入成长档案</button>
-      <button id="restartBtn" class="ghost-btn">回到主页</button>
-    </div>
-  </div>
+      <button id="newQuestionBtn" class="secondary-btn">✏️ 换个问题再抽一次</button>
+    div>
 
   <div id="historyDetailModal" class="modal-overlay" style="display:none;">
     <div class="modal-content" style="max-width: 620px; text-align: left;">
@@ -345,11 +344,7 @@
       <div id="feedbackSendStatus" style="display:none; margin-top:8px; font-size:13px; color:#e07060; text-align:center;"></div>
       <a id="feedbackMailtoFallback" href="#" style="display:none; margin-top:8px; font-size:13px; color:#d4aa70; text-align:center; text-decoration:underline;">→ 点此直接发邮件给我</a>
       <div class="feedback-contact-shortcut">
-        <div class="contact-desc" style="margin-top:10px;">需要定制占卜流程？可直接联系作者。</div>
-        <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-          <button id="openContactFromFeedbackBtn" class="secondary-btn">查看联系方式</button>
-          <button id="feedbackBackHomeBtn" class="secondary-btn">← 回到主页</button>
-        </div>
+        <div class="contact-desc" style="margin-top:10px; font-size:13px; text-align:center;">定制占卜 · 问题反馈：<a href="mailto:jingni18@hotmail.com" class="contact-email-inline">jingni18@hotmail.com</a></div>
       </div>
     </div>
   </div>
@@ -357,6 +352,8 @@
   <div id="cardPreviewModal" class="modal-overlay card-preview-modal" style="display:none;">
     <div class="modal-content card-preview-content">
       <button id="closeCardPreviewBtn" class="card-preview-close" type="button" aria-label="关闭看牌预览">×</button>
+      <button id="cardPreviewPrev" class="card-preview-nav card-preview-nav--prev" type="button" aria-label="上一张牌" style="display:none;">‹</button>
+      <button id="cardPreviewNext" class="card-preview-nav card-preview-nav--next" type="button" aria-label="下一张牌" style="display:none;">›</button>
       <div class="card-preview-shell">
         <div class="card-preview-visual">
           <img id="cardPreviewImage" class="card-preview-image" alt="塔罗牌放大预览">

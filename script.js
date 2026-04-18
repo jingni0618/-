@@ -83,6 +83,7 @@ function getUnlockPriceForMode(mode = activeReadingMode, spread = document.getEl
 
 let currentSpreadConfig = {}; let requiredCardsCount = 0; let cardsDrawn = 0; let cardsFlipped = 0; let drawnCardsData = []; let shuffledDeck = []; let isMobile = false; let isNightMode = false;
 let activeReadingMode = "standard";
+let currentPreviewIndex = -1;
 let latestReadingRecord = null;
 let screenModeHideTimer = null;
 let vipConfirmCountdownTimer = null;
@@ -108,55 +109,52 @@ const DECK_SPREAD_THRESHOLD = 140;
 
 window.onload = function() {
   isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+  // ── Intro dismiss logic registered FIRST ─────────────────────────────────
+  // Even if later init steps throw, the intro will still dismiss correctly.
+  let introDone = false;
+  function dismissIntro() {
+    if (introDone) return;
+    introDone = true;
+    const introEl = document.getElementById('introScreen');
+    if (introEl) introEl.style.opacity = 0;
+    setTimeout(() => {
+      if (introEl) introEl.style.display = 'none';
+      const ui = document.getElementById('uiElements');
+      if (ui) { ui.style.opacity = 1; ui.style.display = 'flex'; }
+      document.body.classList.add("home-ready");
+    }, 380);
+  }
+
+  const introEl = document.getElementById('introScreen');
+  if (introEl) {
+    introEl.addEventListener('click', dismissIntro, { once: true });
+    introEl.addEventListener('touchend', dismissIntro, { once: true });
+  }
+  // Absolute failsafe: dismiss after 3s no matter what
+  setTimeout(dismissIntro, 3000);
+
+  // ── Rest of init ─────────────────────────────────────────────────────────
   applyDensityMode(localStorage.getItem(DENSITY_MODE_KEY) || "compact");
   applyTimePhaseTheme(); initStarfield(); renderSpread(); renderSpreadGuide(); loadHistory(); initEventBindings(); renderHomeDate(); updateStatus("");
 
-  const isReturning = localStorage.getItem("tarotHasVisited");
-  
-  if (isReturning) {
-    // 回访用户：快速淡入，跳过打字机
-    document.getElementById('introScreen').style.display = 'none';
-    document.getElementById('uiElements').style.opacity = 1;
-    document.body.classList.add("home-ready");
-  } else {
-    localStorage.setItem("tarotHasVisited", "1");
-    const introStr = isNightMode ? "夜色已深，愿你在这里照见真实的自己。\n把困惑放在掌心，我们慢慢翻开答案。" : "欢迎回来，今天也值得被温柔对待。\n从一个问题开始，把方向交给牌面。";
-    let i = 0;
-    let introDone = false;
+  // Typewriter intro text (every page load)
+  const introStr = isNightMode ? "夜色已深，愿你在这里照见真实的自己。" : "欢迎来到塔罗之眼，今天也值得被温柔对待。";
+  let i = 0;
 
-    function dismissIntro() {
-      if (introDone) return;
-      introDone = true;
-      i = introStr.length; // 停止打字机
-      const introEl = document.getElementById('introScreen');
-      if (introEl) introEl.style.opacity = 0;
-      setTimeout(() => {
-        if (introEl) introEl.style.display = 'none';
-        document.getElementById('uiElements').style.opacity = 1;
-        document.body.classList.add("home-ready");
-      }, 450);
+  function typeIntro() {
+    if (introDone) return;
+    const textEl = document.getElementById('introText');
+    if (!textEl) { setTimeout(dismissIntro, 800); return; }
+    if (i < introStr.length) {
+      textEl.innerText += introStr.charAt(i); i++; setTimeout(typeIntro, 38);
+    } else {
+      const tapHint = document.getElementById('introTapHint');
+      if (tapHint) tapHint.classList.add('visible');
+      setTimeout(dismissIntro, 800);
     }
-
-    // 点击/触摸任意位置跳过
-    const introEl = document.getElementById('introScreen');
-    if (introEl) {
-      introEl.addEventListener('click', dismissIntro, { once: true });
-      introEl.addEventListener('touchend', dismissIntro, { once: true });
-    }
-
-    function typeIntro() {
-      if (introDone) return;
-      if(i < introStr.length) {
-        document.getElementById('introText').innerText += introStr.charAt(i); i++; setTimeout(typeIntro, 34);
-      } else {
-        // 打字完成后显示 tap hint
-        const tapHint = document.getElementById('introTapHint');
-        if (tapHint) tapHint.classList.add('visible');
-        setTimeout(dismissIntro, 2200);
-      }
-    }
-    typeIntro();
   }
+  typeIntro();
 };
 
 function applyDensityMode(mode = "compact") {
@@ -186,14 +184,6 @@ function initEventBindings() {
   bindReturnHome(byId("dailyBackBtn"));
   byId("growthHubBtn")?.addEventListener("click", openGrowthHub);
   byId("feedbackBtn")?.addEventListener("click", openFeedbackModal);
-  byId("openContactFromFeedbackBtn")?.addEventListener("click", () => {
-    closeFeedbackModal();
-    openContactModal();
-  });
-  byId("feedbackBackHomeBtn")?.addEventListener("click", () => {
-    closeFeedbackModal();
-    handleReturnToHomePage();
-  });
   byId("quickDrawBtn")?.addEventListener("click", quickDrawSingleCard);
   initStartHoldGesture();
   byId("startBtn")?.addEventListener("click", () => {
@@ -226,8 +216,13 @@ function initEventBindings() {
   byId("closeCardPreviewBtn")?.addEventListener("click", closeCardPreview);
   byId("sendFeedbackBtn")?.addEventListener("click", sendFeedback);
   byId("saveBtn")?.addEventListener("click", saveAsImage);
-  byId("pushToArchiveBtn")?.addEventListener("click", pushLatestReadingToArchive);
-  bindReturnHome(byId("restartBtn"));
+  byId("newQuestionBtn")?.addEventListener("click", () => {
+    handleReturnToHomePage();
+    setTimeout(() => {
+      const qi = document.getElementById("questionInput");
+      if (qi) { qi.focus(); qi.scrollIntoView({ behavior: "smooth" }); }
+    }, 300);
+  });
   bindReturnHome(byId("immersiveBackBtn"));
   byId("historyDetailCloseBtn")?.addEventListener("click", closeHistoryDetail);
   byId("questionInput")?.addEventListener("input", () => updateQuestionHint());
@@ -251,6 +246,36 @@ function initEventBindings() {
   byId("cardPreviewModal")?.addEventListener("click", e => {
     if (e.target?.id === "cardPreviewModal") closeCardPreview();
   });
+
+  // Card preview prev/next navigation
+  byId("cardPreviewPrev")?.addEventListener("click", () => {
+    if (currentPreviewIndex <= 0) return;
+    const prevIdx = currentPreviewIndex - 1;
+    if (drawnCardsData[prevIdx]) openCardPreview(drawnCardsData[prevIdx], prevIdx);
+  });
+  byId("cardPreviewNext")?.addEventListener("click", () => {
+    if (currentPreviewIndex < 0 || currentPreviewIndex >= drawnCardsData.length - 1) return;
+    const nextIdx = currentPreviewIndex + 1;
+    if (drawnCardsData[nextIdx]) openCardPreview(drawnCardsData[nextIdx], nextIdx);
+  });
+
+  // Touch swipe for card preview modal
+  let _swipeStartX = 0;
+  const previewModal = byId("cardPreviewModal");
+  if (previewModal) {
+    previewModal.addEventListener("touchstart", e => { _swipeStartX = e.touches[0].clientX; }, { passive: true });
+    previewModal.addEventListener("touchend", e => {
+      const dx = e.changedTouches[0].clientX - _swipeStartX;
+      if (Math.abs(dx) < 50) return;
+      if (dx < 0 && currentPreviewIndex >= 0 && currentPreviewIndex < drawnCardsData.length - 1) {
+        const ni = currentPreviewIndex + 1;
+        if (drawnCardsData[ni]) openCardPreview(drawnCardsData[ni], ni);
+      } else if (dx > 0 && currentPreviewIndex > 0) {
+        const pi = currentPreviewIndex - 1;
+        if (drawnCardsData[pi]) openCardPreview(drawnCardsData[pi], pi);
+      }
+    }, { passive: true });
+  }
   updateQuestionHint();
   updateCoupleHint();
   setInterval(() => {
@@ -514,6 +539,16 @@ async function sendFeedback() {
   }
 }
 
+const SPREAD_DOTS_HTML = {
+  single:       `<span class="sdr"><i class="sd"></i></span>`,
+  yesno:        `<span class="sdr"><i class="sd"></i><i class="sd"></i><i class="sd"></i></span>`,
+  time:         `<span class="sdr"><i class="sd"></i><i class="sd"></i><i class="sd"></i></span>`,
+  relationship: `<span class="sdr"><i class="sd"></i><i class="sd"></i></span><span class="sdr"><i class="sd"></i><i class="sd"></i></span>`,
+  career:       `<span class="sdr"><i class="sd"></i><i class="sd"></i></span><span class="sdr"><i class="sd"></i><i class="sd"></i></span>`,
+  choice:       `<span class="sdr"><i class="sd sd-g"></i><i class="sd"></i><i class="sd sd-g"></i></span><span class="sdr"><i class="sd"></i><i class="sd"></i><i class="sd"></i></span><span class="sdr"><i class="sd sd-g"></i><i class="sd"></i><i class="sd sd-g"></i></span>`,
+  cross:        `<span class="sdr"><i class="sd sd-g"></i><i class="sd"></i><i class="sd sd-g"></i></span><span class="sdr"><i class="sd"></i><i class="sd"></i><i class="sd"></i></span><span class="sdr"><i class="sd sd-g"></i><i class="sd"></i><i class="sd sd-g"></i></span>`,
+};
+
 function renderSpreadGuide() {
   const wrap = document.getElementById("spreadVisualGuide");
   const select = document.getElementById("spreadSelect");
@@ -528,11 +563,13 @@ function renderSpreadGuide() {
   const freeCards = keys.filter(k => !spreadGuideMeta[k].paid).map(k => {
     const info = spreadGuideMeta[k];
     const activeClass = k === selected ? "active" : "";
+    const dots = SPREAD_DOTS_HTML[k] || "";
     return `
       <button class="spread-pill ${activeClass}" data-spread="${k}" type="button">
         <span class="spread-pill__icon">${info.icon}</span>
         <span class="spread-pill__name">${info.title}</span>
         <span class="spread-pill__meta">${info.count}张 · 免费</span>
+        <span class="spread-pill__dots">${dots}</span>
       </button>
     `;
   }).join("");
@@ -541,11 +578,13 @@ function renderSpreadGuide() {
     const info = spreadGuideMeta[k];
     const activeClass = k === selected ? "active" : "";
     const priceFen = info.priceFen || VIP_PRICE_DEEP_FEN;
+    const dots = SPREAD_DOTS_HTML[k] || "";
     return `
       <button class="spread-pill is-paid ${activeClass}" data-spread="${k}" type="button">
         <span class="spread-pill__icon">${info.icon}</span>
         <span class="spread-pill__name">${info.title}</span>
         <span class="spread-pill__meta">${info.count}张 · 🔒 ${formatFenPrice(priceFen)}/次</span>
+        <span class="spread-pill__dots">${dots}</span>
       </button>
     `;
   }).join("");
@@ -924,7 +963,7 @@ function closeContactModal() {
   modal.style.display = "none";
 }
 
-function openCardPreview(cardData) {
+function openCardPreview(cardData, index = -1) {
   const modal = document.getElementById("cardPreviewModal");
   const imageEl = document.getElementById("cardPreviewImage");
   const emojiEl = document.getElementById("cardPreviewEmoji");
@@ -932,6 +971,8 @@ function openCardPreview(cardData) {
   const nameEl = document.getElementById("cardPreviewName");
   const meaningEl = document.getElementById("cardPreviewMeaning");
   if (!modal || !imageEl || !emojiEl || !positionEl || !nameEl || !meaningEl || !cardData) return;
+
+  currentPreviewIndex = index;
 
   positionEl.textContent = cardData.position || "已翻开的牌";
   nameEl.textContent = normalizeCardName(cardData.cardName) || cardData.cardName || "未知牌";
@@ -952,6 +993,14 @@ function openCardPreview(cardData) {
     emojiEl.style.display = "flex";
     emojiEl.textContent = cardData.emoji || "✧";
   }
+
+  // Show/hide prev-next nav based on available flipped cards
+  const flippedCount = drawnCardsData.filter(Boolean).length;
+  const showNav = index >= 0 && flippedCount > 1;
+  const prevBtn = document.getElementById("cardPreviewPrev");
+  const nextBtn = document.getElementById("cardPreviewNext");
+  if (prevBtn) prevBtn.style.display = showNav ? "" : "none";
+  if (nextBtn) nextBtn.style.display = showNav ? "" : "none";
 
   modal.style.display = "flex";
 }
@@ -1045,8 +1094,7 @@ function hideHomeShell(modeClass) {
 
 function enterReadingMode() {
   hideHomeShell("reading-mode");
-  const backBtn = document.getElementById("immersiveBackBtn");
-  if (backBtn) backBtn.style.display = "";
+  // immersiveBackBtn intentionally not shown — restartBtn in actionBtns handles going home
 }
 
 function enterDailyMode() {
@@ -1058,6 +1106,9 @@ function returnToHomePage() {
   resetRitualOrbState();
   resetDeckSpreadState();
   finalRevealTransitionRunning = false;
+  // Clear VIP token so each paid reading requires fresh payment
+  sessionStorage.removeItem(VIP_TOKEN_KEY);
+  localStorage.removeItem(VIP_ORDER_ID_KEY);
   document.body.classList.remove("screen-shake");
   const finalFlash = document.getElementById("finalFlashOverlay");
   if (finalFlash) finalFlash.classList.remove("active");
@@ -1089,6 +1140,7 @@ function returnToHomePage() {
   }
   document.body.classList.remove("daily-mode");
   document.body.classList.remove("reading-mode");
+  document.body.classList.remove("reading-text-active");
 
   const intro = document.getElementById("introScreen");
   if (intro) {
@@ -1477,7 +1529,7 @@ function showEnergyEffect(isVip = false) {
     energyText.style.display = "none";
     playSound("drawSound"); if (navigator.vibrate) navigator.vibrate([100, 50, 100]); 
     const shuffleArea = document.getElementById("shuffleArea"); shuffleArea.style.display = "flex";
-    setTimeout(() => { shuffleArea.style.display = "none"; document.getElementById("deckArea").style.display = "flex"; initFanDeck(); }, 3800);
+    setTimeout(() => { shuffleArea.style.display = "none"; document.getElementById("deckArea").style.display = "flex"; initFanDeck(); }, 2000);
   }, 800);
 }
 
@@ -1489,8 +1541,8 @@ function initFanDeck() {
   fanDeck.style.setProperty("--spread-progress", "0");
   deckSpreadProgress = 0;
   deckSpreadUnlocked = false;
-  const totalCards = isMobile ? 13 : 21;
-  const fanRange = isMobile ? 118 : 132; // total arc in degrees
+  const totalCards = isMobile ? 21 : 33;
+  const fanRange = isMobile ? 130 : 148; // total arc in degrees
   const cardsLeftEl = document.getElementById("cardsLeft"); if (cardsLeftEl) cardsLeftEl.innerText = requiredCardsCount;
   for (let i = 0; i < totalCards; i++) {
     const ratio = totalCards <= 1 ? 0.5 : i / (totalCards - 1);
@@ -1565,6 +1617,18 @@ function unlockDeckSpread() {
 
   const spreadContainer = document.getElementById("spreadContainer");
   if (spreadContainer) spreadContainer.style.opacity = "1";
+
+  // Inject draw progress tracker into deckArea
+  const deckAreaForTracker = document.getElementById("deckArea");
+  let tracker = document.getElementById("drawSlotTracker");
+  if (tracker) tracker.remove();
+  tracker = document.createElement("div");
+  tracker.id = "drawSlotTracker";
+  tracker.className = "draw-slot-tracker";
+  tracker.innerHTML = currentSpreadConfig.cards.map((pos, i) =>
+    `<span class="dst-slot" id="dst-${i}"><span class="dst-dot"></span><span class="dst-label">${pos.label}</span></span>`
+  ).join("");
+  if (deckAreaForTracker) deckAreaForTracker.appendChild(tracker);
 }
 
 function updateDeckSpreadHint(progress = 0) {
@@ -1688,9 +1752,17 @@ function userDrawsOneCard(clickedCardElement) {
   const cardData = shuffledDeck.pop();
   const isReversed = Math.random() < 0.2; const reversedText = isReversed ? " (逆位)" : " (正位)";
 
-  drawnCardsData.push({ position: currentSpreadConfig.cards[cardsDrawn].label, cardName: cardData.name + reversedText, meaning: cardData.meaning, isReversed: isReversed, emoji: cardData.emoji, imageUrl: getTarotImageUrl(cardData.name) });
+  const drawnImageUrl = getTarotImageUrl(cardData.name);
+  drawnCardsData.push({ position: currentSpreadConfig.cards[cardsDrawn].label, cardName: cardData.name + reversedText, meaning: cardData.meaning, isReversed: isReversed, emoji: cardData.emoji, imageUrl: drawnImageUrl });
+  if (drawnImageUrl) { const preImg = new Image(); preImg.src = drawnImageUrl; }
   const targetSlotCard = document.getElementById(`card-${cardsDrawn}`);
   targetSlotCard.classList.add("dealt"); document.getElementById(`label-${cardsDrawn}`).classList.add("visible");
+  // Update draw progress tracker
+  const dstSlot = document.getElementById(`dst-${cardsDrawn}`);
+  if (dstSlot) dstSlot.classList.add("filled");
+  // Update draw progress tracker
+  const dstSlot = document.getElementById(`dst-${cardsDrawn}`);
+  if (dstSlot) dstSlot.classList.add("filled");
   cardsDrawn++; const cardsLeftEl2 = document.getElementById("cardsLeft"); if (cardsLeftEl2) cardsLeftEl2.innerText = (requiredCardsCount - cardsDrawn);
 
   if (cardsDrawn === requiredCardsCount) { 
@@ -1710,7 +1782,7 @@ function userDrawsOneCard(clickedCardElement) {
 function userFlipsCard(i) {
   const cardElement = document.getElementById(`card-${i}`);
   if(cardElement.classList.contains("flipped")) {
-    openCardPreview(drawnCardsData[i]);
+    openCardPreview(drawnCardsData[i], i);
     return;
   }
 
@@ -1772,6 +1844,9 @@ async function triggerFinalRevealAndReading(question, style, cards, context) {
   finalRevealTransitionRunning = true;
   try {
     await playFinalFlashTransition();
+    // Keep spread container visible — CSS reading-text-active moves it to left sidebar
+    document.body.classList.add("reading-text-active");
+    window.scrollTo({ top: 0, behavior: "smooth" });
     document.getElementById("readingWrapper").style.display = "block";
     document.getElementById("readingBox").classList.add("visible");
     renderMiniCardBar(cards);
@@ -1795,15 +1870,60 @@ function renderMiniCardBar(cards = []) {
   bar.innerHTML = miniCards.map((item, index) => {
     const emoji = String(item?.emoji || "🔮");
     const position = String(item?.position || `位置${index + 1}`);
+    const baseName = normalizeCardName(item?.cardName || "");
     return `
-      <div class="mini-card-item">
+      <div class="mini-card-item" role="button" tabindex="0" data-idx="${index}" title="${baseName}">
         <span class="mini-card-emoji">${emoji}</span>
         <span class="mini-card-position">${position}</span>
+        <span class="mini-card-name">${baseName}</span>
       </div>
     `;
   }).join("");
 
   bar.style.display = "flex";
+  bar.querySelectorAll(".mini-card-item").forEach(el => {
+    const onClick = () => {
+      const idx = parseInt(el.getAttribute("data-idx"), 10);
+      if (!isNaN(idx) && drawnCardsData[idx]) openCardPreview(drawnCardsData[idx], idx);
+    };
+    el.addEventListener("click", onClick);
+    el.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") onClick(); });
+  });
+}
+
+function wrapReadingSectionsAsCollapsible() {
+  const container = document.getElementById("streamContent");
+  if (!container) return;
+  // Only wrap h3 headings that are NOT the quick-takeaway header
+  const allH3 = Array.from(container.querySelectorAll("h3")).filter(h =>
+    !h.textContent.includes("速览") && !h.textContent.includes("takeaway")
+  );
+  if (allH3.length < 2) return;
+
+  allH3.forEach((h, idx) => {
+    const nextH = allH3[idx + 1] || null;
+    const parent = h.parentNode;
+    if (!parent) return;
+
+    const details = document.createElement("details");
+    if (idx === 0) details.setAttribute("open", "");
+    details.className = "reading-section-details";
+
+    const summary = document.createElement("summary");
+    summary.className = "reading-section-summary";
+    summary.textContent = h.textContent.trim();
+    details.appendChild(summary);
+
+    // Collect sibling nodes between this h3 and the next h3
+    const toMove = [];
+    let cur = h.nextSibling;
+    while (cur && cur !== nextH) {
+      toMove.push(cur);
+      cur = cur.nextSibling;
+    }
+    toMove.forEach(node => details.appendChild(node));
+    parent.replaceChild(details, h);
+  });
 }
 
 function renderReadingSummary(rawHtml) {
@@ -2080,6 +2200,7 @@ async function fetchStream(question, style, cards, context = getReadingContext(q
     if(cursor) cursor.style.display = "none";
     if(aiStatus) aiStatus.style.display = "none";
     const actionBtns = document.getElementById("actionBtns"); if(actionBtns) actionBtns.style.display = "flex";
+    wrapReadingSectionsAsCollapsible();
     if (historyRecord) {
       latestReadingRecord = historyRecord;
       addHistoryRecord(historyRecord);
