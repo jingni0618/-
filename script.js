@@ -947,6 +947,11 @@ function returnToHomePage() {
 
   const readingBox = document.getElementById("readingBox");
   if (readingBox) readingBox.classList.remove("visible", "theme-night", "theme-nebula");
+  const miniCardBar = document.getElementById("miniCardBar");
+  if (miniCardBar) {
+    miniCardBar.style.display = "none";
+    miniCardBar.innerHTML = "";
+  }
   const stream = document.getElementById("streamContent");
   if (stream) stream.innerHTML = "";
   const summary = document.getElementById("readingSummary");
@@ -1479,6 +1484,7 @@ function userFlipsCard(i) {
     const question = context.question;
     const style = "classic";
     document.getElementById("readingWrapper").style.display = "block"; document.getElementById("readingBox").classList.add("visible");
+    renderMiniCardBar(drawnCardsData);
     fetchStream(question, style, drawnCardsData, context);
   }
 }
@@ -1521,6 +1527,31 @@ function renderActionPlan(context, cards, style) {
   list.innerHTML = plans.map(item => `<li>${item}</li>`).join("");
   box.style.display = "block";
   setFlowStep(4);
+}
+
+function renderMiniCardBar(cards = []) {
+  const bar = document.getElementById("miniCardBar");
+  if (!bar) return;
+
+  const miniCards = Array.isArray(cards) ? cards.slice(0, 5) : [];
+  if (!miniCards.length) {
+    bar.style.display = "none";
+    bar.innerHTML = "";
+    return;
+  }
+
+  bar.innerHTML = miniCards.map((item, index) => {
+    const emoji = String(item?.emoji || "🔮");
+    const position = String(item?.position || `位置${index + 1}`);
+    return `
+      <div class="mini-card-item">
+        <span class="mini-card-emoji">${emoji}</span>
+        <span class="mini-card-position">${position}</span>
+      </div>
+    `;
+  }).join("");
+
+  bar.style.display = "flex";
 }
 
 function renderReadingSummary(rawHtml) {
@@ -1594,6 +1625,19 @@ const TarotApiService = {
 async function fetchStream(question, style, cards, context = getReadingContext(question, activeReadingMode)) {
   const streamContent = document.getElementById("streamContent"); const cursor = document.getElementById("cursor");
   streamContent.innerHTML = ""; let htmlBuffer = "";
+  const renderMarkdown = (markdownText = "") => {
+    const source = String(markdownText || "").replace(/```html/gi, '').replace(/```/g, '');
+    if (typeof marked !== "undefined" && typeof marked.parse === "function") {
+      streamContent.innerHTML = marked.parse(source);
+      return;
+    }
+    streamContent.textContent = source;
+  };
+
+  if (typeof marked !== "undefined" && typeof marked.setOptions === "function") {
+    marked.setOptions({ gfm: true, breaks: true });
+  }
+
   const aiStatus = document.getElementById("aiStatus"); if(aiStatus) aiStatus.style.display = "flex";
   let historyRecord = null;
   const vipToken = readVipToken()?.token || null;
@@ -1625,11 +1669,15 @@ async function fetchStream(question, style, cards, context = getReadingContext(q
         if (line.startsWith('data: ')) {
           try {
             const dataStr = line.replace('data: ', '');
-            if(dataStr.startsWith('[ERROR]')) { streamContent.innerHTML += `<br><span style="color:#ff6b6b">${dataStr}</span>`; continue; }
+            if(dataStr.startsWith('[ERROR]')) {
+              htmlBuffer += `\n\n> ${dataStr}`;
+              renderMarkdown(htmlBuffer);
+              continue;
+            }
             const data = JSON.parse(dataStr);
             const content = data.choices?.[0]?.delta?.content || "";
             htmlBuffer += content;
-            streamContent.innerHTML = htmlBuffer.replace(/```html/gi, '').replace(/```/g, '');
+            renderMarkdown(htmlBuffer);
             if (cursor) cursor.style.display = "inline-block";
           } catch (e) {
             console.error("流数据解析失败", e);
@@ -1672,7 +1720,7 @@ async function fetchStream(question, style, cards, context = getReadingContext(q
         vipToken
       });
       const fallbackText = fallback.reading || "星界连接暂时不稳，已为你生成简版解牌。";
-      streamContent.innerHTML = fallbackText.replace(/\n/g, "<br>");
+      renderMarkdown(fallbackText);
       const spreadLabel = document.getElementById("spreadSelect") ? document.getElementById("spreadSelect").selectedOptions[0].innerText : "未知牌阵";
       const displayQuestion = compositeQuestion || "直觉速取";
       const mode = detailContext.mode === "compatibility" ? "双人合盘" : (detailContext.mode === "quick" ? "直觉速取" : "深度占卜");
@@ -1694,7 +1742,7 @@ async function fetchStream(question, style, cards, context = getReadingContext(q
       renderActionPlan(detailContext, cards, style);
       updateStatus("流式连接异常，已自动切换到稳定解牌模式。");
     } catch {
-      streamContent.innerHTML = `<span style="color:#ff6b6b">🔮 宇宙连接中断: ${error.message}</span>`;
+      renderMarkdown(`> 🔮 宇宙连接中断: ${error.message}`);
       updateStatus("连接异常，请稍后重试。");
     }
   } finally {

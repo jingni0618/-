@@ -890,6 +890,47 @@ body[data-phase="dusk"] #starfield {
 
 .reading-wrapper { max-width: 760px; width: 100%; }
 
+.mini-card-bar {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  overflow-x: auto;
+  padding: 8px 10px;
+  margin: 0 0 10px;
+  border-bottom: 1px solid rgba(229, 204, 156, 0.3);
+  border-radius: 14px;
+  background: rgba(17, 20, 35, 0.58);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.mini-card-item {
+  flex: 0 0 auto;
+  min-width: 88px;
+  border: 1px solid rgba(233, 213, 174, 0.28);
+  border-radius: 10px;
+  padding: 6px 8px;
+  background: rgba(255, 248, 230, 0.08);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.mini-card-emoji {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.mini-card-position {
+  font-size: 11px;
+  color: rgba(247, 233, 200, 0.9);
+  white-space: nowrap;
+}
+
 .ai-status {
   display: flex;
   flex-direction: column;
@@ -922,6 +963,44 @@ body[data-phase="dusk"] #starfield {
 .parchment-text * { color: inherit !important; background: transparent !important; }
 .parchment-text h4 { margin-top: 26px !important; margin-bottom: 12px !important; border-bottom: 1px dashed rgba(100, 80, 52, 0.35); padding-bottom: 6px; }
 .reading-keywords { border-left: 4px solid #6d5438; background: rgba(109,84,56,0.1); padding: 12px; border-radius: 0 8px 8px 0; }
+
+#streamContent blockquote {
+  margin: 16px 0;
+  padding: 12px 14px;
+  border-left: 6px solid #c9a45b;
+  border-radius: 0 10px 10px 0;
+  background: linear-gradient(120deg, rgba(244, 231, 203, 0.78), rgba(241, 223, 184, 0.36));
+  color: #5d462a !important;
+  box-shadow: 0 8px 18px rgba(92, 70, 39, 0.12);
+}
+
+#streamContent blockquote p {
+  margin: 0;
+  line-height: 1.85;
+}
+
+#streamContent ul {
+  margin: 14px 0;
+  padding: 0 0 0 1.25rem;
+  list-style: none;
+}
+
+#streamContent ul li {
+  position: relative;
+  margin: 8px 0;
+  padding-left: 12px;
+  color: inherit !important;
+  line-height: 1.8;
+}
+
+#streamContent ul li::before {
+  content: "✦";
+  position: absolute;
+  left: -2px;
+  top: 1px;
+  color: #b48b46;
+  font-size: 0.9rem;
+}
 .typing-cursor {
   display: inline-block;
   width: 6px;

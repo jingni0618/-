@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
@@ -210,6 +211,7 @@
 
     <!-- 羊皮纸长文解析区 -->
     <div class="reading-wrapper" id="readingWrapper" style="display: none;">
+      <div id="miniCardBar" class="mini-card-bar" style="display:none;"></div>
       <div class="parchment-box" id="readingBox">
         <div class="ai-status" id="aiStatus"><div class="crystal-ball">🔮</div><span>塔罗解读中，正在编织你的答案...</span></div>
         <div id="readingSummary" class="reading-summary" style="display:none;"></div>
