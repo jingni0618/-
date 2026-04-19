@@ -3869,6 +3869,14 @@ body.reading-mode .slot-label {
   padding: 36px 38px;
 }
 
+.poster-question {
+  margin-bottom: 18px;
+  text-align: center;
+  font-size: 24px;
+  line-height: 1.6;
+  color: rgba(247, 233, 204, 0.88);
+}
+
 .poster-quote-label {
   text-align: center;
   font-size: 30px;
@@ -3878,9 +3886,17 @@ body.reading-mode .slot-label {
 
 .poster-quote-text {
   margin: 20px 0 0;
-  font-size: 44px;
-  line-height: 1.6;
+  font-size: 34px;
+  line-height: 1.75;
   text-align: center;
+}
+
+.poster-summary-text {
+  margin: 24px 0 0;
+  font-size: 22px;
+  line-height: 1.9;
+  text-align: center;
+  color: rgba(246, 230, 197, 0.84);
 }
 
 .poster-footer {
@@ -3897,6 +3913,33 @@ body.reading-mode .slot-label {
   border-radius: 20px;
   border: 1px solid rgba(250, 236, 206, 0.5);
   background: #fff;
+}
+
+.poster-qr--text {
+  width: 320px;
+  height: auto;
+  min-height: 160px;
+  padding: 24px 22px;
+  display: grid;
+  place-items: center;
+  gap: 12px;
+  text-align: center;
+  background:
+    radial-gradient(circle at top, rgba(255,255,255,0.18), transparent 58%),
+    rgba(255, 248, 233, 0.08);
+}
+
+.poster-qr__label {
+  font-size: 24px;
+  color: rgba(246, 230, 197, 0.92);
+  letter-spacing: 1px;
+}
+
+.poster-qr__url {
+  font-size: 30px;
+  line-height: 1.4;
+  color: #fff8e8;
+  word-break: break-all;
 }
 
 .poster-meta {

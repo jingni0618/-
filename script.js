@@ -2860,6 +2860,15 @@ function extractPosterCoreLineFromDom() {
   return first.slice(0, 64);
 }
 
+function extractPosterSummaryText(record = latestReadingRecord) {
+  const rawSummary = String(document.getElementById("readingSummary")?.textContent || "").replace(/\s+/g, " ").trim();
+  if (rawSummary) return rawSummary.slice(0, 120);
+  const plain = stripRichText(String(record?.reading || ""));
+  if (!plain) return "";
+  const parts = plain.split(/(?<=[。！？!?])/).map(s => s.trim()).filter(Boolean).slice(0, 2);
+  return parts.join(" ").slice(0, 120);
+}
+
 async function ensureHtml2CanvasReady() {
   if (typeof html2canvas !== "function") {
     await loadExternalScript("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js");
@@ -3021,20 +3030,22 @@ function fillPosterCanvasFromReading(record) {
   const quoteEl = document.getElementById("posterQuote");
   const qrEl = document.getElementById("posterQr");
   const metaEl = document.getElementById("posterMeta");
-  if (!cardsWrap || !quoteEl || !qrEl || !metaEl) return;
+  const questionEl = document.getElementById("posterQuestion");
+  const summaryEl = document.getElementById("posterSummary");
+  if (!cardsWrap || !quoteEl || !qrEl || !metaEl || !questionEl || !summaryEl) return;
 
   const cards = Array.isArray(record?.cards) ? record.cards.slice(0, 5) : [];
   cardsWrap.innerHTML = cards.map((card, idx) => {
     const name = String(card?.cardName || `牌 ${idx + 1}`);
     const position = String(card?.position || `位置${idx + 1}`);
-    const imgUrl = String(card?.imageUrl || "").trim();
-    if (imgUrl) {
-      return `<div class="poster-card"><img src="${imgUrl}" alt="${name}"><span>${position}</span></div>`;
-    }
-    return `<div class="poster-card"><div class="poster-card-emoji">${String(card?.emoji || "🔮")}</div><span>${position}</span></div>`;
+    const emoji = String(card?.emoji || "🔮");
+    return `<div class="poster-card"><div class="poster-card-emoji">${emoji}</div><span>${position}</span><span>${name}</span></div>`;
   }).join("");
 
+  const shareQuestion = String(record?.question || "").trim();
+  questionEl.textContent = shareQuestion ? `问题：${shareQuestion}` : "为你抽出的这一组牌，正在回应你此刻最在意的课题。";
   quoteEl.textContent = `“${extractPosterCoreLineFromDom()}”`;
-  qrEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(window.location.origin)}`;
-  metaEl.textContent = `${record?.date || new Date().toLocaleString()} · 塔罗之眼`; 
+  summaryEl.textContent = extractPosterSummaryText(record);
+  qrEl.innerHTML = `<span class="poster-qr__label">访问塔罗之眼</span><span class="poster-qr__url">${window.location.host}</span>`;
+  metaEl.textContent = `${record?.date || new Date().toLocaleString()} · ${record?.spread || "塔罗之眼"}`; 
 }
