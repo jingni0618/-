@@ -88,6 +88,8 @@ let latestReadingRecord = null;
 let screenModeHideTimer = null;
 let vipConfirmCountdownTimer = null;
 let vipConfirmRemainingSeconds = 0;
+let vipOrderPollingTimer = null;
+let vipOrderStatusRequestPending = false;
 let startHoldTimer = null;
 let startHoldStartedAt = 0;
 let startHoldCommitted = false;
@@ -98,7 +100,7 @@ let finalRevealTransitionRunning = false;
 const DAILY_CACHE_KEY = "tarotDailyReading";
 const VIP_TOKEN_KEY = "tarotVipToken";
 const VIP_ORDER_ID_KEY = "tarotVipOrderId";
-const VIP_STATIC_QR_URL = "https://i.postimg.cc/P525Vk7w/IMG-9071.png";
+const VIP_STATIC_QR_URL = "/alipay-qr.PNG";
 const VAULT_META_KEY = "tarotVaultMeta";
 const DENSITY_MODE_KEY = "tarotReadingDensityMode";
 const HISTORY_LIMIT = 20;
@@ -190,7 +192,7 @@ function initEventBindings() {
   });
 
   byId("saveJournalNoteBtn")?.addEventListener("click", saveJournalNote);
-  byId("confirmVipPaidBtn")?.addEventListener("click", openVipConfirmModal);
+  byId("confirmVipPaidBtn")?.addEventListener("click", confirmVipOrderBeforeContinue);
   byId("submitVipCodeBtn")?.addEventListener("click", submitVipCode);
   byId("vipCodeInput")?.addEventListener("keydown", event => {
     if (event.key === "Enter") submitVipCode();
@@ -1327,7 +1329,7 @@ function checkVipAndStart({ requireQuestion = true, mode = "standard" } = {}) {
   if (requiredCardsCount > 3 && !hasValidVipToken()) {
     document.getElementById("vipModal").style.display = "flex";
     const priceFen = getUnlockPriceForMode(mode, document.getElementById("spreadSelect")?.value || "");
-    updateStatus(`该牌阵需解锁，当前价格 ${formatFenPrice(priceFen)}/次。扫码支付后点击“我已完成支付”继续。`);
+    updateStatus(`该牌阵需解锁，当前价格 ${formatFenPrice(priceFen)}/次。系统会自动检测支付结果，确认后即可继续解牌。`);
     prepareVipPaymentFlow();
     return;
   }
@@ -1362,17 +1364,167 @@ function setVipCodeHint(text, isError = false) {
 }
 
 function stopVipOrderPolling() {
+  if (vipOrderPollingTimer) {
+    clearInterval(vipOrderPollingTimer);
+    vipOrderPollingTimer = null;
+  }
+  vipOrderStatusRequestPending = false;
   localStorage.removeItem(VIP_ORDER_ID_KEY);
 }
 
-function prepareVipPaymentFlow() {
+function getVipProductTypeForMode(mode = activeReadingMode) {
+  return mode === "compatibility" ? "compatibility" : "deep";
+}
+
+function formatOrderExpireTime(expiresAt) {
+  const ts = Number(expiresAt || 0);
+  if (!ts) return "";
+  return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+async function createVipPaymentOrder(productType = getVipProductTypeForMode()) {
+  const response = await fetch("/api/vip-payment-order", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ productType })
+  });
+  if (!response.ok) {
+    let message = "创建支付订单失败";
+    try {
+      const data = await response.json();
+      message = data?.error || message;
+    } catch {}
+    throw new Error(message);
+  }
+  return response.json();
+}
+
+async function fetchVipPaymentOrderStatus(orderId) {
+  const response = await fetch(`/api/vip-payment-status?orderId=${encodeURIComponent(orderId)}`, {
+    method: "GET"
+  });
+  if (!response.ok) {
+    let message = "查询支付状态失败";
+    try {
+      const data = await response.json();
+      message = data?.error || message;
+    } catch {}
+    throw new Error(message);
+  }
+  return response.json();
+}
+
+async function unlockVipPaymentOrder(orderId) {
+  const response = await fetch("/api/vip-payment-unlock", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ orderId })
+  });
+  if (!response.ok) {
+    let message = "订单核销失败";
+    try {
+      const data = await response.json();
+      message = data?.error || message;
+    } catch {}
+    throw new Error(message);
+  }
+  return response.json();
+}
+
+function setVipContinueButtonState(text = "检查支付结果", disabled = false) {
+  const btn = document.getElementById("confirmVipPaidBtn");
+  if (!btn) return;
+  btn.textContent = text;
+  btn.disabled = disabled;
+}
+
+function applyVipOrderStatus(order) {
+  if (!order?.orderId) return;
+  localStorage.setItem(VIP_ORDER_ID_KEY, order.orderId);
+  const amountText = formatFenPrice(order.amountFen || getUnlockPriceForMode());
+  const expireText = formatOrderExpireTime(order.expiresAt);
+  const metaParts = [`订单号 ${order.orderId}`, `${amountText}/次`];
+  if (expireText) metaParts.push(`有效至 ${expireText}`);
+  const meta = metaParts.join(" · ");
+
+  if (order.status === "paid" || order.status === "unlocked") {
+    setVipOrderStatus("状态：已确认支付", `${meta} · 现在可以继续解牌。`);
+    setVipContinueButtonState("支付已确认，继续", false);
+    updateStatus("支付已确认，点击继续后将正式解锁本次高级解牌。");
+    return;
+  }
+
+  if (order.status === "expired") {
+    if (vipOrderPollingTimer) {
+      clearInterval(vipOrderPollingTimer);
+      vipOrderPollingTimer = null;
+    }
+    setVipOrderStatus("状态：订单已过期", `${meta} · 请重新发起支付订单。`);
+    setVipContinueButtonState("订单已过期", true);
+    updateStatus("当前支付订单已过期，请重新开启支付。");
+    return;
+  }
+
+  setVipOrderStatus("状态：等待扫码支付", `${meta} · 扫码完成后系统会自动检测支付结果。`);
+  setVipContinueButtonState("检查支付结果", false);
+}
+
+async function refreshVipOrderStatus(orderId, { silent = false } = {}) {
+  if (!orderId || vipOrderStatusRequestPending) return null;
+  vipOrderStatusRequestPending = true;
+  try {
+    const order = await fetchVipPaymentOrderStatus(orderId);
+    applyVipOrderStatus(order);
+    if (order.status === "paid" || order.status === "unlocked" || order.status === "expired") {
+      if (vipOrderPollingTimer) {
+        clearInterval(vipOrderPollingTimer);
+        vipOrderPollingTimer = null;
+      }
+    }
+    return order;
+  } catch (error) {
+    if (!silent) {
+      setVipOrderStatus("状态：查询失败", error.message || "暂时无法获取支付状态，请稍后再试。");
+      setVipContinueButtonState("重新检查", false);
+    }
+    return null;
+  } finally {
+    vipOrderStatusRequestPending = false;
+  }
+}
+
+function startVipOrderPolling(orderId) {
+  if (!orderId) return;
+  if (vipOrderPollingTimer) {
+    clearInterval(vipOrderPollingTimer);
+    vipOrderPollingTimer = null;
+  }
+  localStorage.setItem(VIP_ORDER_ID_KEY, orderId);
+  refreshVipOrderStatus(orderId, { silent: true });
+  vipOrderPollingTimer = setInterval(() => {
+    refreshVipOrderStatus(orderId, { silent: true });
+  }, 4000);
+}
+
+async function prepareVipPaymentFlow() {
   const priceFen = getUnlockPriceForMode(activeReadingMode, document.getElementById("spreadSelect")?.value || "");
   const qrImg = document.getElementById("qrImage");
   const codeInput = document.getElementById("vipCodeInput");
   if (qrImg) qrImg.src = VIP_STATIC_QR_URL;
   if (codeInput) codeInput.value = "";
   setVipCodeHint("", false);
-  setVipOrderStatus("状态：请扫码支付", `当前价格 ${formatFenPrice(priceFen)}/次，支付后点击“我已完成支付，继续解牌”。`);
+  setVipContinueButtonState("创建订单中…", true);
+  setVipOrderStatus("状态：正在创建订单", `当前价格 ${formatFenPrice(priceFen)}/次，系统正在准备支付二维码。`);
+  try {
+    const order = await createVipPaymentOrder(getVipProductTypeForMode(activeReadingMode));
+    if (qrImg) qrImg.src = order.qrUrl || VIP_STATIC_QR_URL;
+    applyVipOrderStatus(order);
+    startVipOrderPolling(order.orderId);
+  } catch (error) {
+    if (qrImg) qrImg.src = VIP_STATIC_QR_URL;
+    setVipOrderStatus("状态：订单创建失败", `${error.message || "支付接口暂时不可用"}。你仍可使用口令解锁作为备用方案。`);
+    setVipContinueButtonState("暂不可用", true);
+  }
 }
 
 function closeVipModal() {
@@ -1422,11 +1574,31 @@ function closeVipConfirmModal() {
   updateVipConfirmButtonState();
 }
 
-function confirmVipPaidAndContinue() {
+async function confirmVipPaidAndContinue() {
   if (vipConfirmRemainingSeconds > 0) return;
-  closeVipConfirmModal();
-  closeVipModal();
-  showEnergyEffect(true);
+  const orderId = localStorage.getItem(VIP_ORDER_ID_KEY);
+  if (!orderId) {
+    setVipOrderStatus("状态：缺少订单信息", "请重新发起支付订单，或使用口令解锁。");
+    closeVipConfirmModal();
+    return;
+  }
+  const btn = document.getElementById("confirmVipContinueBtn");
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "确认中…";
+  }
+  try {
+    const tokenData = await unlockVipPaymentOrder(orderId);
+    sessionStorage.setItem(VIP_TOKEN_KEY, JSON.stringify({ token: tokenData.token, expiresAt: tokenData.expiresAt }));
+    closeVipConfirmModal();
+    closeVipModal();
+    showEnergyEffect(true);
+  } catch (error) {
+    setVipOrderStatus("状态：尚未完成支付", error.message || "订单还未支付成功，请稍后再试。");
+    closeVipConfirmModal();
+  } finally {
+    updateVipConfirmButtonState();
+  }
 }
 
 function readVipToken() {
@@ -1506,6 +1678,33 @@ async function submitVipCode() {
       button.disabled = false;
       button.textContent = "口令解锁";
     }
+  }
+}
+
+async function confirmVipOrderBeforeContinue() {
+  const orderId = localStorage.getItem(VIP_ORDER_ID_KEY);
+  if (!orderId) {
+    setVipOrderStatus("状态：请先创建订单", "订单信息不存在，请重新打开支付弹窗。");
+    return;
+  }
+  setVipContinueButtonState("检查中…", true);
+  try {
+    const order = await refreshVipOrderStatus(orderId);
+    if (!order) return;
+    if (order.status === "paid" || order.status === "unlocked") {
+      openVipConfirmModal();
+      return;
+    }
+    if (order.status === "expired") {
+      setVipOrderStatus("状态：订单已过期", "请关闭弹窗后重新发起支付。");
+      return;
+    }
+    setVipOrderStatus("状态：尚未检测到支付", "如果你刚完成扫码，请等待几秒后再次检查，或使用口令解锁。");
+    setVipContinueButtonState("重新检查", false);
+  } finally {
+    const activeOrderId = localStorage.getItem(VIP_ORDER_ID_KEY);
+    if (!activeOrderId) return;
+    refreshVipOrderStatus(activeOrderId, { silent: true });
   }
 }
 
