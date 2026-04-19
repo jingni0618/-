@@ -137,6 +137,9 @@ let deckSpreadProgress = 0;
 let deckSpreadUnlocked = false;
 let deckGestureCleanup = null;
 let finalRevealTransitionRunning = false;
+let activeReadingAbortController = null;
+let activeReadingRequestId = 0;
+let posterRenderInFlight = null;
 const DAILY_CACHE_KEY = "tarotDailyReading";
 const VIP_TOKEN_KEY = "tarotVipToken";
 const VIP_ORDER_ID_KEY = "tarotVipOrderId";
@@ -147,6 +150,10 @@ const HISTORY_LIMIT = 20;
 const NOTES_LIMIT = 40;
 const START_HOLD_MS = 2000;
 const DECK_SPREAD_THRESHOLD = 140;
+const SCRIPT_LOAD_TIMEOUT_MS = 12000;
+const STREAM_REQUEST_TIMEOUT_MS = 30000;
+const FALLBACK_REQUEST_TIMEOUT_MS = 20000;
+const DAILY_REQUEST_TIMEOUT_MS = 15000;
 // Removed emotion range labels — now using emoji reaction bar
 
 // ── Intro dismiss ────────────────────────────────────────────────────────
@@ -2193,12 +2200,21 @@ function renderReadingSummary(rawHtml) {
 }
 
 const TarotApiService = {
-  async requestReadingStream(payload) {
-    const response = await fetch("/api/tarot", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
+  async requestReadingStream(payload, options = {}) {
+    let response;
+    try {
+      response = await fetchWithTimeout("/api/tarot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        signal: options.signal
+      }, STREAM_REQUEST_TIMEOUT_MS);
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        throw new Error("星界连接超时，请稍后重试");
+      }
+      throw error;
+    }
 
     if (!response.ok) {
       throw new Error("星界通道拥堵，请稍后重试");
@@ -2212,11 +2228,19 @@ const TarotApiService = {
   },
 
   async requestDailyReading(card) {
-    const response = await fetch("/api/tarot", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isDaily: true, cards: [card] })
-    });
+    let response;
+    try {
+      response = await fetchWithTimeout("/api/tarot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isDaily: true, cards: [card] })
+      }, DAILY_REQUEST_TIMEOUT_MS);
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        throw new Error("日签连接超时，请稍后再试");
+      }
+      throw error;
+    }
 
     if (!response.ok) {
       throw new Error("日签抽取失败");
@@ -2225,12 +2249,21 @@ const TarotApiService = {
     return response.json();
   },
 
-  async requestFallbackReading(payload) {
-    const response = await fetch("/api/tarot", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...payload, fallbackShort: true })
-    });
+  async requestFallbackReading(payload, options = {}) {
+    let response;
+    try {
+      response = await fetchWithTimeout("/api/tarot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...payload, fallbackShort: true }),
+        signal: options.signal
+      }, FALLBACK_REQUEST_TIMEOUT_MS);
+    } catch (error) {
+      if (error?.name === "AbortError") {
+        throw new Error("简版解牌连接超时");
+      }
+      throw error;
+    }
 
     if (!response.ok) {
       throw new Error("简版解牌生成失败");
@@ -2240,8 +2273,41 @@ const TarotApiService = {
   }
 };
 
+function fetchWithTimeout(url, options = {}, timeoutMs = 15000) {
+  const controller = new AbortController();
+  const { signal, ...rest } = options;
+  let timerId = 0;
+  let abortForwarder = null;
+
+  if (signal) {
+    if (signal.aborted) {
+      controller.abort();
+    } else {
+      abortForwarder = () => controller.abort();
+      signal.addEventListener("abort", abortForwarder, { once: true });
+    }
+  }
+
+  if (timeoutMs > 0) {
+    timerId = window.setTimeout(() => controller.abort(), timeoutMs);
+  }
+
+  return fetch(url, {
+      ...rest,
+      signal: controller.signal
+    }).finally(() => {
+      if (timerId) clearTimeout(timerId);
+      if (signal && abortForwarder) signal.removeEventListener("abort", abortForwarder);
+    });
+}
+
 /* 流式输出解码 */
 async function fetchStream(question, style, cards, context = getReadingContext(question, activeReadingMode)) {
+  activeReadingAbortController?.abort();
+  const requestController = new AbortController();
+  activeReadingAbortController = requestController;
+  const requestId = ++activeReadingRequestId;
+  const isStaleRequest = () => requestId !== activeReadingRequestId;
   const streamContent = document.getElementById("streamContent"); const cursor = document.getElementById("cursor");
   streamContent.innerHTML = ""; let htmlBuffer = "";
 
@@ -2324,6 +2390,7 @@ async function fetchStream(question, style, cards, context = getReadingContext(q
   };
 
   const renderMarkdown = (markdownText = "", isFinal = false) => {
+    if (isStaleRequest()) return;
     let cleaned = String(markdownText || "")
       .replace(/```html/gi, '').replace(/```/g, '')
       .replace(/<\/?(?:div|span|style)[^>]*>/gi, '')
@@ -2371,10 +2438,14 @@ async function fetchStream(question, style, cards, context = getReadingContext(q
       isCompatibility: detailContext.isCompatibility,
       isNight: isNightMode,
       vipToken
-    });
+    }, { signal: requestController.signal });
     const reader = streamBody.getReader(); const decoder = new TextDecoder("utf-8");
 
     while (true) {
+      if (requestController.signal.aborted || isStaleRequest()) {
+        try { await reader.cancel(); } catch {}
+        throw new DOMException("Reading aborted", "AbortError");
+      }
       const { done, value } = await reader.read(); if (done) break;
       const chunk = decoder.decode(value, { stream: true }); const lines = chunk.split('\n').filter(line => line.trim() !== '');
       for (const line of lines) {
@@ -2424,6 +2495,9 @@ async function fetchStream(question, style, cards, context = getReadingContext(q
     renderReadingSummary(historyRecord.reading);
     setFlowStep(3);
   } catch (error) {
+    if (requestController.signal.aborted || isStaleRequest() || error?.name === "AbortError") {
+      return;
+    }
     try {
       const fallback = await TarotApiService.requestFallbackReading({
         question: compositeQuestion,
@@ -2436,7 +2510,7 @@ async function fetchStream(question, style, cards, context = getReadingContext(q
         isCompatibility: detailContext.isCompatibility,
         isNight: isNightMode,
         vipToken
-      });
+      }, { signal: requestController.signal });
       const fallbackText = fallback.reading || "星界连接暂时不稳，已为你生成简版解牌。";
       renderMarkdown(fallbackText);
       const spreadLabel = document.getElementById("spreadSelect") ? document.getElementById("spreadSelect").selectedOptions[0].innerText : "未知牌阵";
@@ -2460,10 +2534,17 @@ async function fetchStream(question, style, cards, context = getReadingContext(q
       setFlowStep(3);
       updateStatus("网络波动，已自动切换到稳定模式。你可以继续阅读，不影响结果。");
     } catch {
+      if (requestController.signal.aborted || isStaleRequest()) {
+        return;
+      }
       renderMarkdown(`> 🔮 宇宙连接中断: ${error.message}`);
       updateStatus("连接失败：请检查网络后重试，或返回主页重新抽牌。");
     }
   } finally {
+    if (activeReadingAbortController === requestController) {
+      activeReadingAbortController = null;
+    }
+    if (isStaleRequest()) return;
     if(cursor) cursor.style.display = "none";
     if(aiStatus) aiStatus.style.display = "none";
     // #7 进度条：流式结束时收起
@@ -2837,7 +2918,7 @@ function extractCoreQuote(reading = "") {
   return first.length > 72 ? `${first.slice(0, 72)}…` : first;
 }
 
-function loadExternalScript(src) {
+function loadExternalScript(src, timeoutMs = SCRIPT_LOAD_TIMEOUT_MS) {
   return new Promise((resolve, reject) => {
     const existing = document.querySelector(`script[src="${src}"]`);
     if (existing) {
@@ -2845,19 +2926,35 @@ function loadExternalScript(src) {
         resolve();
         return;
       }
-      existing.addEventListener("load", () => resolve(), { once: true });
-      existing.addEventListener("error", () => reject(new Error(`脚本加载失败: ${src}`)), { once: true });
+      const existingTimer = window.setTimeout(() => reject(new Error(`脚本加载超时: ${src}`)), timeoutMs);
+      existing.addEventListener("load", () => {
+        clearTimeout(existingTimer);
+        resolve();
+      }, { once: true });
+      existing.addEventListener("error", () => {
+        clearTimeout(existingTimer);
+        reject(new Error(`脚本加载失败: ${src}`));
+      }, { once: true });
       return;
     }
 
     const script = document.createElement("script");
     script.src = src;
     script.async = true;
+    const timerId = window.setTimeout(() => {
+      script.remove();
+      reject(new Error(`脚本加载超时: ${src}`));
+    }, timeoutMs);
     script.addEventListener("load", () => {
+      clearTimeout(timerId);
       script.setAttribute("data-loaded", "true");
       resolve();
     }, { once: true });
-    script.addEventListener("error", () => reject(new Error(`脚本加载失败: ${src}`)), { once: true });
+    script.addEventListener("error", () => {
+      clearTimeout(timerId);
+      script.remove();
+      reject(new Error(`脚本加载失败: ${src}`));
+    }, { once: true });
     document.head.appendChild(script);
   });
 }
@@ -2871,21 +2968,32 @@ async function saveAsImage() {
     return;
   }
 
+  if (posterRenderInFlight) {
+    updateStatus("海报仍在生成中，请稍候片刻。");
+    return posterRenderInFlight;
+  }
+
   btn.innerText = "正在生成海报…";
   btn.disabled = true;
 
-  try {
-    const blob = await createReadingPosterBlob(latestReadingRecord);
-    downloadBlob(blob, "塔罗之眼海报-9x16.png");
-    updateStatus("图片已生成。手机端可在下载或分享面板中保存到相册。");
-  } catch (error) {
-    alert(`生成海报失败：${error.message || "未知错误"}`);
-  } finally {
-    const host = document.getElementById("posterCanvasHost");
-    if (host) host.classList.remove("is-rendering");
-    btn.innerText = "📸 保存解牌卷轴";
-    btn.disabled = false;
-  }
+  posterRenderInFlight = (async () => {
+    try {
+      const blob = await createReadingPosterBlob(latestReadingRecord);
+      downloadBlob(blob, "塔罗之眼海报-9x16.png");
+      updateStatus("图片已生成。手机端可在下载面板中保存到相册。");
+    } catch (error) {
+      updateStatus("海报生成失败，当前解读已保留，可稍后重试。");
+      alert(`生成海报失败：${error.message || "未知错误"}`);
+    } finally {
+      const host = document.getElementById("posterCanvasHost");
+      if (host) host.classList.remove("is-rendering");
+      btn.innerText = "📸 保存图片";
+      btn.disabled = false;
+      posterRenderInFlight = null;
+    }
+  })();
+
+  return posterRenderInFlight;
 }
 
 function extractPosterCoreLineFromDom() {
@@ -2910,7 +3018,22 @@ function extractPosterSummaryText(record = latestReadingRecord) {
 
 async function ensureHtml2CanvasReady() {
   if (typeof html2canvas !== "function") {
-    await loadExternalScript("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js");
+    const sources = [
+      "https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js",
+      "https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"
+    ];
+    let lastError = null;
+    for (const src of sources) {
+      try {
+        await loadExternalScript(src);
+        break;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+    if (typeof html2canvas !== "function" && lastError) {
+      throw lastError;
+    }
   }
   if (typeof html2canvas !== "function") {
     throw new Error("html2canvas 未加载");
