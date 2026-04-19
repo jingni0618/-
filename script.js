@@ -140,6 +140,9 @@ try { initEventBindings(); } catch(e) { console.error("initEventBindings:", e); 
 window.onload = function() {
   isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   try {
+    // Paid unlocks are single-use; refreshing the page should not preserve a previous unlock.
+    sessionStorage.removeItem(VIP_TOKEN_KEY);
+    localStorage.removeItem(VIP_ORDER_ID_KEY);
     applyDensityMode(localStorage.getItem(DENSITY_MODE_KEY) || "compact");
     applyTimePhaseTheme(); initStarfield(); renderSpread(); renderSpreadGuide(); loadHistory(); renderHomeDate(); updateStatus("");
   } catch(e) { console.error("init failed:", e); }
@@ -2306,6 +2309,11 @@ async function fetchStream(question, style, cards, context = getReadingContext(q
   const aiStatus = document.getElementById("aiStatus"); if(aiStatus) aiStatus.style.display = "flex";
   let historyRecord = null;
   const vipToken = readVipToken()?.token || null;
+  if (vipToken) {
+    // Consume the unlock once a paid reading actually starts requesting content.
+    sessionStorage.removeItem(VIP_TOKEN_KEY);
+    localStorage.removeItem(VIP_ORDER_ID_KEY);
+  }
   const detailContext = context || getReadingContext(question, activeReadingMode);
   const compositeQuestion = detailContext.isCompatibility
     ? `[双人合盘：${detailContext.userName || "我"} x ${detailContext.partnerName}] ${detailContext.question || "关系走向"}`
