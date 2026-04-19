@@ -2259,24 +2259,289 @@ async function startDailyDraw() {
 }
 
 function initStarfield() {
-  const canvas = document.getElementById('starfield'); const ctx = canvas.getContext('2d'); let width, height, stars = [], shootingStars = [];
-  function resize() { width = window.innerWidth; height = window.innerHeight; canvas.width = width; canvas.height = height; initStars(); }
-  function initStars() { stars = []; const numStars = window.innerWidth < 768 ? 90 : 180; const colors = ["rgba(255,255,255,", "rgba(240,220,165,", "rgba(195,160,90,"]; for (let i = 0; i < numStars; i++) { stars.push({ x: Math.random() * width, y: Math.random() * height, radius: Math.random() * 1.8 + 0.3, vx: (Math.random() - 0.5) * 12, vy: (Math.random() - 0.5) * 12, opacity: Math.random() * 0.8 + 0.15, color: colors[Math.floor(Math.random() * colors.length)] }); } shootingStars = []; }
-  function createShootingStar() { shootingStars.push({ x: Math.random() * width * 0.5 + width * 0.25, y: Math.random() * height * 0.4 + 20, length: Math.random() * 120 + 90, vx: Math.random() * 8 + 10, vy: Math.random() * 1.2 - 0.4, opacity: 0.85, life: 1 }); }
-  function draw() { ctx.clearRect(0, 0, width, height); for (let star of stars) { star.x += star.vx / 100; star.y += star.vy / 100; if (star.x < 0 || star.x > width) star.vx = -star.vx; if (star.y < 0 || star.y > height) star.vy = -star.vy; star.opacity += (Math.random() - 0.5) * 0.06; star.opacity = Math.max(0.15, Math.min(1, star.opacity)); ctx.beginPath(); ctx.arc(star.x, star.y, star.radius, 0, 2 * Math.PI); ctx.fillStyle = `${star.color}${star.opacity})`; ctx.shadowColor = `${star.color}${star.opacity * 0.8})`; ctx.shadowBlur = star.radius * 1.8; ctx.fill(); ctx.shadowBlur = 0; }
-    if (Math.random() < 0.008 && shootingStars.length < 3) createShootingStar();
-    for (let i = shootingStars.length - 1; i >= 0; i--) {
-      const sh = shootingStars[i]; sh.x += sh.vx; sh.y += sh.vy; sh.life -= 0.01; if (sh.x > width + 80 || sh.y < -50 || sh.life <= 0) { shootingStars.splice(i, 1); continue; }
-      const grad = ctx.createLinearGradient(sh.x, sh.y, sh.x - sh.length, sh.y - sh.length * 0.2);
-      grad.addColorStop(0, `rgba(255,255,255,${sh.opacity})`);
-      grad.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.strokeStyle = grad; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(sh.x, sh.y); ctx.lineTo(sh.x - sh.length, sh.y - sh.length * 0.2); ctx.stroke();
-      ctx.fillStyle = `rgba(255,255,255,${sh.opacity})`; ctx.beginPath(); ctx.arc(sh.x, sh.y, 2.2, 0, 2 * Math.PI); ctx.fill();
+  const canvas = document.getElementById('starfield');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  let width;
+  let height;
+  let stars = [];
+  let shootingStars = [];
+  let meteorShards = [];
+  let lastAt = performance.now();
+  let spawnCooldown = 0;
+  let showerCooldown = 6 + Math.random() * 7;
+
+  function viewportScale() {
+    if (window.innerWidth < 768) return 0.62;
+    if (window.innerWidth < 1024) return 0.82;
+    return 1;
+  }
+
+  function initStars() {
+    stars = [];
+    const scale = viewportScale();
+    const baseCount = Math.floor(220 * scale);
+    const colors = [
+      "rgba(255,255,255,",
+      "rgba(255,240,215,",
+      "rgba(214,232,255,",
+      "rgba(255,226,174,"
+    ];
+
+    for (let i = 0; i < baseCount; i++) {
+      const depth = Math.random();
+      stars.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        radius: 0.3 + depth * 1.9,
+        vx: (Math.random() - 0.5) * (6 + depth * 16),
+        vy: (Math.random() - 0.5) * (4 + depth * 10),
+        baseOpacity: 0.16 + depth * 0.64,
+        twinkleSpeed: 0.8 + Math.random() * 2.2,
+        twinkleOffset: Math.random() * Math.PI * 2,
+        color: colors[Math.floor(Math.random() * colors.length)]
+      });
     }
+    shootingStars = [];
+  }
+
+  function createShootingStar(strong = false) {
+    const fromLeft = Math.random() > 0.28;
+    const startX = fromLeft ? -40 : width * (0.2 + Math.random() * 0.6);
+    const startY = 20 + Math.random() * height * 0.5;
+    const angle = (-18 + Math.random() * 11) * Math.PI / 180;
+    const speed = (strong ? 19 : 13) + Math.random() * (strong ? 9 : 7);
+    const vx = Math.cos(angle) * speed;
+    const vy = Math.sin(angle) * speed;
+
+    shootingStars.push({
+      x: startX,
+      y: startY,
+      vx,
+      vy,
+      length: (strong ? 210 : 132) + Math.random() * (strong ? 170 : 96),
+      width: (strong ? 2.4 : 1.45) + Math.random() * 1.65,
+      split: Math.random() > 0.2,
+      opacity: 0.8 + Math.random() * 0.2,
+      life: 0,
+      ttl: (strong ? 0.9 : 0.72) + Math.random() * 0.6,
+      color: Math.random() > 0.7 ? "255,235,194" : "232,242,255"
+    });
+  }
+
+  function emitShardBurst(sh) {
+    const scale = viewportScale();
+    const maxShards = Math.max(38, Math.floor(140 * scale));
+    if (meteorShards.length >= maxShards) return;
+
+    const count = 2 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < count && meteorShards.length < maxShards; i++) {
+      const drift = (Math.random() - 0.5) * 0.9;
+      const speed = 0.45 + Math.random() * 1.7;
+      meteorShards.push({
+        x: sh.x,
+        y: sh.y,
+        vx: sh.vx * (0.045 + Math.random() * 0.02) + drift,
+        vy: sh.vy * (0.045 + Math.random() * 0.02) + drift * 0.4,
+        size: 0.48 + Math.random() * 1.45,
+        life: 0,
+        ttl: 0.24 + Math.random() * 0.42,
+        spin: Math.random() * Math.PI * 2,
+        spinSpeed: (Math.random() - 0.5) * 10,
+        alpha: 0.56 + Math.random() * 0.42,
+        color: Math.random() > 0.6 ? "255,246,223" : "228,240,255",
+        speed
+      });
+    }
+  }
+
+  function spawnMeteors(deltaSec) {
+    const scale = viewportScale();
+    const maxMeteors = Math.max(3, Math.floor(8 * scale));
+    spawnCooldown -= deltaSec;
+    showerCooldown -= deltaSec;
+
+    if (showerCooldown <= 0) {
+      const showerCount = 3 + Math.floor(Math.random() * (window.innerWidth < 768 ? 3 : 5));
+      for (let i = 0; i < showerCount && shootingStars.length < maxMeteors; i++) {
+        createShootingStar(true);
+      }
+      showerCooldown = 7 + Math.random() * 10;
+      spawnCooldown = 0.25;
+      return;
+    }
+
+    if (spawnCooldown <= 0 && shootingStars.length < maxMeteors) {
+      const chance = (window.innerWidth < 768 ? 0.46 : 0.68) * deltaSec;
+      if (Math.random() < chance) {
+        createShootingStar(false);
+        spawnCooldown = 0.2 + Math.random() * 0.75;
+      }
+    }
+  }
+
+  function draw(now) {
+    const deltaSec = Math.min(0.05, (now - lastAt) / 1000 || 0.016);
+    lastAt = now;
+    ctx.clearRect(0, 0, width, height);
+
+    const t = now / 1000;
+    for (let i = 0; i < stars.length; i++) {
+      const star = stars[i];
+      star.x += (star.vx * deltaSec) / 2.4;
+      star.y += (star.vy * deltaSec) / 2.4;
+
+      if (star.x < -2) star.x = width + 2;
+      if (star.x > width + 2) star.x = -2;
+      if (star.y < -2) star.y = height + 2;
+      if (star.y > height + 2) star.y = -2;
+
+      const twinkle = 0.52 + 0.48 * Math.sin(t * star.twinkleSpeed + star.twinkleOffset);
+      const alpha = Math.max(0.08, Math.min(1, star.baseOpacity * twinkle));
+
+      ctx.beginPath();
+      ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+      ctx.fillStyle = `${star.color}${alpha})`;
+      ctx.shadowColor = `${star.color}${Math.min(0.8, alpha * 0.75)})`;
+      ctx.shadowBlur = star.radius * 2.4;
+      ctx.fill();
+    }
+    ctx.shadowBlur = 0;
+
+    spawnMeteors(deltaSec);
+
+    for (let i = shootingStars.length - 1; i >= 0; i--) {
+      const sh = shootingStars[i];
+      sh.life += deltaSec;
+      sh.x += sh.vx;
+      sh.y += sh.vy;
+
+      const progress = sh.life / sh.ttl;
+      if (progress >= 1 || sh.x > width + sh.length + 40 || sh.y > height + 120 || sh.y < -120) {
+        shootingStars.splice(i, 1);
+        continue;
+      }
+
+      const fade = progress < 0.25 ? progress / 0.25 : (1 - progress) / 0.75;
+      const alpha = Math.max(0, sh.opacity * fade);
+      const tailX = sh.x - sh.vx * (sh.length / Math.max(1, Math.hypot(sh.vx, sh.vy)));
+      const tailY = sh.y - sh.vy * (sh.length / Math.max(1, Math.hypot(sh.vx, sh.vy)));
+
+      const grad = ctx.createLinearGradient(sh.x, sh.y, tailX, tailY);
+      grad.addColorStop(0, `rgba(${sh.color},${Math.min(1, alpha + 0.05)})`);
+      grad.addColorStop(0.34, `rgba(255,255,255,${alpha * 0.62})`);
+      grad.addColorStop(1, "rgba(255,255,255,0)");
+
+      ctx.strokeStyle = grad;
+      ctx.lineWidth = sh.width;
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      ctx.moveTo(sh.x, sh.y);
+      ctx.lineTo(tailX, tailY);
+      ctx.stroke();
+
+      if (sh.split && alpha > 0.06) {
+        const n = Math.hypot(sh.vx, sh.vy) || 1;
+        const px = -sh.vy / n;
+        const py = sh.vx / n;
+        const forkLen = sh.length * (0.28 + Math.random() * 0.08);
+        const fx = tailX + px * (4 + Math.random() * 6);
+        const fy = tailY + py * (4 + Math.random() * 6);
+        const forkGrad = ctx.createLinearGradient(sh.x, sh.y, fx, fy);
+        forkGrad.addColorStop(0, `rgba(255,255,255,${alpha * 0.45})`);
+        forkGrad.addColorStop(1, "rgba(255,255,255,0)");
+        ctx.strokeStyle = forkGrad;
+        ctx.lineWidth = Math.max(0.8, sh.width * 0.58);
+        ctx.beginPath();
+        ctx.moveTo(sh.x - sh.vx * 0.06, sh.y - sh.vy * 0.06);
+        ctx.lineTo(fx - sh.vx * (forkLen / (n * 24)), fy - sh.vy * (forkLen / (n * 24)));
+        ctx.stroke();
+      }
+
+      if (Math.random() < 0.82) emitShardBurst(sh);
+
+      ctx.fillStyle = `rgba(255,255,255,${Math.min(1, alpha + 0.12)})`;
+      ctx.beginPath();
+      ctx.arc(sh.x, sh.y, sh.width * 1.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      const halo = ctx.createRadialGradient(sh.x, sh.y, sh.width * 0.2, sh.x, sh.y, sh.width * 5.2);
+      halo.addColorStop(0, `rgba(255,255,255,${Math.min(0.9, alpha * 0.52)})`);
+      halo.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = halo;
+      ctx.beginPath();
+      ctx.arc(sh.x, sh.y, sh.width * 5.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (Math.random() < 0.58) {
+        const glintAlpha = Math.min(1, alpha * 0.78 + 0.12);
+        ctx.strokeStyle = `rgba(255,255,255,${glintAlpha})`;
+        ctx.lineWidth = 1.1;
+        const g = sh.width * (3 + Math.random() * 2.2);
+        ctx.beginPath();
+        ctx.moveTo(sh.x - g, sh.y);
+        ctx.lineTo(sh.x + g, sh.y);
+        ctx.moveTo(sh.x, sh.y - g);
+        ctx.lineTo(sh.x, sh.y + g);
+        ctx.stroke();
+      }
+    }
+
+    for (let i = meteorShards.length - 1; i >= 0; i--) {
+      const shard = meteorShards[i];
+      shard.life += deltaSec;
+      const p = shard.life / shard.ttl;
+      if (p >= 1) {
+        meteorShards.splice(i, 1);
+        continue;
+      }
+
+      shard.x += shard.vx * shard.speed;
+      shard.y += shard.vy * shard.speed;
+      shard.spin += shard.spinSpeed * deltaSec;
+      const fade = p < 0.2 ? p / 0.2 : 1 - p;
+      const alpha = Math.max(0, shard.alpha * fade);
+      const r = shard.size;
+
+      ctx.save();
+      ctx.translate(shard.x, shard.y);
+      ctx.rotate(shard.spin);
+      ctx.fillStyle = `rgba(${shard.color},${alpha})`;
+      ctx.beginPath();
+      ctx.moveTo(0, -r * 1.5);
+      ctx.lineTo(r * 0.9, 0);
+      ctx.lineTo(0, r * 1.35);
+      ctx.lineTo(-r * 0.9, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
     requestAnimationFrame(draw);
   }
+
+  function resize() {
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+    initStars();
+    meteorShards = [];
+  }
+
   let resizeTimer;
-  window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(resize, 200); }); resize(); draw();
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(resize, 180);
+  });
+
+  resize();
+  requestAnimationFrame(ts => {
+    lastAt = ts;
+    draw(ts);
+  });
 }
 
 /* Old canvas drawing helpers removed — saveAsImage now uses html2canvas */
