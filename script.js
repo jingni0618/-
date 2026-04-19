@@ -211,6 +211,7 @@ function initEventBindings() {
   byId("closeCardPreviewBtn")?.addEventListener("click", closeCardPreview);
   byId("sendFeedbackBtn")?.addEventListener("click", sendFeedback);
   byId("saveBtn")?.addEventListener("click", saveAsImage);
+  byId("shareBtn")?.addEventListener("click", shareReadingResult);
   byId("newQuestionBtn")?.addEventListener("click", () => {
     handleReturnToHomePage();
     setTimeout(() => {
@@ -2835,34 +2836,9 @@ async function saveAsImage() {
   btn.disabled = true;
 
   try {
-    if (typeof html2canvas !== "function") {
-      await loadExternalScript("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js");
-    }
-    if (typeof html2canvas !== "function") {
-      throw new Error("html2canvas 未加载");
-    }
-
-    const host = document.getElementById("posterCanvasHost");
-    const poster = document.getElementById("posterCanvas");
-    if (!host || !poster) throw new Error("海报容器不存在");
-
-    fillPosterCanvasFromReading(latestReadingRecord);
-    host.classList.add("is-rendering");
-    await waitMs(40);
-
-    const canvas = await html2canvas(poster, {
-      backgroundColor: null,
-      useCORS: true,
-      scale: 2,
-      width: 1080,
-      height: 1920
-    });
-
-    const link = document.createElement("a");
-    link.download = "塔罗之眼海报-9x16.png";
-    link.href = canvas.toDataURL("image/png");
-    link.click();
-    host.classList.remove("is-rendering");
+    const blob = await createReadingPosterBlob(latestReadingRecord);
+    downloadBlob(blob, "塔罗之眼海报-9x16.png");
+    updateStatus("图片已生成。手机端可在下载或分享面板中保存到相册。");
   } catch (error) {
     alert(`生成海报失败：${error.message || "未知错误"}`);
   } finally {
@@ -2882,6 +2858,162 @@ function extractPosterCoreLineFromDom() {
   if (!plain) return "你真正要的答案，已经在你心里出现了第一束光。";
   const first = plain.split(/(?<=[。！？!?])/).map(s => s.trim()).filter(Boolean)[0] || plain;
   return first.slice(0, 64);
+}
+
+async function ensureHtml2CanvasReady() {
+  if (typeof html2canvas !== "function") {
+    await loadExternalScript("https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js");
+  }
+  if (typeof html2canvas !== "function") {
+    throw new Error("html2canvas 未加载");
+  }
+}
+
+async function renderReadingPosterCanvas(record = latestReadingRecord) {
+  await ensureHtml2CanvasReady();
+  const host = document.getElementById("posterCanvasHost");
+  const poster = document.getElementById("posterCanvas");
+  if (!host || !poster) throw new Error("海报容器不存在");
+
+  fillPosterCanvasFromReading(record);
+  host.classList.add("is-rendering");
+  await waitMs(40);
+
+  return html2canvas(poster, {
+    backgroundColor: null,
+    useCORS: true,
+    scale: 2,
+    width: 1080,
+    height: 1920
+  });
+}
+
+async function canvasToPngBlob(canvas) {
+  const blob = await new Promise((resolve, reject) => {
+    canvas.toBlob(result => {
+      if (result) resolve(result);
+      else reject(new Error("图片导出失败"));
+    }, "image/png");
+  });
+  return blob;
+}
+
+async function createReadingPosterBlob(record = latestReadingRecord) {
+  const canvas = await renderReadingPosterCanvas(record);
+  return canvasToPngBlob(canvas);
+}
+
+function downloadBlob(blob, filename = "tarot-result.png") {
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  link.download = filename;
+  link.href = url;
+  link.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+function buildSharePayload(record = latestReadingRecord) {
+  const question = String(record?.question || "").trim();
+  const spread = String(record?.spread || "").trim();
+  const coreLine = extractPosterCoreLineFromDom();
+  const title = question ? `塔罗之眼｜${question.slice(0, 22)}` : "塔罗之眼｜本次解牌结果";
+  const textParts = [
+    question ? `问题：${question}` : "",
+    spread ? `牌阵：${spread}` : "",
+    coreLine ? `解读摘句：${coreLine}` : "",
+    "来自塔罗之眼的本次解牌"
+  ].filter(Boolean);
+  return {
+    title,
+    text: textParts.join("\n"),
+    url: window.location.origin
+  };
+}
+
+async function copyTextToClipboard(text = "") {
+  const content = String(text || "");
+  if (!content) return false;
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(content);
+    return true;
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = content;
+  textarea.setAttribute("readonly", "readonly");
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  textarea.style.left = "-9999px";
+  document.body.appendChild(textarea);
+  textarea.select();
+  textarea.setSelectionRange(0, textarea.value.length);
+  let success = false;
+  try {
+    success = document.execCommand("copy");
+  } finally {
+    textarea.remove();
+  }
+  return success;
+}
+
+async function shareReadingResult() {
+  const btn = document.getElementById("shareBtn");
+  if (!btn) return;
+  if (!latestReadingRecord) {
+    alert("请先完成一次解牌后再分享结果。");
+    return;
+  }
+
+  const payload = buildSharePayload(latestReadingRecord);
+  const fallbackText = `${payload.text}\n${payload.url}`;
+  btn.disabled = true;
+  btn.textContent = "生成图片中…";
+
+  try {
+    const posterBlob = await createReadingPosterBlob(latestReadingRecord);
+    const posterFile = new File([posterBlob], "塔罗之眼解牌结果.png", { type: "image/png" });
+
+    btn.textContent = "准备分享中…";
+    if (navigator.share && navigator.canShare?.({ files: [posterFile] })) {
+      await navigator.share({
+        title: payload.title,
+        text: payload.text,
+        files: [posterFile]
+      });
+      updateStatus("图片分享面板已打开，你可以直接转发或保存到相册。");
+      return;
+    }
+
+    if (navigator.share) {
+      await navigator.share(payload);
+      updateStatus("当前浏览器不支持图片分享，已打开文字分享面板。");
+      return;
+    }
+
+    downloadBlob(posterBlob, "塔罗之眼解牌结果.png");
+    const copied = await copyTextToClipboard(fallbackText);
+    if (!copied) {
+      updateStatus("图片已下载。你可以从下载目录或系统相册中继续分享。");
+      return;
+    }
+    updateStatus("图片已下载，分享文案和链接也已复制。");
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      updateStatus("已取消分享。");
+      return;
+    }
+    try {
+      const copied = await copyTextToClipboard(fallbackText);
+      if (copied) {
+        updateStatus("系统分享暂不可用，已为你复制分享文案和链接。");
+        return;
+      }
+    } catch {}
+    alert(`分享失败：${error.message || "当前浏览器暂不支持分享"}`);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "🔗 分享结果";
+  }
 }
 
 function fillPosterCanvasFromReading(record) {
