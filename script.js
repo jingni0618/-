@@ -678,13 +678,9 @@ function renderTimeline() {
   if (summary) {
     const total = records.length;
     const compatibility = records.filter(r => r.isCompatibility).length;
-    const notes = JournalService.notes.length;
-    const avgEmotion = total ? (records.reduce((sum, r) => sum + getMoodScore(r.emotionLevel), 0) / total).toFixed(1) : "0.0";
     summary.innerHTML = `
       <div class="timeline-summary-item"><div class="timeline-summary-label">总记录</div><div class="timeline-summary-value">${total}</div></div>
       <div class="timeline-summary-item"><div class="timeline-summary-label">双人占卜</div><div class="timeline-summary-value">${compatibility}</div></div>
-      <div class="timeline-summary-item"><div class="timeline-summary-label">心情均值</div><div class="timeline-summary-value">${avgEmotion}/5</div></div>
-      <div class="timeline-summary-item"><div class="timeline-summary-label">笔记数</div><div class="timeline-summary-value">${notes}</div></div>
     `;
   }
 
