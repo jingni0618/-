@@ -103,7 +103,7 @@ const VAULT_META_KEY = "tarotVaultMeta";
 const DENSITY_MODE_KEY = "tarotReadingDensityMode";
 const HISTORY_LIMIT = 20;
 const NOTES_LIMIT = 40;
-const START_HOLD_MS = 3000;
+const START_HOLD_MS = 2000;
 const DECK_SPREAD_THRESHOLD = 140;
 // Removed emotion range labels — now using emoji reaction bar
 
@@ -783,6 +783,13 @@ const JournalService = {
     this.save();
     renderJournalNotes();
     renderTimeline();
+  },
+  remove(idx) {
+    if (idx < 0 || idx >= this.notes.length) return;
+    this.notes.splice(idx, 1);
+    this.save();
+    renderJournalNotes();
+    renderVaultMeta();
   }
 };
 
@@ -907,17 +914,21 @@ function renderJournalNotes() {
     list.innerHTML = '<div class="timeline-item"><div class="timeline-item-main">还没有札记，写下今天第一条心境记录吧。</div></div>';
     return;
   }
-  JournalService.notes.forEach(note => {
+  JournalService.notes.forEach((note, idx) => {
     const item = document.createElement("div");
     item.className = "timeline-item";
     item.innerHTML = `
-      <div class="timeline-item-time">${note.date}</div>
+      <div class="timeline-item-time">${note.date}<button class="journal-delete-btn" data-idx="${idx}" title="删除" aria-label="删除此条札记">×</button></div>
       <div class="timeline-item-main">${note.emotionLabel}${note.linkedSpread ? ` · ${note.linkedSpread}` : ""}</div>
       <div class="timeline-item-snippet">${note.text}</div>
       <div class="timeline-tags">
         ${note.linkedQuestion ? `<span class="timeline-tag">${note.linkedQuestion.slice(0, 18)}</span>` : ""}
       </div>
     `;
+    item.querySelector(".journal-delete-btn").addEventListener("click", e => {
+      e.stopPropagation();
+      JournalService.remove(idx);
+    });
     list.appendChild(item);
   });
 }
@@ -1775,7 +1786,16 @@ function userFlipsCard(i) {
   document.getElementById(`emoji-${i}`).innerText = data.emoji; document.getElementById(`name-${i}`).innerText = data.cardName;
   cardElement.classList.add("flipped"); if(data.isReversed) cardElement.classList.add("reversed");
   cardElement.classList.add("previewable");
-  
+
+  // 翻牌后显示"点击放大"微提示
+  let previewHint = cardElement.querySelector(".card-preview-hint");
+  if (!previewHint) {
+    previewHint = document.createElement("span");
+    previewHint.className = "card-preview-hint";
+    previewHint.textContent = "🔍";
+    cardElement.appendChild(previewHint);
+  }
+
   cardsFlipped++;
   if (cardsFlipped === requiredCardsCount) {
     document.getElementById("revealInstruction").style.display = "none";
@@ -1982,6 +2002,10 @@ const TarotApiService = {
 async function fetchStream(question, style, cards, context = getReadingContext(question, activeReadingMode)) {
   const streamContent = document.getElementById("streamContent"); const cursor = document.getElementById("cursor");
   streamContent.innerHTML = ""; let htmlBuffer = "";
+
+  // #7 进度条：流式开始时显示
+  const streamProgress = document.getElementById("streamProgressBar");
+  if (streamProgress) { streamProgress.style.width = "0%"; streamProgress.parentElement.style.display = "block"; streamProgress.classList.add("streaming"); }
   const escapeRegExp = (value = "") => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const getCardBaseNames = () => {
     return [...new Set((Array.isArray(cards) ? cards : [])
@@ -2195,6 +2219,9 @@ async function fetchStream(question, style, cards, context = getReadingContext(q
   } finally {
     if(cursor) cursor.style.display = "none";
     if(aiStatus) aiStatus.style.display = "none";
+    // #7 进度条：流式结束时收起
+    if (streamProgress) { streamProgress.style.width = "100%"; streamProgress.classList.remove("streaming"); setTimeout(() => { if (streamProgress?.parentElement) streamProgress.parentElement.style.display = "none"; }, 400); }
+    // #8 简化按钮：只保留主要两个，写入档案自动完成
     const actionBtns = document.getElementById("actionBtns"); if(actionBtns) actionBtns.style.display = "flex";
     wrapReadingSectionsAsCollapsible();
     if (historyRecord) {
