@@ -800,7 +800,7 @@ function clearHistory() {
   HistoryService.clear();
   renderVaultMeta();
   renderTimeline();
-  updateStatus("解牌记录已清空，新的旅程可以开始了。");
+  updateStatus("");
 }
 
 function getMoodScore(level) {
