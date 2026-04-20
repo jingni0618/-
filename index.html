@@ -37,9 +37,9 @@
         <div class="phase-chip date-chip" id="homeDate">日期载入中</div>
       </div>
       <div class="top-nav-actions">
-        <button id="dailyBtn" class="icon-btn subtle" data-icon="今日"><span class="btn-label">今日一牌</span></button>
-        <button id="growthHubBtn" class="icon-btn subtle" data-icon="档案"><span class="btn-label">成长档案</span></button>
-        <button id="feedbackBtn" class="icon-btn subtle" data-icon="留言"><span class="btn-label">留言</span></button>
+        <button id="dailyBtn" class="icon-btn subtle" data-icon="✨"><span class="btn-label">今日神谕</span></button>
+        <button id="growthHubBtn" class="icon-btn subtle" data-icon="🗂"><span class="btn-label">成长档案</span></button>
+        <button id="feedbackBtn" class="icon-btn subtle" data-icon="💌"><span class="btn-label">给👀仔留言</span></button>
       </div>
     </div>
 
@@ -51,12 +51,12 @@
 
       <!-- 主页小互动：能量水晶球 -->
       <div class="home-ritual-widget" id="homeRitualWidget">
-        <button class="ritual-orb" id="ritualOrbBtn" type="button" aria-label="长按查看今日状态">
+        <button class="ritual-orb" id="ritualOrbBtn" type="button" aria-label="长按感应能量">
           <span class="ritual-orb__glow" aria-hidden="true"></span>
-          <span class="ritual-orb__icon">◎</span>
+          <span class="ritual-orb__icon">🔮</span>
           <span class="ritual-orb__ring" aria-hidden="true"><span id="ritualOrbProgress"></span></span>
         </button>
-        <div class="ritual-orb__label" id="ritualOrbLabel">长按查看今日状态</div>
+        <div class="ritual-orb__label" id="ritualOrbLabel">长按水晶球，感应今日能量</div>
       </div>
 
       <div class="mystical-divider" aria-hidden="true">
@@ -67,10 +67,10 @@
         <div class="home-main">
           <div class="hero-grid hero-grid--editorial">
         <div class="choice-card choice-card--secondary card-quick">
-          <div class="choice-card__eyebrow">单张指引</div>
-          <h2 class="choice-card__title">抽一张牌</h2>
-          <p class="choice-card__desc">不输入问题，快速得到一条提示。</p>
-          <div class="choice-card__icon">一</div>
+          <div class="choice-card__eyebrow">单张神谕</div>
+          <h2 class="choice-card__title">抽一张灵感牌</h2>
+          <p class="choice-card__desc">不输入问题，直接看见当下信号。</p>
+          <div class="choice-card__icon">✨</div>
           <div class="choice-card__feature">约30秒 · 轻量启示</div>
           <div class="choice-card__footer">
             <button id="quickDrawBtn" class="secondary-btn">立刻抽牌</button>
@@ -83,14 +83,14 @@
           <p class="choice-card__desc">适合认真梳理一件事：选阵、抽牌、解牌，再落到行动。</p>
           <div class="choice-card__body" id="deepSettings">
             <div class="input-group">
-              <label>你想问什么？</label>
-              <input type="text" id="questionInput" placeholder="问题越具体，解读越清楚…">
+              <label>你此刻最想照见什么？</label>
+              <input type="text" id="questionInput" placeholder="越具体，牌意越清晰…">
             </div>
             <div class="spread-guide-head">先选择牌阵（推荐）</div>
             <div class="spread-visual-guide" id="spreadVisualGuide" aria-live="polite"></div>
             <select id="spreadSelect" style="display:none;">
               <optgroup label="基础指引">
-                <option value="single">单牌指引（1张：快速提示）</option>
+                <option value="single">单牌神谕（1张：直觉指引）</option>
                 <option value="yesno">是非决断阵（3张：支持/反对/答案）</option>
                 <option value="time" selected>时间之流（3张：过去/现在/未来）</option>
               </optgroup>
@@ -103,13 +103,13 @@
               </optgroup>
             </select>
             <div class="pay-hint" id="payHintText">当前牌阵无需解锁。</div>
-            <button id="startBtn" class="main-btn start-btn-sticky" type="button">开始解牌</button>
+            <button id="startBtn" class="main-btn start-btn-sticky" type="button">🔮 开启解牌</button>
           </div>
         </div>
 
         <div class="choice-card choice-card--love card-love couple-collapsed" id="coupleCard">
           <button class="couple-toggle" id="coupleToggleBtn" type="button" aria-label="展开双人关系合盘">
-            <span class="couple-toggle__heart" aria-hidden="true">双</span>
+            <span class="couple-toggle__heart" aria-hidden="true">💗</span>
             <span class="couple-toggle__text">双人关系合盘</span>
             <span class="price-tag">进阶 ¥5/次</span>
             <span class="couple-toggle__expand-hint">点击展开</span>
@@ -130,11 +130,11 @@
                 </div>
               </div>
               <div class="input-group">
-                <label>你想问这段关系的什么？</label>
+                <label>你想照见这段关系的什么课题？</label>
                 <input type="text" id="coupleQuestionInput" placeholder="例如：我们接下来该如何靠近彼此？">
                 <div class="field-hint" id="coupleQuestionHint">双人信息仅用于本次解牌，不会公开。</div>
               </div>
-              <button id="startCoupleBtn" class="secondary-btn">开启双人合盘</button>
+              <button id="startCoupleBtn" class="secondary-btn">💞 开启双人合盘</button>
             </div>
           </div>
         </div>
@@ -147,7 +147,7 @@
   <!-- VIP 赞赏弹窗 -->
   <div id="vipModal" class="modal-overlay" style="display: none;">
     <div class="modal-content vip-modal-content">
-      <h3 class="classic-title" id="vipModalTitle" style="font-size: 1.5rem; margin-top:0;">解锁进阶牌阵</h3>
+      <h3 class="classic-title" id="vipModalTitle" style="font-size: 1.5rem; margin-top:0;">👑 解锁进阶牌阵</h3>
       <div id="vipUnlockSummary" class="vip-unlock-summary"></div>
       <div class="qr-container"><img id="qrImage" src="https://i.postimg.cc/P525Vk7w/IMG-9071.png" alt="支付宝收款码"></div>
       <a id="qrFallbackLink" class="qr-fallback-link" href="#" target="_blank" rel="noopener" style="display:none;">二维码加载失败？点击打开支付宝支付链接</a>
@@ -183,18 +183,18 @@
   <div class="aside-panel">
     <div class="daily-card-area" id="dailyCardArea" style="display: none;">
       <div class="daily-card-visual">
-        <div class="daily-title">今日一牌</div>
+        <div class="daily-title">今日神谕</div>
         <div class="daily-date" id="dailyDate"></div>
         <div class="daily-emoji-card">
-          <img id="dailyImage" class="daily-image" alt="今日牌面">
-          <div id="dailyEmoji" class="daily-emoji">一</div>
+          <img id="dailyImage" class="daily-image" alt="今日神谕牌面">
+          <div id="dailyEmoji" class="daily-emoji">✨</div>
           <div id="dailyName" class="daily-name">牌名</div>
         </div>
       </div>
       <div class="daily-copy">
-        <div class="daily-copy__eyebrow">今天这张牌的提醒</div>
+        <div class="daily-copy__eyebrow">今天这张牌，想先轻轻提醒你</div>
         <div class="daily-quote" id="dailyQuote">今日牌面正在为你写下一句日签…</div>
-        <div class="daily-copy__hint">如果这句话有用，就把它当成今天的一个行动提示。</div>
+        <div class="daily-copy__hint">如果这句话刚好击中你，今天就把它当成一个温柔但明确的行动提示。</div>
         <button id="dailyBackBtn" class="save-btn restart">回到主页</button>
       </div>
     </div>
@@ -212,7 +212,7 @@
     <div id="energyText" class="energy-text" style="display: none;"></div>
 
     <div id="shuffleArea" class="deck-area" style="display: none;">
-      <p class="ritual-text shuffle-ritual-text">正在洗牌…</p>
+      <p class="ritual-text shuffle-ritual-text">牌正在与你的能量共振…</p>
       <div class="shuffling-deck-multi">
         <div class="sdm-card sdm-card--1"></div>
         <div class="sdm-card sdm-card--2"></div>
@@ -225,7 +225,7 @@
 
     <!-- 交互抽牌区 -->
     <div id="deckArea" class="deck-area" style="display: none;">
-      <h3 id="instructionText" class="ritual-text">选择一张你想抽的牌</h3>
+      <h3 id="instructionText" class="ritual-text">✨ 用心感受，选择与你共鸣的牌</h3>
       <div class="fan-deck" id="fanDeck"></div>
       <div class="deck-spread-track" aria-hidden="true">
         <span id="deckSpreadHint" class="deck-spread-hint">牌阵正在展开…</span>
@@ -240,12 +240,12 @@
     <div class="reading-wrapper" id="readingWrapper" style="display: none;">
       <div id="miniCardBar" class="mini-card-bar" style="display:none;"></div>
       <div class="parchment-box" id="readingBox">
-        <div class="ai-status" id="aiStatus"><div class="crystal-ball">◎</div><span>正在生成解读…</span></div>
+        <div class="ai-status" id="aiStatus"><div class="crystal-ball">🔮</div><span>塔罗解读中，正在编织你的答案…</span></div>
         <div id="readingSummary" class="reading-summary" style="display:none;"></div>
         <div id="streamContent" class="stream-content parchment-text"></div>
         <span id="cursor" class="typing-cursor"></span>
       </div>
-      <div id="shareHeader" class="share-only" style="color: #2c241b; font-weight: bold; margin-bottom: 20px;">塔罗之眼 · 解牌记录</div>
+      <div id="shareHeader" class="share-only" style="color: #2c241b; font-weight: bold; margin-bottom: 20px;">✨ 塔罗之眼 · 你的专属解牌卷轴 ✨</div>
     </div>
 
     
@@ -254,9 +254,9 @@
       <div id="streamProgressBar" style="height:100%; width:0%; background:linear-gradient(90deg,#d4a856,#f0d48a,#c09038); transition:width 0.3s ease; border-radius:0 2px 2px 0;"></div>
     </div>
     <div id="actionBtns" class="action-btns result-actions" style="margin-top: 30px; display: none; justify-content: center; gap: 15px; padding-bottom: 50px;">
-      <button id="saveBtn" class="main-btn result-action-primary">保存图片</button>
-      <button id="resultGrowthBtn" class="secondary-btn result-action-soft">查看档案</button>
-      <button id="newQuestionBtn" class="secondary-btn result-action-soft">再问一次</button>
+      <button id="saveBtn" class="main-btn result-action-primary">📸 保存图片</button>
+      <button id="resultGrowthBtn" class="secondary-btn result-action-soft">🗂 查看档案</button>
+      <button id="newQuestionBtn" class="secondary-btn result-action-soft">✏️ 再问一次</button>
     </div>
   </div><!-- end .immersive-container -->
 
@@ -285,10 +285,10 @@
           <div class="journal-notebook">
             <h4>快捷心境</h4>
             <div class="emoji-reaction-bar" id="emojiReactionBar">
-              <button class="emoji-react" data-mood="calm" type="button">平静</button>
-              <button class="emoji-react" data-mood="inspired" type="button">有启发</button>
-              <button class="emoji-react" data-mood="confused" type="button">待消化</button>
-              <button class="emoji-react" data-mood="excited" type="button">很有感觉</button>
+              <button class="emoji-react" data-mood="calm" type="button">😌 平静</button>
+              <button class="emoji-react" data-mood="inspired" type="button">✨ 有启发</button>
+              <button class="emoji-react" data-mood="confused" type="button">🤔 待消化</button>
+              <button class="emoji-react" data-mood="excited" type="button">🔥 上头了</button>
             </div>
             <div class="input-group">
               <label>写下此刻感受</label>
@@ -323,14 +323,14 @@
 
   <div id="feedbackModal" class="modal-overlay" style="display:none;">
     <div class="modal-content feedback-panel-content">
-      <h3 class="feedback-title">留言</h3>
+      <h3 class="feedback-title">给👀仔留言</h3>
       <p class="feedback-desc">有什么想说的，都可以写在这里。每一条都会认真读到。</p>
       <div class="input-group">
         <textarea id="feedbackMessage" rows="5" placeholder="夸我、吐槽、或者许个愿都行…" required></textarea>
       </div>
       <div class="modal-btns" style="margin-top: 14px;">
         <button id="closeFeedbackBtn" class="cancel-btn">我再想想</button>
-        <button id="sendFeedbackBtn" class="confirm-btn">发送留言</button>
+        <button id="sendFeedbackBtn" class="confirm-btn">投递星语</button>
       </div>
       <div id="feedbackSendStatus" class="feedback-send-status" style="display:none;"></div>
       <a id="feedbackMailtoFallback" class="feedback-mailto-fallback" href="#" style="display:none;">打开邮件发送</a>
