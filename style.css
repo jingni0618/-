@@ -4851,3 +4851,452 @@ body.reading-text-active .action-btns {
   50%  { width: 38%; margin-left: 28%; }
   100% { width: 8%;  margin-left: 92%; }
 }
+
+/* ═══════════════════════════════════════
+   性能优化：GPU 加速层提升
+   ═══════════════════════════════════════ */
+
+/* 翻牌动画 – 启用 GPU 合成层，避免主线程卡顿 */
+.card {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+}
+.card.dealt {
+  will-change: auto;
+}
+.card.dealt:not(.flipped) {
+  will-change: transform;
+}
+
+/* 扇形牌堆展开动画 */
+.fan-deck.arc-fan .deck-card {
+  will-change: transform;
+}
+
+/* 洗牌动画卡片 */
+.sdm-card {
+  will-change: transform;
+}
+
+/* 水晶球按压动画 */
+.ritual-orb {
+  will-change: transform, box-shadow;
+}
+
+/* 选择卡片悬浮动画 */
+.choice-card {
+  will-change: transform, box-shadow;
+}
+.choice-card:not(:hover) {
+  will-change: auto;
+}
+
+/* 流星动画减少重绘 */
+.intro-screen {
+  will-change: opacity;
+}
+
+/* ═══════════════════════════════════════
+   iOS 安全区域（刘海/底部 Home Bar）适配
+   ═══════════════════════════════════════ */
+#uiElements {
+  padding-bottom: max(72px, calc(72px + env(safe-area-inset-bottom)));
+}
+
+.immersive-back-btn {
+  top: max(16px, calc(16px + env(safe-area-inset-top)));
+  left: max(16px, env(safe-area-inset-left));
+}
+
+.top-nav {
+  top: max(12px, calc(12px + env(safe-area-inset-top)));
+}
+
+/* 解牌完成操作栏底部留白 */
+#actionBtns {
+  padding-bottom: max(50px, calc(50px + env(safe-area-inset-bottom))) !important;
+}
+
+/* ═══════════════════════════════════════
+   iOS Safari / 微信浏览器兼容性修复
+   ═══════════════════════════════════════ */
+
+/* 修复 iOS 16 以下 backdrop-filter 性能问题 */
+@supports not (backdrop-filter: blur(1px)) {
+  .top-nav {
+    background: rgba(14, 20, 44, 0.92) !important;
+  }
+  .modal-overlay {
+    background: rgba(2, 3, 10, 0.94);
+  }
+  .mini-card-bar {
+    background: rgba(17, 20, 35, 0.88);
+  }
+}
+
+/* 修复 iOS Safari input 自动缩放（font-size < 16px 会触发缩放） */
+.input-group input,
+.input-group textarea,
+.input-group select {
+  font-size: max(16px, 1em);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* 修复 iOS Safari 滚动惯性 */
+.timeline-list,
+.journal-notes-list,
+.history-detail-body,
+.growth-hub-modal,
+.mini-card-bar {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* 修复微信浏览器 100vh 问题 */
+.intro-screen,
+.modal-overlay {
+  height: 100%;
+  min-height: -webkit-fill-available;
+}
+
+/* 修复 iOS 按钮默认样式 */
+button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* ═══════════════════════════════════════
+   移动端触控热区优化（最小 44×44px）
+   ═══════════════════════════════════════ */
+.icon-btn,
+.spread-pill,
+.couple-toggle,
+.spread-current-pick__change,
+.emoji-react,
+.timeline-item,
+.journal-delete-btn,
+.card-preview-nav,
+.spread-advanced-teaser,
+.spread-recommendation,
+.mini-card-item {
+  touch-action: manipulation;
+}
+
+/* 强制所有可交互元素最小触控尺寸 */
+.icon-btn {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spread-pill {
+  min-height: 52px;
+}
+
+.emoji-react {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+.timeline-item {
+  min-height: 52px;
+}
+
+/* 日历删除按钮扩大热区 */
+.journal-delete-btn {
+  min-width: 32px;
+  min-height: 32px;
+  padding: 4px 8px;
+}
+
+/* ═══════════════════════════════════════
+   320px 超窄屏专项修复
+   ═══════════════════════════════════════ */
+@media (max-width: 360px) {
+  /* 标题字号缩减 */
+  .classic-title {
+    font-size: 1.55rem !important;
+    letter-spacing: 2px;
+  }
+
+  /* 顶部导航适配 */
+  .top-nav {
+    padding: 6px 8px;
+  }
+
+  .top-nav-actions {
+    gap: 4px;
+  }
+
+  .icon-btn {
+    padding: 6px 8px;
+    font-size: 15px;
+  }
+
+  /* 选择卡片 */
+  .choice-card {
+    padding: 12px 10px !important;
+    border-radius: 12px !important;
+  }
+
+  .card-quick {
+    padding: 18px 12px !important;
+  }
+
+  .card-deep {
+    padding: 14px 10px !important;
+  }
+
+  /* 价格标签在窄屏换行显示 */
+  .couple-toggle {
+    flex-wrap: wrap !important;
+    gap: 6px 8px !important;
+  }
+
+  .price-tag {
+    margin-left: 0 !important;
+  }
+
+  /* 牌阵推荐区域自适应宽度 */
+  .spread-advanced-teaser__price {
+    position: static !important;
+    display: inline-block;
+    margin-bottom: 4px;
+  }
+
+  .spread-advanced-teaser__cta {
+    position: static !important;
+    width: 100%;
+    margin-top: 8px;
+  }
+
+  .spread-advanced-teaser__preview {
+    padding-right: 0 !important;
+  }
+
+  /* 牌阵选择网格强制单列 */
+  .spread-pills--free {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* 流程步骤字号 */
+  .flow-step {
+    font-size: 11px;
+    padding: 6px 4px;
+  }
+
+  /* 模态框内按钮组 */
+  .modal-btns {
+    flex-direction: column !important;
+  }
+
+  .vip-modal-content .modal-btns {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* 解牌区域卡槽尺寸 */
+  .card-slot {
+    width: 90px !important;
+    height: 158px !important;
+  }
+
+  .layout-grid {
+    grid-template-columns: repeat(2, 90px) !important;
+    gap: 10px !important;
+  }
+
+  /* 十字阵在阅读模式 320px 宽屏的溢出修复 */
+  body.reading-mode .layout-cross {
+    grid-template-columns: repeat(3, 84px) !important;
+    grid-template-rows: repeat(3, 148px) !important;
+    gap: 6px !important;
+  }
+
+  body.reading-mode .card-slot,
+  body.reading-mode .layout-cross .card-slot {
+    width: 84px !important;
+    height: 148px !important;
+  }
+
+  body.reading-mode .card-art {
+    height: 90px !important;
+  }
+
+  /* 扇形牌堆 */
+  .fan-deck.arc-fan .deck-card {
+    width: 62px !important;
+    height: 108px !important;
+    left: calc(50% - 31px) !important;
+  }
+
+  /* 水晶球组件 */
+  .ritual-orb {
+    width: 86px;
+    height: 86px;
+  }
+
+  .ritual-orb__icon {
+    font-size: 36px;
+  }
+
+  /* 按钮宽度 */
+  .main-btn,
+  .secondary-btn,
+  .save-btn {
+    font-size: 14px;
+    padding: 12px 14px;
+  }
+}
+
+/* ═══════════════════════════════════════
+   320-430px 通用移动端优化
+   ═══════════════════════════════════════ */
+@media (max-width: 430px) {
+  /* 成长档案弹窗优化 */
+  .growth-hub-modal {
+    width: calc(100vw - 12px);
+    max-height: 94vh;
+    border-radius: 18px !important;
+    padding: 16px 14px !important;
+  }
+
+  .journal-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .timeline-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* 牌面预览弹窗 */
+  .card-preview-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .card-preview-visual {
+    min-height: 280px;
+  }
+
+  .card-preview-image {
+    max-height: 340px;
+  }
+
+  /* VIP 弹窗 */
+  .vip-modal-content {
+    width: calc(100vw - 16px);
+    padding: 18px 16px;
+  }
+
+  .qr-container {
+    width: 180px;
+    height: 180px;
+  }
+
+  /* 反馈弹窗 */
+  .feedback-panel-content {
+    width: calc(100vw - 16px);
+    padding: 18px 16px;
+  }
+
+  /* 解牌文本区域 */
+  .parchment-box {
+    padding: 18px 14px;
+    border-radius: 14px;
+  }
+
+  /* 操作按钮区 */
+  .result-actions {
+    width: calc(100% - 12px);
+    padding: 10px 12px 20px !important;
+  }
+
+  .result-action-primary {
+    min-width: unset;
+    width: 100%;
+  }
+
+  .result-action-soft {
+    min-width: unset;
+    flex: 1;
+  }
+
+  /* 阅读模式卡片布局 */
+  body.reading-mode .layout-cross {
+    grid-template-columns: repeat(3, 92px) !important;
+    grid-template-rows: repeat(3, 164px) !important;
+    gap: 8px !important;
+  }
+
+  body.reading-mode .card-slot,
+  body.reading-mode .layout-cross .card-slot {
+    width: 92px !important;
+    height: 164px !important;
+  }
+
+  body.reading-mode .card-art {
+    height: 110px !important;
+  }
+}
+
+/* ═══════════════════════════════════════
+   减少动画模式（无障碍支持）
+   ═══════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .card {
+    transition: none !important;
+  }
+
+  .sdm-card,
+  .ritual-orb,
+  .ritual-orb__glow,
+  .choice-card__icon,
+  .couple-toggle__heart,
+  .mystical-divider span:nth-child(2) {
+    animation: none !important;
+  }
+
+  .fan-deck.arc-fan .deck-card {
+    transition: opacity 0.1s ease !important;
+  }
+}
+
+/* ═══════════════════════════════════════
+   横屏手机适配（landscape mobile）
+   ═══════════════════════════════════════ */
+@media (max-height: 500px) and (orientation: landscape) {
+  .intro-panel {
+    padding: 16px 20px;
+  }
+
+  .home-ritual-widget {
+    display: none;
+  }
+
+  .hero-header {
+    margin-bottom: 8px;
+  }
+
+  .classic-title {
+    font-size: 1.6rem !important;
+  }
+
+  .fan-deck.arc-fan {
+    height: 180px !important;
+  }
+
+  .fan-deck.arc-fan .deck-card {
+    height: 130px !important;
+  }
+}

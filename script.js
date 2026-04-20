@@ -167,6 +167,8 @@ const VIP_ORDER_POLL_INTERVAL_MS = 3000;
 // ── Intro dismiss ────────────────────────────────────────────────────────
 let introDone = false;
 let initDone = false;
+let _timePhaseIntervalId = null;
+
 function dismissIntro() {
   if (introDone) return;
   if (!initDone) return;
@@ -178,6 +180,8 @@ function dismissIntro() {
     const ui = document.getElementById('uiElements');
     if (ui) { ui.style.opacity = 1; ui.style.display = 'flex'; }
     document.body.classList.add("home-ready");
+    // 首屏消退后再初始化 starfield，避免阻塞首屏渲染
+    try { initStarfield(); } catch(e) { console.warn("starfield init:", e); }
   }, 380);
 }
 
@@ -199,10 +203,17 @@ window.onload = function() {
     sessionStorage.removeItem(VIP_TOKEN_KEY);
     localStorage.removeItem(VIP_ORDER_ID_KEY);
     applyDensityMode(localStorage.getItem(DENSITY_MODE_KEY) || "compact");
-    applyTimePhaseTheme(); initStarfield(); renderSpread(); renderSpreadGuide(); loadHistory(); renderHomeDate(); updateStatus("");
+    // initStarfield 已移至 dismissIntro 回调中延迟执行
+    applyTimePhaseTheme(); renderSpread(); renderSpreadGuide(); loadHistory(); renderHomeDate(); updateStatus("");
   } catch(e) { console.error("init failed:", e); }
   initDone = true;
   setTimeout(dismissIntro, 800);
+  // 定时刷新时相主题，保存 id 以便必要时清理
+  if (_timePhaseIntervalId) clearInterval(_timePhaseIntervalId);
+  _timePhaseIntervalId = setInterval(() => {
+    applyTimePhaseTheme();
+    renderHomeDate();
+  }, 60 * 1000);
 };
 // Failsafe: if window.onload never fires, force dismiss after 6s
 setTimeout(() => { if (!introDone) { initDone = true; dismissIntro(); } }, 6000);
@@ -332,10 +343,7 @@ function initEventBindings() {
   }
   updateQuestionHint();
   updateCoupleHint();
-  setInterval(() => {
-    applyTimePhaseTheme();
-    renderHomeDate();
-  }, 60 * 1000);
+  // setInterval 移至 window.onload 统一管理，此处不重复创建
 }
 
 /* Old ritual-hold-btn functions removed — start button is now a normal click,
@@ -2954,6 +2962,13 @@ function initStarfield() {
   let lastAt = performance.now();
   let spawnCooldown = 0;
   let showerCooldown = 6 + Math.random() * 7;
+  let animFrameId = null;
+  let isPaused = false;
+
+  // 帧率限制：目标 30fps 节省电量
+  const TARGET_FPS = 30;
+  const FRAME_INTERVAL = 1000 / TARGET_FPS;
+  let lastFrameTime = 0;
 
   function viewportScale() {
     if (window.innerWidth < 768) return 0.62;
@@ -3065,11 +3080,22 @@ function initStarfield() {
   }
 
   function draw(now) {
+    // 帧率限制：跳过过密帧，目标 30fps
+    if (now - lastFrameTime < FRAME_INTERVAL) {
+      animFrameId = requestAnimationFrame(draw);
+      return;
+    }
+    lastFrameTime = now;
+
     const deltaSec = Math.min(0.05, (now - lastAt) / 1000 || 0.016);
     lastAt = now;
     ctx.clearRect(0, 0, width, height);
 
     const t = now / 1000;
+
+    // 批量绘制普通星星（关闭 shadowBlur 节省 GPU 资源）
+    // 每 3 帧才开启 shadowBlur，降低 GPU 压力
+    const enableGlow = Math.floor(t * TARGET_FPS) % 3 === 0;
     for (let i = 0; i < stars.length; i++) {
       const star = stars[i];
       star.x += (star.vx * deltaSec) / 2.4;
@@ -3086,9 +3112,15 @@ function initStarfield() {
       ctx.beginPath();
       ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
       ctx.fillStyle = `${star.color}${alpha})`;
-      ctx.shadowColor = `${star.color}${Math.min(0.8, alpha * 0.75)})`;
-      ctx.shadowBlur = star.radius * 2.4;
+      if (enableGlow && star.radius > 1.2) {
+        ctx.shadowColor = `${star.color}${Math.min(0.8, alpha * 0.75)})`;
+        ctx.shadowBlur = star.radius * 2.4;
+      }
       ctx.fill();
+      // 及时关闭 shadowBlur 避免影响后续绘制
+      if (enableGlow && star.radius > 1.2) {
+        ctx.shadowBlur = 0;
+      }
     }
     ctx.shadowBlur = 0;
 
@@ -3201,7 +3233,7 @@ function initStarfield() {
       ctx.restore();
     }
 
-    requestAnimationFrame(draw);
+    animFrameId = requestAnimationFrame(draw);
   }
 
   function resize() {
@@ -3213,6 +3245,31 @@ function initStarfield() {
     meteorShards = [];
   }
 
+  // 页面不可见时暂停动画，恢复可见时继续
+  function pauseAnimation() {
+    isPaused = true;
+    if (animFrameId) {
+      cancelAnimationFrame(animFrameId);
+      animFrameId = null;
+    }
+  }
+
+  function resumeAnimation() {
+    if (!isPaused) return;
+    isPaused = false;
+    lastAt = performance.now();
+    lastFrameTime = 0;
+    animFrameId = requestAnimationFrame(draw);
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      pauseAnimation();
+    } else {
+      resumeAnimation();
+    }
+  });
+
   let resizeTimer;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
@@ -3220,8 +3277,9 @@ function initStarfield() {
   });
 
   resize();
-  requestAnimationFrame(ts => {
+  animFrameId = requestAnimationFrame(ts => {
     lastAt = ts;
+    lastFrameTime = ts;
     draw(ts);
   });
 }
