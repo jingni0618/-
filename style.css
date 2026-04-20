@@ -1372,6 +1372,43 @@ body[data-phase="dusk"] #starfield {
   pointer-events: auto;
 }
 
+.result-actions {
+  width: min(760px, calc(100% - 18px));
+  margin-left: auto;
+  margin-right: auto;
+  padding: 14px 16px 28px !important;
+  border-radius: 24px;
+  border: 1px solid rgba(244, 220, 176, 0.18);
+  background:
+    radial-gradient(260px 120px at 50% 0%, rgba(244, 220, 176, 0.12), transparent 70%),
+    rgba(8, 11, 23, 0.2);
+  box-shadow: 0 16px 34px rgba(2, 5, 16, 0.16);
+}
+
+.result-actions::before {
+  content: "下一步";
+  width: 100%;
+  color: rgba(246, 230, 197, 0.72);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-align: center;
+}
+
+.result-action-primary {
+  min-width: 190px;
+}
+
+.result-action-soft {
+  min-width: 150px;
+  background: rgba(255, 249, 236, 0.12) !important;
+  border: 1px solid rgba(244, 220, 176, 0.28) !important;
+  color: rgba(255, 244, 220, 0.94) !important;
+}
+
+.result-action-soft:hover {
+  background: rgba(255, 249, 236, 0.18) !important;
+}
+
 .aside-panel {
   width: min(1060px, calc(100% - 24px));
   margin: 12px auto 0;
@@ -1671,18 +1708,32 @@ body[data-phase="dusk"] #starfield {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 7px;
-  margin-top: 14px;
-  padding: 6px 12px;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 0 12px;
+  color: rgba(240, 220, 180, 0.58);
+  font-size: 12px;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.draw-slot-tracker__label {
+  letter-spacing: 0.08em;
+}
+.draw-slot-tracker__items {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
 }
 .dst-slot {
   display: flex;
   align-items: center;
   gap: 5px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(220,185,120,0.22);
-  background: rgba(20,16,40,0.4);
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: rgba(240,220,180,0.5);
   font-size: 12px;
   transition: all 0.35s ease;
@@ -1696,8 +1747,6 @@ body[data-phase="dusk"] #starfield {
   transition: all 0.35s ease;
 }
 .dst-slot.filled {
-  border-color: rgba(160,220,170,0.5);
-  background: rgba(20,50,30,0.5);
   color: rgba(175,235,185,0.9);
 }
 .dst-slot.filled .dst-dot {
@@ -2205,6 +2254,82 @@ body[data-phase="dusk"] #starfield {
 .contact-label { color: #d8c08c; }
 .contact-value { color: #f8e7b3; text-decoration: none; font-weight: 700; }
 .contact-value:hover { text-decoration: underline; }
+
+.parchment-modal-title {
+  color: #4b3520 !important;
+  letter-spacing: 0.5px;
+  text-shadow: none !important;
+}
+
+#contactModal .contact-panel-content,
+#historyDetailModal .history-detail-content,
+#growthHubModal .growth-hub-modal,
+#vipConfirmModal .vip-confirm-content {
+  color: #4f3821;
+  background:
+    radial-gradient(circle at 18% 0%, rgba(255, 244, 204, 0.72), transparent 34%),
+    linear-gradient(155deg, rgba(255, 250, 237, 0.98), rgba(239, 221, 184, 0.98));
+  border: 1px solid rgba(142, 102, 55, 0.34);
+  box-shadow: 0 24px 70px rgba(43, 31, 16, 0.28), inset 0 1px 0 rgba(255,255,255,0.72);
+}
+
+#contactModal .contact-desc,
+#growthHubModal .growth-intro,
+#growthHubModal .vault-meta,
+#vipConfirmModal .vip-confirm-text {
+  color: rgba(79, 56, 33, 0.74) !important;
+}
+
+#contactModal .contact-item,
+#growthHubModal .journal-notebook,
+#growthHubModal .timeline-item,
+#historyDetailModal .history-detail-body {
+  color: rgba(75, 53, 32, 0.88);
+  background: rgba(255, 252, 244, 0.62);
+  border-color: rgba(136, 99, 56, 0.2);
+}
+
+#historyDetailModal .history-detail-body {
+  padding: 12px;
+  border: 1px solid rgba(136, 99, 56, 0.2);
+  border-radius: 16px;
+}
+
+#historyDetailModal .history-detail-body hr {
+  border-color: rgba(136, 99, 56, 0.2) !important;
+}
+
+#growthHubModal .timeline-item-main,
+#growthHubModal .journal-notebook h4 {
+  color: #4b3520 !important;
+  text-shadow: none;
+}
+
+#growthHubModal .timeline-item-time,
+#growthHubModal .timeline-item-snippet {
+  color: rgba(79, 56, 33, 0.64) !important;
+}
+
+#growthHubModal .timeline-tag,
+#growthHubModal .emoji-react {
+  color: #6b4c29;
+  background: rgba(152, 110, 58, 0.1);
+  border-color: rgba(136, 99, 56, 0.18);
+}
+
+#growthHubModal textarea {
+  color: #4b3520;
+  background: rgba(255, 252, 244, 0.86);
+  border-color: rgba(136, 99, 56, 0.34);
+}
+
+#contactModal .contact-label {
+  color: rgba(79, 56, 33, 0.68) !important;
+}
+
+#contactModal .contact-value {
+  color: #7a4e16 !important;
+}
 
 .feedback-contact-shortcut {
   margin-top: 10px;

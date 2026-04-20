@@ -266,6 +266,7 @@ function initEventBindings() {
   byId("closeCardPreviewBtn")?.addEventListener("click", closeCardPreview);
   byId("sendFeedbackBtn")?.addEventListener("click", sendFeedback);
   byId("saveBtn")?.addEventListener("click", saveAsImage);
+  byId("resultGrowthBtn")?.addEventListener("click", openGrowthHub);
   byId("newQuestionBtn")?.addEventListener("click", () => {
     handleReturnToHomePage();
     setTimeout(() => {
@@ -2195,9 +2196,15 @@ function unlockDeckSpread() {
   tracker = document.createElement("div");
   tracker.id = "drawSlotTracker";
   tracker.className = "draw-slot-tracker";
-  tracker.innerHTML = currentSpreadConfig.cards.map((pos, i) =>
-    `<span class="dst-slot" id="dst-${i}"><span class="dst-dot"></span><span class="dst-label">${pos.label}</span></span>`
-  ).join("");
+  tracker.setAttribute("aria-hidden", "true");
+  tracker.innerHTML = `
+    <span class="draw-slot-tracker__label">本轮抽取</span>
+    <span class="draw-slot-tracker__items">
+      ${currentSpreadConfig.cards.map((pos, i) =>
+        `<span class="dst-slot" id="dst-${i}"><span class="dst-dot"></span><span class="dst-label">${pos.label}</span></span>`
+      ).join("")}
+    </span>
+  `;
   if (deckAreaForTracker) deckAreaForTracker.appendChild(tracker);
 }
 
