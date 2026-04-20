@@ -551,42 +551,71 @@ async function sendFeedback() {
   }
 
   try {
+    clearFeedbackStatus();
+
     const res = await fetch("/api/feedback", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
 
+    let data = {};
+    try { data = await res.json(); } catch {}
+
+    if (data?.fallback === "mailto") {
+      showFeedbackMailFallback(message, "留言通道还差最后一步配置，已帮你准备好邮件草稿。");
+      return;
+    }
+
     if (!res.ok) {
-      let errMsg = "信使暂时离线";
-      try { const d = await res.json(); errMsg = d.error || errMsg; } catch {}
-      throw new Error(errMsg);
+      throw new Error(data?.error || "信使暂时离线");
     }
 
     if (msgEl) msgEl.value = "";
-    const statusEl = document.getElementById("feedbackSendStatus");
-    if (statusEl) statusEl.style.display = "none";
-    document.getElementById("feedbackMailtoFallback")?.style.setProperty("display", "none", "important");
+    clearFeedbackStatus();
     closeFeedbackModal();
     updateStatus("感谢你的星语，已送达邮箱。");
   } catch (err) {
-    const statusEl = document.getElementById("feedbackSendStatus");
-    const fallback = document.getElementById("feedbackMailtoFallback");
-    if (statusEl) {
-      statusEl.textContent = `接口暂时不可用：${err.message || "网络异常"}。可以直接发邮件给我。`;
-      statusEl.style.display = "block";
-    }
-    if (fallback) {
-      const subject = encodeURIComponent("塔罗之眼用户意见反馈");
-      const body = encodeURIComponent(`意见：\n${message}`);
-      fallback.href = `mailto:jingni18@hotmail.com?subject=${subject}&body=${body}`;
-      fallback.style.display = "inline-block";
-    }
+    showFeedbackMailFallback(message, "留言通道暂时离线，已帮你准备好邮件草稿。");
   } finally {
     if (btn) {
       btn.disabled = false;
       btn.textContent = "投递星语";
     }
+  }
+}
+
+function buildFeedbackMailto(message) {
+  const subject = encodeURIComponent("塔罗之眼用户意见反馈");
+  const body = encodeURIComponent(`意见：\n${message}\n\n来源页面：${window.location.href}`);
+  return `mailto:jingniwang188@gmail.com?subject=${subject}&body=${body}`;
+}
+
+function clearFeedbackStatus() {
+  const statusEl = document.getElementById("feedbackSendStatus");
+  const fallback = document.getElementById("feedbackMailtoFallback");
+  if (statusEl) {
+    statusEl.textContent = "";
+    statusEl.classList.remove("is-error");
+    statusEl.style.display = "none";
+  }
+  if (fallback) {
+    fallback.href = "#";
+    fallback.style.display = "none";
+  }
+}
+
+function showFeedbackMailFallback(message, text) {
+  const statusEl = document.getElementById("feedbackSendStatus");
+  const fallback = document.getElementById("feedbackMailtoFallback");
+  if (statusEl) {
+    statusEl.textContent = text;
+    statusEl.classList.remove("is-error");
+    statusEl.style.display = "block";
+  }
+  if (fallback) {
+    fallback.href = buildFeedbackMailto(message);
+    fallback.style.display = "inline-flex";
   }
 }
 

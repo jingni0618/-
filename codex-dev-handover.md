@@ -176,7 +176,13 @@
 - `ALIPAY_APP_PRIVATE_KEY`
 - `ALIPAY_NOTIFY_URL`
 - `RESEND_API_KEY`
+- `FEEDBACK_TO_EMAIL`
 - `FEEDBACK_FROM_EMAIL`
+
+留言邮件说明：
+
+- `FEEDBACK_TO_EMAIL` 是接收留言的邮箱，默认是 `jingniwang188@gmail.com`。
+- `FEEDBACK_FROM_EMAIL` 是 Resend 的发件邮箱。Resend 测试地址通常只能发给账号邮箱；如果未来要直接发到其他邮箱，需要先在 Resend 验证自有域名，再设置成类似 `noreply@your-domain.com` 的地址。
 
 支付闭环说明：
 

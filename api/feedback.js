@@ -39,11 +39,15 @@ export default async function handler(req, res) {
   }
 
   const resendKey = process.env.RESEND_API_KEY;
-  const toEmail = "jingni18@hotmail.com";
+  const toEmail = process.env.FEEDBACK_TO_EMAIL || "jingniwang188@gmail.com";
   const fromEmail = process.env.FEEDBACK_FROM_EMAIL || "onboarding@resend.dev";
 
   if (!resendKey) {
-    return res.status(503).json({ error: "RESEND_API_KEY 未配置" });
+    return res.status(200).json({
+      ok: false,
+      fallback: "mailto",
+      error: "RESEND_API_KEY 未配置"
+    });
   }
 
   const html = `
@@ -74,7 +78,11 @@ export default async function handler(req, res) {
 
     if (!resp.ok) {
       const text = await resp.text();
-      return res.status(502).json({ error: `邮件发送失败: ${text}` });
+      return res.status(502).json({
+        error: "邮件服务暂时没有完成配置",
+        detail: text,
+        fallback: "mailto"
+      });
     }
 
     return res.status(200).json({ ok: true });
