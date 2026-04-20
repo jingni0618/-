@@ -94,18 +94,20 @@ const spreadsOptions = {
   time: { cssClass: 'linear', cards: [{ label: "过去的因果" }, { label: "当下的现状" }, { label: "未来的趋势" }] },
   relationship: { cssClass: 'grid', cards: [{ label: "你的现状" }, { label: "对方的状态" }, { label: "当前的阻碍" }, { label: "未来的走向" }] },
   career: { cssClass: 'grid', cards: [{ label: "事业现状" }, { label: "潜在机遇" }, { label: "未知风险" }, { label: "财务走向" }] },
+  monthly: { cssClass: 'cross', cards: [{ label: "本月主题" }, { label: "感情人际" }, { label: "事业财富" }, { label: "挑战提醒" }, { label: "行动建议" }] },
   choice: { cssClass: 'cross', cards: [{ label: "当前现状" }, { label: "选A的走向" }, { label: "选B的走向" }, { label: "选A结局" }, { label: "选B结局" }] },
   cross: { cssClass: 'cross', cards: [{ label: "核心问题" }, { label: "面临的阻碍" }, { label: "潜在的目标" }, { label: "深层的潜意识" }, { label: "最终的可能结局" }] }
 };
 
 const spreadGuideMeta = {
-  single: { title: "单牌神谕", icon: "🃏", count: 1, mood: "免费", paid: false, desc: "当下直觉快照，适合想要一句提醒的时候。" },
-  yesno: { title: "是非决断阵", icon: "⚖️", count: 3, mood: "进阶", paid: true, priceFen: 300, desc: "看见支持与阻力，帮你做清晰判断。" },
-  time: { title: "时间之流", icon: "⏳", count: 3, mood: "免费", paid: false, desc: "过去、现在、未来三段式梳理问题脉络。" },
-  relationship: { title: "情感透视阵", icon: "💞", count: 4, mood: "进阶", paid: true, priceFen: 300, desc: "拆解你与对方的状态、阻碍和关系走向。" },
-  career: { title: "财富事业阵", icon: "💼", count: 4, mood: "进阶", paid: true, priceFen: 300, desc: "聚焦现状、机遇、风险与下一步方向。" },
-  choice: { title: "二选一岔路阵", icon: "🧭", count: 5, mood: "进阶", paid: true, priceFen: 300, desc: "并排比较两条路径的趋势与结果。" },
-  cross: { title: "灵感十字阵", icon: "✚", count: 5, mood: "进阶", paid: true, priceFen: 300, desc: "从核心、阻碍、潜意识到结局做完整推演。" }
+  single: { title: "单牌神谕", icon: "🃏", count: 1, mood: "免费", paid: false, desc: "当下直觉快照，适合想要一句提醒的时候。", tags: ["日常提醒", "快速答案"] },
+  yesno: { title: "是非决断阵", icon: "⚖️", count: 3, mood: "进阶", paid: true, priceFen: 300, desc: "看见支持与阻力，帮你做清晰判断。", tags: ["要不要", "会不会", "快速判断"] },
+  time: { title: "时间之流", icon: "⏳", count: 3, mood: "免费", paid: false, desc: "过去、现在、未来三段式梳理问题脉络。", tags: ["发展走势", "时间线"] },
+  relationship: { title: "情感透视阵", icon: "💞", count: 4, mood: "进阶", paid: true, priceFen: 300, desc: "拆解你与对方的状态、阻碍和关系走向。", tags: ["感情", "复合", "暧昧"] },
+  career: { title: "财富事业阵", icon: "💼", count: 4, mood: "进阶", paid: true, priceFen: 300, desc: "聚焦现状、机遇、风险与下一步方向。", tags: ["事业", "收入", "机会风险"] },
+  monthly: { title: "月运导航阵", icon: "🌙", count: 5, mood: "进阶", paid: true, priceFen: 300, desc: "预览一个月的主题、人际、事业、挑战与行动重点。", tags: ["本月运势", "周期规划", "行动重点"] },
+  choice: { title: "二选一岔路阵", icon: "🧭", count: 5, mood: "进阶", paid: true, priceFen: 300, desc: "并排比较两条路径的趋势与结果。", tags: ["A/B选择", "去留", "岔路"] },
+  cross: { title: "灵感十字阵", icon: "✚", count: 5, mood: "进阶", paid: true, priceFen: 300, desc: "从核心、阻碍、潜意识到结局做完整推演。", tags: ["复杂问题", "深度复盘"] }
 };
 
 const VIP_PRICE_DEEP_FEN = 300;
@@ -625,6 +627,7 @@ const SPREAD_DOTS_HTML = {
   time:         `<span class="sdr"><i class="sd"></i><i class="sd"></i><i class="sd"></i></span>`,
   relationship: `<span class="sdr"><i class="sd"></i><i class="sd"></i></span><span class="sdr"><i class="sd"></i><i class="sd"></i></span>`,
   career:       `<span class="sdr"><i class="sd"></i><i class="sd"></i></span><span class="sdr"><i class="sd"></i><i class="sd"></i></span>`,
+  monthly:      `<span class="sdr"><i class="sd sd-g"></i><i class="sd"></i><i class="sd sd-g"></i></span><span class="sdr"><i class="sd"></i><i class="sd"></i><i class="sd"></i></span><span class="sdr"><i class="sd sd-g"></i><i class="sd"></i><i class="sd sd-g"></i></span>`,
   choice:       `<span class="sdr"><i class="sd sd-g"></i><i class="sd"></i><i class="sd sd-g"></i></span><span class="sdr"><i class="sd"></i><i class="sd"></i><i class="sd"></i></span><span class="sdr"><i class="sd sd-g"></i><i class="sd"></i><i class="sd sd-g"></i></span>`,
   cross:        `<span class="sdr"><i class="sd sd-g"></i><i class="sd"></i><i class="sd sd-g"></i></span><span class="sdr"><i class="sd"></i><i class="sd"></i><i class="sd"></i></span><span class="sdr"><i class="sd sd-g"></i><i class="sd"></i><i class="sd sd-g"></i></span>`,
 };
@@ -644,6 +647,11 @@ const SPREAD_RECOMMENDATION_RULES = [
     spread: "choice",
     patterns: ["二选一", "选择", "选哪个", "哪一个", "两个选择", "方案A", "方案B", "A和B", "a和b", "要不要", "该不该", "还是", "或者"],
     reason: "你的问题出现选择分岔，适合并排比较两条路径。"
+  },
+  {
+    spread: "monthly",
+    patterns: ["月运", "本月", "这个月", "下个月", "最近一个月", "四月", "五月", "六月", "七月", "八月", "九月", "十月", "十一月", "十二月", "运势"],
+    reason: "你的问题关注一个月内的整体状态，适合看月度主题、挑战与行动重点。"
   },
   {
     spread: "time",
@@ -669,6 +677,10 @@ const SPREAD_UNLOCK_COPY = {
   career: {
     value: "聚焦事业与财富，把现状、机会、风险和趋势拆开看。",
     bullets: ["4 张事业/财务结构", "识别机会与未知风险", "适合工作、跳槽、项目和收入问题"]
+  },
+  monthly: {
+    value: "预览接下来一个月的核心主题、人际感情、事业财富、挑战提醒与行动重点。",
+    bullets: ["5 张月度结构", "适合每月复盘和规划", "输出本月最该关注的行动建议"]
   },
   choice: {
     value: "并排比较两条路径，适合 A/B 选择、去留判断和关键岔路。",
@@ -699,6 +711,10 @@ function getRecommendedSpread(question = "") {
     .filter(rule => rule.score > 0)
     .sort((a, b) => b.score - a.score)[0];
   return matched || null;
+}
+
+function renderSpreadTags(tags = []) {
+  return tags.slice(0, 3).map(tag => `<span class="spread-pill__tag">${tag}</span>`).join("");
 }
 
 function updateVipUnlockSummary(mode = activeReadingMode) {
@@ -753,7 +769,9 @@ function renderSpreadGuide() {
         <span class="spread-pill__name">${info.title}</span>
         <span class="spread-pill__desc">${info.desc}</span>
         <span class="spread-pill__meta">${info.count}张 · 免费</span>
+        <span class="spread-pill__tags">${renderSpreadTags(info.tags)}</span>
         <span class="spread-pill__dots">${dots}</span>
+        <span class="spread-pill__cta">${k === selected ? "当前选择" : "选择免费牌阵"}</span>
       </button>
     `;
   }).join("");
@@ -769,7 +787,9 @@ function renderSpreadGuide() {
         <span class="spread-pill__name">${info.title}</span>
         <span class="spread-pill__desc">${info.desc}</span>
         <span class="spread-pill__meta">${info.count}张 · 🔒 ${formatFenPrice(priceFen)}/次</span>
+        <span class="spread-pill__tags">${renderSpreadTags(info.tags)}</span>
         <span class="spread-pill__dots">${dots}</span>
+        <span class="spread-pill__cta">${k === selected ? "当前选择" : "选择进阶牌阵"}</span>
       </button>
     `;
   }).join("");
@@ -780,7 +800,7 @@ function renderSpreadGuide() {
   const recommendedInfo = recommendation ? spreadGuideMeta[recommendation.spread] : null;
   const showRecommendation = recommendation && recommendedInfo && recommendation.spread !== selected && keys.includes(recommendation.spread);
   const paidKeys = keys.filter(k => spreadGuideMeta[k].paid);
-  const paidPreview = paidKeys.slice(0, 3).map(k => {
+  const paidPreview = paidKeys.slice(0, 4).map(k => {
     const item = spreadGuideMeta[k];
     return `${item.icon}${item.title}`;
   }).join(" · ");
@@ -819,16 +839,14 @@ function renderSpreadGuide() {
         <div class="spread-pills spread-pills--free">${freeCards}</div>
         ${paidKeys.length ? `
         <button class="spread-advanced-teaser" type="button">
-          <span class="spread-advanced-teaser__label">进阶牌阵 · 点击展开</span>
-          <span class="spread-advanced-teaser__main">查看全部付费牌阵</span>
-          <span class="spread-advanced-teaser__preview">${paidPreview}${paidKeys.length > 3 ? " · 更多" : ""}</span>
-          <span class="spread-advanced-teaser__price">${formatFenPrice(VIP_PRICE_DEEP_FEN)}/次</span>
-          <span class="spread-advanced-teaser__cta">展开选择 <span aria-hidden="true">›</span></span>
+          <span class="spread-advanced-teaser__label">进阶牌阵 · ${formatFenPrice(VIP_PRICE_DEEP_FEN)}/次</span>
+          <span class="spread-advanced-teaser__main">展开关系、事业、月运、选择题</span>
+          <span class="spread-advanced-teaser__preview">${paidPreview}${paidKeys.length > 4 ? " · 更多" : ""}</span>
+          <span class="spread-advanced-teaser__cta">查看全部进阶牌阵 <span aria-hidden="true">›</span></span>
         </button>
-        <details class="spread-pills-advanced" style="display:none;">
-          <summary class="spread-pills-advanced__toggle">进阶牌阵 <span class="spread-pills-advanced__arrow">▾</span></summary>
+        <section class="spread-section spread-section--paid" style="display:none;">
           <div class="spread-pills spread-pills--paid">${paidCards}</div>
-        </details>
+        </section>
         ` : ""}
       </div>
     </div>
@@ -849,11 +867,15 @@ function renderSpreadGuide() {
   });
 
   wrap.querySelector(".spread-advanced-teaser")?.addEventListener("click", () => {
-    const advanced = wrap.querySelector(".spread-pills-advanced");
-    if (!advanced) return;
-    advanced.style.display = "";
-    advanced.open = true;
-    advanced.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    const advanced = wrap.querySelector(".spread-section--paid");
+    const teaser = wrap.querySelector(".spread-advanced-teaser");
+    if (!advanced || !teaser) return;
+    const isOpen = advanced.style.display !== "none";
+    advanced.style.display = isOpen ? "none" : "";
+    teaser.classList.toggle("is-open", !isOpen);
+    teaser.querySelector(".spread-advanced-teaser__cta").innerHTML = isOpen
+      ? '查看全部进阶牌阵 <span aria-hidden="true">›</span>'
+      : '收起进阶牌阵 <span aria-hidden="true">⌃</span>';
   });
 
   wrap.querySelectorAll(".spread-pill").forEach(btn => {
