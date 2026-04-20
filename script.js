@@ -100,7 +100,7 @@ const spreadsOptions = {
 
 const spreadGuideMeta = {
   single: { title: "单牌神谕", icon: "🃏", count: 1, mood: "免费", paid: false, desc: "当下直觉快照，适合想要一句提醒的时候。" },
-  yesno: { title: "是非决断阵", icon: "⚖️", count: 3, mood: "免费", paid: false, desc: "看见支持与阻力，帮你做清晰判断。" },
+  yesno: { title: "是非决断阵", icon: "⚖️", count: 3, mood: "进阶", paid: true, priceFen: 300, desc: "看见支持与阻力，帮你做清晰判断。" },
   time: { title: "时间之流", icon: "⏳", count: 3, mood: "免费", paid: false, desc: "过去、现在、未来三段式梳理问题脉络。" },
   relationship: { title: "情感透视阵", icon: "💞", count: 4, mood: "进阶", paid: true, priceFen: 300, desc: "拆解你与对方的状态、阻碍和关系走向。" },
   career: { title: "财富事业阵", icon: "💼", count: 4, mood: "进阶", paid: true, priceFen: 300, desc: "聚焦现状、机遇、风险与下一步方向。" },
@@ -273,7 +273,10 @@ function initEventBindings() {
   });
   bindReturnHome(byId("immersiveBackBtn"));
   byId("historyDetailCloseBtn")?.addEventListener("click", closeHistoryDetail);
-  byId("questionInput")?.addEventListener("input", () => updateQuestionHint());
+  byId("questionInput")?.addEventListener("input", () => {
+    updateQuestionHint();
+    renderSpreadGuide();
+  });
   byId("coupleQuestionInput")?.addEventListener("input", () => updateCoupleHint());
   document.querySelectorAll(".emoji-react").forEach(btn => {
     btn.addEventListener("click", () => {
@@ -597,6 +600,109 @@ const SPREAD_DOTS_HTML = {
   cross:        `<span class="sdr"><i class="sd sd-g"></i><i class="sd"></i><i class="sd sd-g"></i></span><span class="sdr"><i class="sd"></i><i class="sd"></i><i class="sd"></i></span><span class="sdr"><i class="sd sd-g"></i><i class="sd"></i><i class="sd sd-g"></i></span>`,
 };
 
+const SPREAD_RECOMMENDATION_RULES = [
+  {
+    spread: "relationship",
+    patterns: ["感情", "关系", "复合", "分手", "暧昧", "喜欢", "爱", "恋爱", "男朋友", "女朋友", "前任", "他", "她", "ta", "TA"],
+    reason: "你的问题更像关系课题，适合看双方状态、阻碍和未来走向。"
+  },
+  {
+    spread: "career",
+    patterns: ["工作", "事业", "职业", "offer", "跳槽", "面试", "老板", "同事", "项目", "钱", "财", "收入", "投资", "副业"],
+    reason: "你的问题偏事业或财务，适合拆解现状、机会、风险和走向。"
+  },
+  {
+    spread: "choice",
+    patterns: ["二选一", "选择", "选哪个", "哪一个", "两个选择", "方案A", "方案B", "A和B", "a和b", "要不要", "该不该", "还是", "或者"],
+    reason: "你的问题出现选择分岔，适合并排比较两条路径。"
+  },
+  {
+    spread: "time",
+    patterns: ["未来", "接下来", "走势", "发展", "多久", "什么时候", "三个月", "半年", "今年", "明年"],
+    reason: "你的问题关注时间变化，适合看过去、现在和未来趋势。"
+  },
+  {
+    spread: "yesno",
+    patterns: ["能不能", "会不会", "是不是", "有没有", "是否", "可以吗", "成不成"],
+    reason: "你的问题偏判断题，适合先看支持、反对与最终答案。"
+  }
+];
+
+const SPREAD_UNLOCK_COPY = {
+  yesno: {
+    value: "把一个判断题拆成支持、阻力与最终答案，适合想快速做决定的时候。",
+    bullets: ["3 张结构化判断", "支持/反对力量并列呈现", "适合“要不要/会不会/是否”问题"]
+  },
+  relationship: {
+    value: "看清你、对方、阻碍与未来走向，适合暧昧、复合、冷淡和关系推进。",
+    bullets: ["4 张关系结构", "双方状态与阻碍拆解", "给出下一步沟通建议"]
+  },
+  career: {
+    value: "聚焦事业与财富，把现状、机会、风险和趋势拆开看。",
+    bullets: ["4 张事业/财务结构", "识别机会与未知风险", "适合工作、跳槽、项目和收入问题"]
+  },
+  choice: {
+    value: "并排比较两条路径，适合 A/B 选择、去留判断和关键岔路。",
+    bullets: ["5 张二选一结构", "分别呈现两条路径走向", "适合难以取舍的问题"]
+  },
+  cross: {
+    value: "适合复杂问题的完整推演，从核心阻碍看到潜意识与可能结局。",
+    bullets: ["5 张深度十字结构", "覆盖核心、阻碍、目标、潜意识与结局", "适合长期困扰或重大决定"]
+  },
+  compatibility: {
+    value: "双人合盘会聚焦双方互动模式、误解来源与可执行沟通建议。",
+    bullets: ["关系双方视角", "互动模式与阻碍分析", "适合认真复盘一段关系"]
+  }
+};
+
+function getRecommendedSpread(question = "") {
+  const text = String(question || "").trim();
+  if (!text) return null;
+  const normalized = text.toLowerCase();
+  const matched = SPREAD_RECOMMENDATION_RULES
+    .map(rule => ({
+      ...rule,
+      score: rule.patterns.reduce((sum, pattern) => {
+        const p = String(pattern).toLowerCase();
+        return normalized.includes(p) ? sum + Math.max(1, p.length) : sum;
+      }, 0)
+    }))
+    .filter(rule => rule.score > 0)
+    .sort((a, b) => b.score - a.score)[0];
+  return matched || null;
+}
+
+function updateVipUnlockSummary(mode = activeReadingMode) {
+  const titleEl = document.getElementById("vipModalTitle");
+  const summaryEl = document.getElementById("vipUnlockSummary");
+  if (!summaryEl) return;
+
+  const spread = document.getElementById("spreadSelect")?.value || "";
+  const isCompatibility = mode === "compatibility";
+  const info = isCompatibility
+    ? { title: "双人关系合盘", icon: "💞", priceFen: VIP_PRICE_COMPAT_FEN }
+    : (spreadGuideMeta[spread] || spreadGuideMeta.cross);
+  const copy = isCompatibility
+    ? SPREAD_UNLOCK_COPY.compatibility
+    : (SPREAD_UNLOCK_COPY[spread] || SPREAD_UNLOCK_COPY.cross);
+  const priceFen = getUnlockPriceForMode(mode, spread);
+
+  if (titleEl) titleEl.textContent = `👑 解锁${info.title}`;
+  summaryEl.innerHTML = `
+    <div class="vip-unlock-summary__top">
+      <span class="vip-unlock-summary__icon">${info.icon || "🔮"}</span>
+      <div>
+        <div class="vip-unlock-summary__name">${info.title}</div>
+        <div class="vip-unlock-summary__price">${formatFenPrice(priceFen)}/次 · 本次解锁后自动继续解牌</div>
+      </div>
+    </div>
+    <p class="vip-unlock-summary__value">${copy.value}</p>
+    <ul class="vip-unlock-summary__list">
+      ${copy.bullets.map(item => `<li>${item}</li>`).join("")}
+    </ul>
+  `;
+}
+
 function renderSpreadGuide() {
   const wrap = document.getElementById("spreadVisualGuide");
   const select = document.getElementById("spreadSelect");
@@ -616,6 +722,7 @@ function renderSpreadGuide() {
       <button class="spread-pill ${activeClass}" data-spread="${k}" type="button">
         <span class="spread-pill__icon">${info.icon}</span>
         <span class="spread-pill__name">${info.title}</span>
+        <span class="spread-pill__desc">${info.desc}</span>
         <span class="spread-pill__meta">${info.count}张 · 免费</span>
         <span class="spread-pill__dots">${dots}</span>
       </button>
@@ -631,6 +738,7 @@ function renderSpreadGuide() {
       <button class="spread-pill is-paid ${activeClass}" data-spread="${k}" type="button">
         <span class="spread-pill__icon">${info.icon}</span>
         <span class="spread-pill__name">${info.title}</span>
+        <span class="spread-pill__desc">${info.desc}</span>
         <span class="spread-pill__meta">${info.count}张 · 🔒 ${formatFenPrice(priceFen)}/次</span>
         <span class="spread-pill__dots">${dots}</span>
       </button>
@@ -638,6 +746,15 @@ function renderSpreadGuide() {
   }).join("");
 
   const info = spreadGuideMeta[selected] || spreadGuideMeta.cross;
+  const questionText = document.getElementById("questionInput")?.value || "";
+  const recommendation = getRecommendedSpread(questionText);
+  const recommendedInfo = recommendation ? spreadGuideMeta[recommendation.spread] : null;
+  const showRecommendation = recommendation && recommendedInfo && recommendation.spread !== selected && keys.includes(recommendation.spread);
+  const paidKeys = keys.filter(k => spreadGuideMeta[k].paid);
+  const paidPreview = paidKeys.slice(0, 3).map(k => {
+    const item = spreadGuideMeta[k];
+    return `${item.icon}${item.title}`;
+  }).join(" · ");
   const payHint = document.getElementById("payHintText");
   const startBtn = document.getElementById("startBtn");
   const isPaid = Boolean(info.paid);
@@ -661,13 +778,29 @@ function renderSpreadGuide() {
       <span class="spread-current-pick__meta">${currentInfo.count}张${currentInfo.paid ? ' · 🔒' : ''}</span>
       <button class="spread-current-pick__change" type="button">更换牌阵</button>
     </div>
-    <div class="spread-picker-drawer" style="display:none;">
+    ${showRecommendation ? `
+      <button class="spread-recommendation" type="button" data-recommended-spread="${recommendation.spread}">
+        <span class="spread-recommendation__label">推荐牌阵</span>
+        <span class="spread-recommendation__main">${recommendedInfo.icon} ${recommendedInfo.title}</span>
+        <span class="spread-recommendation__reason">${recommendation.reason}</span>
+      </button>
+    ` : ""}
+    <div class="spread-picker-drawer">
       <div class="spread-pills-groups">
         <div class="spread-pills spread-pills--free">${freeCards}</div>
-        <details class="spread-pills-advanced">
+        ${paidKeys.length ? `
+        <button class="spread-advanced-teaser" type="button">
+          <span class="spread-advanced-teaser__label">进阶牌阵 · 点击展开</span>
+          <span class="spread-advanced-teaser__main">查看全部付费牌阵</span>
+          <span class="spread-advanced-teaser__preview">${paidPreview}${paidKeys.length > 3 ? " · 更多" : ""}</span>
+          <span class="spread-advanced-teaser__price">${formatFenPrice(VIP_PRICE_DEEP_FEN)}/次</span>
+          <span class="spread-advanced-teaser__cta">展开选择 <span aria-hidden="true">›</span></span>
+        </button>
+        <details class="spread-pills-advanced" style="display:none;">
           <summary class="spread-pills-advanced__toggle">进阶牌阵 <span class="spread-pills-advanced__arrow">▾</span></summary>
           <div class="spread-pills spread-pills--paid">${paidCards}</div>
         </details>
+        ` : ""}
       </div>
     </div>
     <div class="spread-guide-text">${info.desc}</div>
@@ -676,6 +809,22 @@ function renderSpreadGuide() {
   wrap.querySelector(".spread-current-pick__change")?.addEventListener("click", () => {
     const drawer = wrap.querySelector(".spread-picker-drawer");
     if (drawer) drawer.style.display = drawer.style.display === "none" ? "" : "none";
+  });
+
+  wrap.querySelector(".spread-recommendation")?.addEventListener("click", event => {
+    const next = event.currentTarget.getAttribute("data-recommended-spread");
+    if (!next || !select.querySelector(`option[value="${next}"]`)) return;
+    select.value = next;
+    renderSpread();
+    renderSpreadGuide();
+  });
+
+  wrap.querySelector(".spread-advanced-teaser")?.addEventListener("click", () => {
+    const advanced = wrap.querySelector(".spread-pills-advanced");
+    if (!advanced) return;
+    advanced.style.display = "";
+    advanced.open = true;
+    advanced.scrollIntoView({ behavior: "smooth", block: "nearest" });
   });
 
   wrap.querySelectorAll(".spread-pill").forEach(btn => {
@@ -1429,14 +1578,15 @@ function checkVipAndStart({ requireQuestion = true, mode = "standard" } = {}) {
     return;
   }
   updateStatus(mode === "compatibility" ? "正在准备双人合盘…" : "正在准备深度解牌…");
-  if (requiredCardsCount > 3 && !hasValidVipToken()) {
+  const unlockPrice = getUnlockPriceForMode(mode, document.getElementById("spreadSelect")?.value || "");
+  const requiresVip = unlockPrice > 0;
+  if (requiresVip && !hasValidVipToken()) {
     document.getElementById("vipModal").style.display = "flex";
-    const priceFen = getUnlockPriceForMode(mode, document.getElementById("spreadSelect")?.value || "");
-    updateStatus(`该牌阵需解锁，当前价格 ${formatFenPrice(priceFen)}/次。系统会自动检测支付结果，确认后即可继续解牌。`);
+    updateStatus(`该牌阵需解锁，当前价格 ${formatFenPrice(unlockPrice)}/次。系统会自动检测支付结果，确认后即可继续解牌。`);
     prepareVipPaymentFlow();
     return;
   }
-  showEnergyEffect(requiredCardsCount > 3 && hasValidVipToken());
+  showEnergyEffect(requiresVip && hasValidVipToken());
 }
 
 function quickDrawSingleCard() {
@@ -1671,6 +1821,7 @@ async function prepareVipPaymentFlow() {
   const priceFen = getUnlockPriceForMode(activeReadingMode, document.getElementById("spreadSelect")?.value || "");
   const qrImg = document.getElementById("qrImage");
   const codeInput = document.getElementById("vipCodeInput");
+  updateVipUnlockSummary(activeReadingMode);
   if (qrImg) qrImg.src = VIP_STATIC_QR_URL;
   setQrFallbackLink("", false);
   if (codeInput) codeInput.value = "";

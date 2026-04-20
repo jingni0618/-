@@ -34,6 +34,18 @@ function verifyVipToken(token, secret) {
   }
 }
 
+function requiresVipForCards(cards = []) {
+  if (!Array.isArray(cards) || !cards.length) return false;
+  if (cards.length > 3) return true;
+
+  const positions = cards
+    .map(card => String(card?.position || '').trim())
+    .filter(Boolean);
+
+  const yesNoPositions = ['支持的力量', '反对的力量', '最终答案'];
+  return yesNoPositions.every(label => positions.includes(label));
+}
+
 export default async function handler(req, res) {
   applyCors(req, res);
 
@@ -48,7 +60,7 @@ export default async function handler(req, res) {
   const vipUnlockCode = process.env.VIP_UNLOCK_CODE;
   const vipSigningSecret = process.env.VIP_SIGNING_SECRET || API_KEY;
 
-  if (!isDaily && safeCards.length > 3 && vipUnlockCode) {
+  if (!isDaily && requiresVipForCards(safeCards) && vipUnlockCode) {
     const ok = verifyVipToken(vipToken, vipSigningSecret);
     if (!ok) {
       return res.status(402).json({ error: '高级牌阵需要VIP解锁验证' });
