@@ -31,9 +31,8 @@ function mapOrder(row) {
   };
 }
 
-export async function createVipPaymentOrder({ amountFen = 100, qrUrl = '', productType = 'deep', scene = '' } = {}) {
+export async function createVipPaymentOrder({ orderId = buildVipOrderId(), amountFen = 100, qrUrl = '', productType = 'deep', scene = '' } = {}) {
   await ensureVipSchema();
-  const orderId = buildVipOrderId();
   const createdAt = now();
   const expiresAt = createdAt + ORDER_TTL_MS;
 
@@ -83,6 +82,22 @@ export async function getVipPaymentOrder(orderId) {
     'SELECT * FROM vip_payment_orders WHERE order_id = $1 LIMIT 1',
     [orderId]
   );
+  return mapOrder(result.rows[0]);
+}
+
+export async function updateVipPaymentOrderQrUrl(orderId, qrUrl = '') {
+  await ensureVipSchema();
+  const result = await pool.query(
+    `
+      UPDATE vip_payment_orders
+      SET qr_url = $2
+      WHERE order_id = $1
+        AND status = 'pending'
+      RETURNING *
+    `,
+    [orderId, qrUrl]
+  );
+
   return mapOrder(result.rows[0]);
 }
 
@@ -184,4 +199,3 @@ export async function hasVipPaymentEventTransaction({ type = '', transactionId =
 
   return result.rowCount > 0;
 }
-

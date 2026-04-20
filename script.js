@@ -130,6 +130,9 @@ let vipConfirmCountdownTimer = null;
 let vipConfirmRemainingSeconds = 0;
 let vipOrderPollingTimer = null;
 let vipOrderStatusRequestPending = false;
+let vipAutoUnlockPending = false;
+let vipPaymentFlowId = 0;
+let currentVipPaymentMode = "static_qr";
 let startHoldTimer = null;
 let startHoldStartedAt = 0;
 let startHoldCommitted = false;
@@ -154,6 +157,9 @@ const SCRIPT_LOAD_TIMEOUT_MS = 12000;
 const STREAM_REQUEST_TIMEOUT_MS = 30000;
 const FALLBACK_REQUEST_TIMEOUT_MS = 20000;
 const DAILY_REQUEST_TIMEOUT_MS = 15000;
+const CARD_IMAGE_LOAD_TIMEOUT_MS = 6000;
+const VIP_ORDER_REQUEST_TIMEOUT_MS = 15000;
+const VIP_ORDER_POLL_INTERVAL_MS = 3000;
 // Removed emotion range labels — now using emoji reaction bar
 
 // ── Intro dismiss ────────────────────────────────────────────────────────
@@ -1072,6 +1078,42 @@ function getTarotImageUrl(cardName = "") {
   return code ? `${TAROT_IMAGE_BASE_URL}${code}.jpg` : "";
 }
 
+function setImageWithFallback(imageEl, imageUrl, options = {}) {
+  if (!imageEl || !imageUrl) {
+    options.onFallback?.();
+    return;
+  }
+
+  const timeoutMs = options.timeoutMs || CARD_IMAGE_LOAD_TIMEOUT_MS;
+  let settled = false;
+  let timerId = 0;
+  const finish = success => {
+    if (settled) return;
+    settled = true;
+    if (timerId) clearTimeout(timerId);
+    imageEl.onload = null;
+    imageEl.onerror = null;
+    if (success) {
+      options.onLoad?.();
+      return;
+    }
+    imageEl.removeAttribute("src");
+    options.onFallback?.();
+  };
+
+  imageEl.onload = () => finish(true);
+  imageEl.onerror = () => finish(false);
+  imageEl.alt = options.alt || "";
+  imageEl.decoding = "async";
+  imageEl.loading = "eager";
+  timerId = window.setTimeout(() => finish(false), timeoutMs);
+  imageEl.src = imageUrl;
+
+  if (imageEl.complete && imageEl.naturalWidth > 0) {
+    finish(true);
+  }
+}
+
 function applyFaceArtwork(slotIndex, cardData) {
   const artWrap = document.getElementById(`art-${slotIndex}`);
   const imageEl = document.getElementById(`image-${slotIndex}`);
@@ -1081,14 +1123,20 @@ function applyFaceArtwork(slotIndex, cardData) {
   if (cardData?.imageUrl) {
     artWrap.style.display = "block";
     imageEl.style.display = "block";
-    imageEl.src = cardData.imageUrl;
-    imageEl.alt = `${normalizeCardName(cardData.cardName)}牌面`;
     emojiEl.style.display = "none";
-    imageEl.onerror = () => {
-      artWrap.style.display = "none";
-      imageEl.style.display = "none";
-      emojiEl.style.display = "block";
-    };
+    setImageWithFallback(imageEl, cardData.imageUrl, {
+      alt: `${normalizeCardName(cardData.cardName)}牌面`,
+      onLoad: () => {
+        artWrap.style.display = "block";
+        imageEl.style.display = "block";
+        emojiEl.style.display = "none";
+      },
+      onFallback: () => {
+        artWrap.style.display = "none";
+        imageEl.style.display = "none";
+        emojiEl.style.display = "block";
+      }
+    });
     return;
   }
 
@@ -1104,15 +1152,20 @@ function applyDailyCardArtwork(cardName = "", fallbackEmoji = "✨") {
 
   const imageUrl = getTarotImageUrl(cardName);
   if (imageUrl) {
-    imageEl.src = imageUrl;
-    imageEl.alt = `${normalizeCardName(cardName)}牌面`;
     imageEl.style.display = "block";
     emojiEl.style.display = "none";
-    imageEl.onerror = () => {
-      imageEl.style.display = "none";
-      emojiEl.style.display = "block";
-      emojiEl.innerText = fallbackEmoji;
-    };
+    setImageWithFallback(imageEl, imageUrl, {
+      alt: `${normalizeCardName(cardName)}牌面`,
+      onLoad: () => {
+        imageEl.style.display = "block";
+        emojiEl.style.display = "none";
+      },
+      onFallback: () => {
+        imageEl.style.display = "none";
+        emojiEl.style.display = "block";
+        emojiEl.innerText = fallbackEmoji;
+      }
+    });
     return;
   }
 
@@ -1293,7 +1346,7 @@ function openHistoryDetail(record) {
     <p><strong>模式：</strong>${record.mode || "解牌"}</p>
     <p><strong>问题：</strong>${record.question || "未填写"}</p>
     <p><strong>主题：</strong>${record.timelineTopic || inferTimelineTopic(record)}</p>
-    <p><strong>解牌：</strong>经典韦特流</p>
+    <p><strong>解牌：</strong>精选塔罗解读</p>
     <p><strong>情绪雷达：</strong>${record.emotionLabel || "平静观察"}</p>
     <p><strong>双人合盘：</strong>${record.isCompatibility ? `${record.userName || "你"} × ${record.partnerName}` : "未开启"}</p>
     <p><strong>牌阵：</strong>${record.spread || "未知"}</p>
@@ -1419,6 +1472,8 @@ function stopVipOrderPolling() {
     vipOrderPollingTimer = null;
   }
   vipOrderStatusRequestPending = false;
+  vipAutoUnlockPending = false;
+  currentVipPaymentMode = "static_qr";
   localStorage.removeItem(VIP_ORDER_ID_KEY);
 }
 
@@ -1433,11 +1488,11 @@ function formatOrderExpireTime(expiresAt) {
 }
 
 async function createVipPaymentOrder(productType = getVipProductTypeForMode()) {
-  const response = await fetch("/api/vip-payment-order", {
+  const response = await fetchWithTimeout("/api/vip-payment-order", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ productType })
-  });
+  }, VIP_ORDER_REQUEST_TIMEOUT_MS);
   if (!response.ok) {
     let message = "创建支付订单失败";
     try {
@@ -1450,9 +1505,9 @@ async function createVipPaymentOrder(productType = getVipProductTypeForMode()) {
 }
 
 async function fetchVipPaymentOrderStatus(orderId) {
-  const response = await fetch(`/api/vip-payment-status?orderId=${encodeURIComponent(orderId)}`, {
+  const response = await fetchWithTimeout(`/api/vip-payment-status?orderId=${encodeURIComponent(orderId)}`, {
     method: "GET"
-  });
+  }, VIP_ORDER_REQUEST_TIMEOUT_MS);
   if (!response.ok) {
     let message = "查询支付状态失败";
     try {
@@ -1465,11 +1520,11 @@ async function fetchVipPaymentOrderStatus(orderId) {
 }
 
 async function unlockVipPaymentOrder(orderId) {
-  const response = await fetch("/api/vip-payment-unlock", {
+  const response = await fetchWithTimeout("/api/vip-payment-unlock", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ orderId })
-  });
+  }, VIP_ORDER_REQUEST_TIMEOUT_MS);
   if (!response.ok) {
     let message = "订单核销失败";
     try {
@@ -1488,19 +1543,69 @@ function setVipContinueButtonState(text = "检查支付结果", disabled = false
   btn.disabled = disabled;
 }
 
+function getVipPaymentModeHint(mode = currentVipPaymentMode) {
+  return mode === "alipay_precreate"
+    ? "订单二维码，支付后自动确认"
+    : "静态二维码，支付后需后台确认";
+}
+
+function setQrFallbackLink(qrContent = "", visible = false) {
+  const link = document.getElementById("qrFallbackLink");
+  if (!link) return;
+  const content = String(qrContent || "").trim();
+  if (!content || !visible) {
+    link.style.display = "none";
+    link.removeAttribute("href");
+    return;
+  }
+  link.href = content;
+  link.style.display = "inline-block";
+}
+
+function continueAfterVipUnlock(tokenData, message = "支付已确认，正在继续解牌。") {
+  if (!tokenData?.token || !tokenData?.expiresAt) {
+    throw new Error("解锁凭证无效");
+  }
+  sessionStorage.setItem(VIP_TOKEN_KEY, JSON.stringify({ token: tokenData.token, expiresAt: tokenData.expiresAt }));
+  closeVipConfirmModal();
+  closeVipModal();
+  updateStatus(message);
+  showEnergyEffect(true);
+}
+
+async function autoUnlockVipPaymentOrder(orderId, flowId = vipPaymentFlowId) {
+  if (!orderId || vipAutoUnlockPending) return;
+  vipAutoUnlockPending = true;
+  setVipContinueButtonState("支付已确认，自动继续中…", true);
+  try {
+    const tokenData = await unlockVipPaymentOrder(orderId);
+    if (flowId !== vipPaymentFlowId) return;
+    continueAfterVipUnlock(tokenData);
+  } catch (error) {
+    if (flowId !== vipPaymentFlowId) return;
+    vipAutoUnlockPending = false;
+    setVipOrderStatus("状态：支付已确认，自动继续失败", error.message || "请点击下方按钮重试。");
+    setVipContinueButtonState("重试继续", false);
+    updateStatus("支付已确认，但自动继续失败。请点击“重试继续”。");
+  }
+}
+
 function applyVipOrderStatus(order) {
   if (!order?.orderId) return;
   localStorage.setItem(VIP_ORDER_ID_KEY, order.orderId);
+  if (order.paymentMode) currentVipPaymentMode = order.paymentMode;
   const amountText = formatFenPrice(order.amountFen || getUnlockPriceForMode());
   const expireText = formatOrderExpireTime(order.expiresAt);
-  const metaParts = [`订单号 ${order.orderId}`, `${amountText}/次`];
+  const metaParts = [`订单号 ${order.orderId}`, `${amountText}/次`, getVipPaymentModeHint()];
   if (expireText) metaParts.push(`有效至 ${expireText}`);
+  if (order.precreateError && currentVipPaymentMode === "static_qr") metaParts.push("自动订单暂不可用");
   const meta = metaParts.join(" · ");
 
   if (order.status === "paid" || order.status === "unlocked") {
-    setVipOrderStatus("状态：已确认支付", `${meta} · 现在可以继续解牌。`);
-    setVipContinueButtonState("支付已确认，继续", false);
-    updateStatus("支付已确认，点击继续后将正式解锁本次高级解牌。");
+    setVipOrderStatus("状态：已确认支付", `${meta} · 系统正在自动继续解牌。`);
+    setVipContinueButtonState(vipAutoUnlockPending ? "自动继续中…" : "支付已确认，自动继续", true);
+    updateStatus("支付已确认，正在自动继续解牌。");
+    autoUnlockVipPaymentOrder(order.orderId, vipPaymentFlowId);
     return;
   }
 
@@ -1515,7 +1620,10 @@ function applyVipOrderStatus(order) {
     return;
   }
 
-  setVipOrderStatus("状态：等待扫码支付", `${meta} · 扫码完成后系统会自动检测支付结果。`);
+  const waitHint = currentVipPaymentMode === "alipay_precreate"
+    ? "扫码完成后系统会自动检测支付结果。"
+    : "扫码后需要后台确认订单，确认后会自动继续。";
+  setVipOrderStatus("状态：等待扫码支付", `${meta} · ${waitHint}`);
   setVipContinueButtonState("检查支付结果", false);
 }
 
@@ -1553,25 +1661,41 @@ function startVipOrderPolling(orderId) {
   refreshVipOrderStatus(orderId, { silent: true });
   vipOrderPollingTimer = setInterval(() => {
     refreshVipOrderStatus(orderId, { silent: true });
-  }, 4000);
+  }, VIP_ORDER_POLL_INTERVAL_MS);
 }
 
 async function prepareVipPaymentFlow() {
+  vipPaymentFlowId += 1;
+  const flowId = vipPaymentFlowId;
+  stopVipOrderPolling();
   const priceFen = getUnlockPriceForMode(activeReadingMode, document.getElementById("spreadSelect")?.value || "");
   const qrImg = document.getElementById("qrImage");
   const codeInput = document.getElementById("vipCodeInput");
   if (qrImg) qrImg.src = VIP_STATIC_QR_URL;
+  setQrFallbackLink("", false);
   if (codeInput) codeInput.value = "";
   setVipCodeHint("", false);
   setVipContinueButtonState("创建订单中…", true);
   setVipOrderStatus("状态：正在创建订单", `当前价格 ${formatFenPrice(priceFen)}/次，系统正在准备支付二维码。`);
   try {
     const order = await createVipPaymentOrder(getVipProductTypeForMode(activeReadingMode));
-    if (qrImg) qrImg.src = order.qrUrl || VIP_STATIC_QR_URL;
+    if (flowId !== vipPaymentFlowId) return;
+    if (qrImg) {
+      qrImg.onerror = () => {
+        if (order.paymentMode === "alipay_precreate" && order.qrContent) {
+          setQrFallbackLink(order.qrContent, true);
+          setVipOrderStatus("状态：二维码图片加载失败", "可点击二维码下方链接打开支付宝支付。支付完成后系统仍会自动检测。");
+        }
+      };
+      qrImg.onload = () => setQrFallbackLink("", false);
+      qrImg.src = order.qrUrl || VIP_STATIC_QR_URL;
+    }
     applyVipOrderStatus(order);
     startVipOrderPolling(order.orderId);
   } catch (error) {
+    if (flowId !== vipPaymentFlowId) return;
     if (qrImg) qrImg.src = VIP_STATIC_QR_URL;
+    setQrFallbackLink("", false);
     setVipOrderStatus("状态：订单创建失败", `${error.message || "支付接口暂时不可用"}。你仍可使用口令解锁作为备用方案。`);
     setVipContinueButtonState("暂不可用", true);
   }
@@ -1580,6 +1704,7 @@ async function prepareVipPaymentFlow() {
 function closeVipModal() {
   document.getElementById("vipModal").style.display = "none";
   closeVipConfirmModal();
+  vipPaymentFlowId += 1;
   stopVipOrderPolling();
 }
 
@@ -1639,10 +1764,7 @@ async function confirmVipPaidAndContinue() {
   }
   try {
     const tokenData = await unlockVipPaymentOrder(orderId);
-    sessionStorage.setItem(VIP_TOKEN_KEY, JSON.stringify({ token: tokenData.token, expiresAt: tokenData.expiresAt }));
-    closeVipConfirmModal();
-    closeVipModal();
-    showEnergyEffect(true);
+    continueAfterVipUnlock(tokenData, "支付已确认，正在继续解牌。");
   } catch (error) {
     setVipOrderStatus("状态：尚未完成支付", error.message || "订单还未支付成功，请稍后再试。");
     closeVipConfirmModal();

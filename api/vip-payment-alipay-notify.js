@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import {
+  getVipPaymentOrder,
   hasVipPaymentEventTransaction,
   markVipPaymentPaidByCallback,
   saveVipPaymentEvent
@@ -167,7 +168,12 @@ export default async function handler(req, res) {
     return alipayFail(res, 'app_id_mismatch');
   }
 
-  const verify = verifyAlipaySignature(payload);
+  let verify;
+  try {
+    verify = verifyAlipaySignature(payload);
+  } catch (err) {
+    return alipayFail(res, `signature_error:${err.message || 'unknown'}`);
+  }
   if (!verify.ok) {
     return alipayFail(res, verify.reason || 'signature_invalid');
   }
@@ -198,12 +204,7 @@ export default async function handler(req, res) {
   });
   if (alreadyProcessed) return alipaySuccess(res);
 
-  const order = await markVipPaymentPaidByCallback({
-    orderId,
-    transactionId,
-    channel: 'alipay',
-    rawNotifyJson: payload
-  });
+  const order = await getVipPaymentOrder(orderId);
   if (!order) return alipayFail(res, 'order_not_found');
 
   if (totalAmountFen > 0 && Number(order.amountFen) > 0 && totalAmountFen !== Number(order.amountFen)) {
@@ -219,6 +220,14 @@ export default async function handler(req, res) {
     });
     return alipayFail(res, 'amount_mismatch');
   }
+
+  const paidOrder = await markVipPaymentPaidByCallback({
+    orderId,
+    transactionId,
+    channel: 'alipay',
+    rawNotifyJson: payload
+  });
+  if (!paidOrder) return alipayFail(res, 'order_not_found');
 
   await saveVipPaymentEvent({
     type: 'alipay_notify_paid',

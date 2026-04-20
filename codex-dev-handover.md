@@ -173,8 +173,16 @@
 - `VIP_ADMIN_KEY`
 - `ALIPAY_PUBLIC_KEY`
 - `ALIPAY_APP_ID`
+- `ALIPAY_APP_PRIVATE_KEY`
+- `ALIPAY_NOTIFY_URL`
 - `RESEND_API_KEY`
 - `FEEDBACK_FROM_EMAIL`
+
+支付闭环说明：
+
+- 配齐 `ALIPAY_APP_ID`、`ALIPAY_APP_PRIVATE_KEY`、`ALIPAY_PUBLIC_KEY` 后，`/api/vip-payment-order` 会走支付宝 `alipay.trade.precreate`，生成绑定 `orderId/out_trade_no` 的订单二维码。
+- `ALIPAY_NOTIFY_URL` 可显式指定回调地址；不配置时会按当前请求域名推导到 `/api/vip-payment-alipay-notify`。
+- 如果支付宝预创建配置不完整，但配置了 `VIP_ALIPAY_QR_IMAGE_URL`，系统会回退到静态二维码模式。静态二维码不能自动回调，只能依赖后台调用 `/api/vip-payment-admin-mark-paid` 标记订单为已支付。
 
 主要对应文件：
 
